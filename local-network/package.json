@@ -1,0 +1,21 @@
+{
+  "name": "@shadow-market/local-network",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "docker-compose up -d",
+    "stop": "docker-compose down",
+    "logs": "docker-compose logs -f",
+    "clean": "docker-compose down -v"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/midnight-js-node-client": "^2.4.0",
+    "@midnight-ntwrk/midnight-js-types": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2",
+    "tsx": "^4.19.2"
+  }
+}

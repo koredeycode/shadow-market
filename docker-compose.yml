@@ -1,0 +1,104 @@
+version: '3.8'
+
+name: shadow-market
+
+services:
+  # ==============================================
+  # Midnight Network Services
+  # ==============================================
+  
+  midnight-node:
+    image: midnightntwrk/midnight-node:0.21.0
+    container_name: shadow-midnight-node
+    ports:
+      - '9944:9944'
+    environment:
+      CFG_PRESET: 'dev'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9944/health']
+      interval: 2s
+      timeout: 5s
+      retries: 20
+    networks:
+      - shadow-network
+
+  midnight-indexer:
+    image: midnightntwrk/indexer-standalone:3.1.0
+    container_name: shadow-midnight-indexer
+    ports:
+      - '8088:8088'
+    environment:
+      APP__APPLICATION__NETWORK_ID: 'undeployed'
+      APP__APPLICATION__NODE_URL: 'http://midnight-node:9944'
+    depends_on:
+      midnight-node:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8088/health']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - shadow-network
+
+  midnight-proof-server:
+    image: midnightntwrk/proof-server:7.0.0
+    container_name: shadow-midnight-proof-server
+    ports:
+      - '6300:6300'
+    environment:
+      LOG_LEVEL: 'info'
+    networks:
+      - shadow-network
+
+  # ==============================================
+  # Backend Services
+  # ==============================================
+  
+  postgres:
+    image: postgres:16-alpine
+    container_name: shadow-postgres
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: shadowmarket
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shadow-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: shadow-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - shadow-network
+
+networks:
+  shadow-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
