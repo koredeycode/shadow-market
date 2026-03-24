@@ -219,7 +219,40 @@
 - ✅ Empty state for no wagers
 - ✅ Responsive design
 
-### Day 40-41: Portfolio Dashboard
+### Day 40-41: Portfolio Dashboard ✅
+
+- ✅ Created positions API service
+- ✅ Position interface with market details
+- ✅ PortfolioStats interface
+- ✅ getPortfolio() API call
+- ✅ getStats() API call
+- ✅ claimWinnings() API call
+- ✅ Portfolio page component
+- ✅ 4 StatCard components with gradients:
+  - Total Value card
+  - Profit & Loss with trend indicator
+  - Win Rate with W/L record
+  - Total Volume with average bet size
+- ✅ PositionsList component
+- ✅ Active/Settled positions tabs
+- ✅ PositionCard component features:
+  - Market question with link
+  - Position side chips (YES/NO)
+  - Entry price and current price
+  - Unrealized P&L for active positions
+  - Realized P&L for settled positions
+  - ROI percentage calculation
+  - Claim winnings button
+  - Time remaining countdown
+  - Market outcome display
+  - Winner indicator
+- ✅ Real-time portfolio updates (15s interval)
+- ✅ TanStack Query integration
+- ✅ Toast notifications for claims
+- ✅ Currency and percentage formatting
+- ✅ Empty state handling
+- ✅ Loading and error states
+- ✅ Responsive grid layout
 
 ### Day 42: Charts & Analytics
 
