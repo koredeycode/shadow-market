@@ -1,26 +1,28 @@
-import { useState } from 'react';
 import {
-  Container,
-  Typography,
-  Box,
-  Grid,
-  Card,
-  CardContent,
-  Tabs,
-  Tab,
-  CircularProgress,
-  Alert,
-} from '@mui/material';
-import {
-  TrendingUp,
-  TrendingDown,
   AccountBalance,
   EmojiEvents,
-  ShowChart,
   LocalAtm,
+  ShowChart,
+  TrendingDown,
+  TrendingUp,
 } from '@mui/icons-material';
+import {
+  Alert,
+  Box,
+  Card,
+  CardContent,
+  CircularProgress,
+  Container,
+  Grid,
+  Tab,
+  Tabs,
+  Typography,
+} from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import { positionsApi, Portfolio as PortfolioData } from '../api/positions';
+import { useState } from 'react';
+import { Portfolio as PortfolioData, positionsApi } from '../api/positions';
+import { ExportDataButton } from '../components/analytics/ExportDataButton';
+import { PortfolioValueChart } from '../components/analytics/PortfolioValueChart';
 import { PositionsList } from '../components/portfolio/PositionsList';
 
 interface StatCardProps {
@@ -39,7 +41,7 @@ function StatCard({ title, value, icon, trend, color }: StatCardProps) {
     <Card
       sx={{
         height: '100%',
-        background: (theme) =>
+        background: theme =>
           `linear-gradient(135deg, ${theme.palette[color].dark} 0%, ${theme.palette[color].main} 100%)`,
         color: 'white',
       }}
@@ -109,9 +111,7 @@ export function Portfolio() {
   if (error) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Alert severity="error">
-          Failed to load portfolio. Please try again later.
-        </Alert>
+        <Alert severity="error">Failed to load portfolio. Please try again later.</Alert>
       </Container>
     );
   }
@@ -151,13 +151,16 @@ export function Portfolio() {
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       {/* Header */}
-      <Box mb={4}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
-          Portfolio
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Track your positions, performance, and earnings
-        </Typography>
+      <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
+        <Box>
+          <Typography variant="h4" fontWeight="bold" gutterBottom>
+            Portfolio
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Track your positions, performance, and earnings
+          </Typography>
+        </Box>
+        <ExportDataButton type="portfolio" />
       </Box>
 
       {/* Stats Cards */}
@@ -210,6 +213,11 @@ export function Portfolio() {
           />
         </Grid>
       </Grid>
+
+      {/* Portfolio Value Chart */}
+      <Box mb={4}>
+        <PortfolioValueChart height={300} />
+      </Box>
 
       {/* Positions Tabs */}
       <Card>

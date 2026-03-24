@@ -1,27 +1,26 @@
-import { useState } from 'react';
+import {
+  AccessTime,
+  Cancel,
+  CheckCircle,
+  OpenInNew,
+  TrendingDown,
+  TrendingUp,
+} from '@mui/icons-material';
 import {
   Box,
+  Button,
   Card,
   CardContent,
-  Typography,
-  Grid,
   Chip,
-  Button,
+  Grid,
   LinearProgress,
-  Alert,
   Link as MuiLink,
+  Typography,
 } from '@mui/material';
-import {
-  TrendingUp,
-  TrendingDown,
-  AccessTime,
-  CheckCircle,
-  Cancel,
-  OpenInNew,
-} from '@mui/icons-material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { Link } from 'react-router-dom';
 import { Position, positionsApi } from '../../api/positions';
 
 interface PositionCardProps {
@@ -36,7 +35,7 @@ function PositionCard({ position, isActive, onClaimSuccess }: PositionCardProps)
 
   const claimMutation = useMutation({
     mutationFn: () => positionsApi.claimWinnings(position.id),
-    onSuccess: (data) => {
+    onSuccess: data => {
       toast.success(`Successfully claimed ${formatCurrency(data.amount)}!`);
       queryClient.invalidateQueries({ queryKey: ['portfolio'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
@@ -81,7 +80,7 @@ function PositionCard({ position, isActive, onClaimSuccess }: PositionCardProps)
   const calculateROI = () => {
     const pnl = calculatePnL();
     const investment = parseFloat(position.amount) * position.entryPrice;
-    return ((pnl / investment) * 100);
+    return (pnl / investment) * 100;
   };
 
   const pnl = calculatePnL();
@@ -124,11 +123,7 @@ function PositionCard({ position, isActive, onClaimSuccess }: PositionCardProps)
       sx={{
         mb: 2,
         border: 1,
-        borderColor: position.isSettled
-          ? pnl >= 0
-            ? 'success.main'
-            : 'error.main'
-          : 'divider',
+        borderColor: position.isSettled ? (pnl >= 0 ? 'success.main' : 'error.main') : 'divider',
         '&:hover': {
           boxShadow: 3,
         },
@@ -218,18 +213,14 @@ function PositionCard({ position, isActive, onClaimSuccess }: PositionCardProps)
                 <Typography variant="body2" color="text.secondary" gutterBottom>
                   Entry Price
                 </Typography>
-                <Typography variant="h6">
-                  {(position.entryPrice * 100).toFixed(1)}%
-                </Typography>
+                <Typography variant="h6">{(position.entryPrice * 100).toFixed(1)}%</Typography>
               </Grid>
 
               <Grid item xs={6}>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
                   Current Price
                 </Typography>
-                <Typography variant="h6">
-                  {(position.currentPrice * 100).toFixed(1)}%
-                </Typography>
+                <Typography variant="h6">{(position.currentPrice * 100).toFixed(1)}%</Typography>
               </Grid>
 
               <Grid item xs={6}>
@@ -313,7 +304,7 @@ export function PositionsList({ positions, isActive, onClaimSuccess }: Positions
 
   return (
     <Box>
-      {positions.map((position) => (
+      {positions.map(position => (
         <PositionCard
           key={position.id}
           position={position}

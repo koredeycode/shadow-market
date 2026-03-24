@@ -15,7 +15,7 @@ export interface Position {
   settledAt?: string;
   payout?: string;
   profitLoss?: string;
-  
+
   // Market info
   marketStatus: 'open' | 'locked' | 'resolved' | 'cancelled';
   marketEndTime: string;
@@ -43,8 +43,8 @@ class PositionsApi {
   private async getAuthHeaders() {
     const token = localStorage.getItem('authToken');
     return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
     };
   }
 
@@ -66,9 +66,15 @@ class PositionsApi {
     return response.data;
   }
 
-  async claimWinnings(positionId: string): Promise<{ success: boolean; txHash: string; amount: string }> {
+  async claimWinnings(
+    positionId: string
+  ): Promise<{ success: boolean; txHash: string; amount: string }> {
     const headers = await this.getAuthHeaders();
-    const response = await axios.post(`${API_BASE_URL}/wagers/${positionId}/claim`, {}, { headers });
+    const response = await axios.post(
+      `${API_BASE_URL}/wagers/${positionId}/claim`,
+      {},
+      { headers }
+    );
     return response.data;
   }
 }

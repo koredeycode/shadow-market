@@ -1,4 +1,8 @@
-import { ShowChart as ChartIcon, AccountBalanceWallet as WalletIcon } from '@mui/icons-material';
+import {
+  ShowChart as ChartIcon,
+  AccountBalanceWallet as WalletIcon,
+  Assessment as AnalyticsIcon,
+} from '@mui/icons-material';
 import {
   AppBar,
   Box,
@@ -71,6 +75,14 @@ export function Navbar() {
                 sx={{ color: 'text.primary' }}
               >
                 Portfolio
+              </Button>
+              <Button
+                component={RouterLink}
+                to="/analytics"
+                startIcon={<AnalyticsIcon />}
+                sx={{ color: 'text.primary' }}
+              >
+                Analytics
               </Button>
             </Box>
 

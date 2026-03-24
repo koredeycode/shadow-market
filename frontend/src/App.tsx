@@ -1,6 +1,7 @@
 import { Box } from '@mui/material';
 import { Route, Routes } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
+import { Analytics } from './pages/Analytics';
 import { CreateMarket } from './pages/CreateMarket';
 import { Home } from './pages/Home';
 import { MarketDetail } from './pages/MarketDetail';
@@ -17,6 +18,7 @@ function App() {
           <Route path="markets/:id" element={<MarketDetail />} />
           <Route path="markets/create" element={<CreateMarket />} />
           <Route path="portfolio" element={<Portfolio />} />
+          <Route path="analytics" element={<Analytics />} />
         </Route>
       </Routes>
     </Box>
