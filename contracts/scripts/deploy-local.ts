@@ -33,7 +33,7 @@ async function main() {
   console.log('   Execute after contracts are compiled');
 }
 
-main().catch((error) => {
+main().catch(error => {
   console.error('❌ Deployment failed:', error);
   process.exit(1);
 });

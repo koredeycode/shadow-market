@@ -13,7 +13,7 @@ async function main() {
   console.log('✅ Verification complete');
 }
 
-main().catch((error) => {
+main().catch(error => {
   console.error('❌ Verification failed:', error);
   process.exit(1);
 });

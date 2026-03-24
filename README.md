@@ -35,6 +35,7 @@ pnpm dev
 ```
 
 Visit:
+
 - **Frontend:** http://localhost:5173
 - **Backend API:** http://localhost:3000
 - **Midnight Network:** http://localhost:9944
@@ -68,23 +69,25 @@ Visit:
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| **Contracts** | Compact 0.29+, ZK Circuits |
-| **Backend** | Node.js 22+, TypeScript, Express, PostgreSQL, Redis |
-| **Frontend** | React 19, TypeScript, Vite, Material-UI, TanStack Query |
-| **Blockchain** | Midnight Network, Midnight.js SDK, Lace Wallet |
-| **DevOps** | Docker, Docker Compose |
+| Layer          | Technology                                              |
+| -------------- | ------------------------------------------------------- |
+| **Contracts**  | Compact 0.29+, ZK Circuits                              |
+| **Backend**    | Node.js 22+, TypeScript, Express, PostgreSQL, Redis     |
+| **Frontend**   | React 19, TypeScript, Vite, Material-UI, TanStack Query |
+| **Blockchain** | Midnight Network, Midnight.js SDK, Lace Wallet          |
+| **DevOps**     | Docker, Docker Compose                                  |
 
 ## ✨ Key Features
 
 ### Privacy Features
+
 - ✅ **Anonymous Betting** - Addresses don't reveal identity
 - ✅ **Hidden Amounts** - ZK commitments conceal bet sizes
 - ✅ **Private Strategies** - Positions revealed only on claim
 - ✅ **Confidential Profits** - Others can't see your P&L
 
 ### Market Features
+
 - ✅ **Binary Markets** - YES/NO predictions
 - ✅ **Automated Market Maker** - Constant product formula (Uniswap-style)
 - ✅ **Peer-to-Peer Wagers** - Custom odds, direct matching
@@ -132,15 +135,15 @@ pnpm network:logs     # View network logs
 
 ## 🔒 Privacy Model
 
-| Data | Visibility |
-|------|-----------|
-| Market exists | 🟢 Public |
-| Your bet amount | 🔴 Private (ZK commitment) |
-| Your bet direction (YES/NO) | 🔴 Private (until claim) |
-| Your profit/loss | 🔴 Private |
-| Total market liquidity | 🟢 Public (aggregated) |
-| Current prices | 🟢 Public (from AMM) |
-| Final outcome | 🟢 Public |
+| Data                        | Visibility                 |
+| --------------------------- | -------------------------- |
+| Market exists               | 🟢 Public                  |
+| Your bet amount             | 🔴 Private (ZK commitment) |
+| Your bet direction (YES/NO) | 🔴 Private (until claim)   |
+| Your profit/loss            | 🔴 Private                 |
+| Total market liquidity      | 🟢 Public (aggregated)     |
+| Current prices              | 🟢 Public (from AMM)       |
+| Final outcome               | 🟢 Public                  |
 
 ## 📄 License
 
@@ -157,4 +160,4 @@ MIT License - see [LICENSE](LICENSE) file
 
 **Built with 🌙 for the Midnight Hackathon**
 
-*"Bet on the future, keep it to yourself"*
+_"Bet on the future, keep it to yourself"_

@@ -1,0 +1,79 @@
+import { db } from './client';
+import { markets, positions } from './schema';
+import { eq } from 'drizzle-orm';
+import { io } from '../app';
+import { broadcastMarketUpdate, notifyPositionUpdate } from '../websocket';
+
+/**
+ * Background job to sync market data from blockchain
+ * In production, this would listen to on-chain events
+ */
+export async function syncMarketPrices() {
+  try {
+    // Get all open markets
+    const openMarkets = await db.query.markets.findMany({
+      where: eq(markets.status, 'OPEN'),
+    });
+
+    for (const market of openMarkets) {
+      // In production, fetch from contract
+      // For now, simulate price updates
+      
+      // Broadcast update to subscribed clients
+      broadcastMarketUpdate(io, market.id, {
+        yesPrice: market.yesPrice,
+        noPrice: market.noPrice,
+        totalVolume: market.totalVolume,
+        totalLiquidity: market.totalLiquidity,
+      });
+    }
+
+    console.log(`✅ Synced ${openMarkets.length} markets`);
+  } catch (error) {
+    console.error('❌ Market sync failed:', error);
+  }
+}
+
+/**
+ * Update user positions with current prices
+ */
+export async function updatePositionValues() {
+  try {
+    // Get all unsettled positions
+    const activePositions = await db.query.positions.findMany({
+      where: eq(positions.isSettled, false),
+      with: { market: true },
+    });
+
+    for (const position of activePositions) {
+      if (position.market.status === 'OPEN') {
+        // Calculate current value based on market price
+        // In production, decrypt and calculate actual values
+        
+        // Notify user of position update
+        notifyPositionUpdate(io, position.userId, {
+          marketId: position.marketId,
+          value: '0', // Calculate from market price
+          profitLoss: '0', // Calculate P&L
+        });
+      }
+    }
+
+    console.log(`✅ Updated ${activePositions.length} positions`);
+  } catch (error) {
+    console.error('❌ Position update failed:', error);
+  }
+}
+
+/**
+ * Start background jobs
+ */
+export function startBackgroundJobs() {
+  // Sync market prices every 10 seconds
+  setInterval(syncMarketPrices, 10000);
+
+  // Update position values every 30 seconds
+  setInterval(updatePositionValues, 30000);
+
+  console.log('🔄 Background jobs started');
+}
