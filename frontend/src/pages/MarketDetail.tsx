@@ -20,6 +20,7 @@ import { MarketChart } from '../components/market/MarketChart';
 import { MarketStats } from '../components/market/MarketStats';
 import { OrderBook } from '../components/market/OrderBook';
 import { RecentTrades } from '../components/market/RecentTrades';
+import { PlaceBetModal } from '../components/wager/PlaceBetModal';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -40,6 +41,7 @@ export function MarketDetail() {
   const navigate = useNavigate();
   const [tabValue, setTabValue] = useState(0);
   const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d' | '30d' | 'all'>('24h');
+  const [betModalOpen, setBetModalOpen] = useState(false);
 
   const {
     data: market,
@@ -144,7 +146,7 @@ export function MarketDetail() {
         </Grid>
 
         {/* Action Button */}
-        {market.status === 'OPEN' && (
+        {market.status === 'OPEN' && ( onClick={() => setBetModalOpen(true)}
           <Button variant="contained" fullWidth size="large">
             Place Bet
           </Button>
@@ -197,6 +199,9 @@ export function MarketDetail() {
       <TabPanel value={tabValue} index={3}>
         <RecentTrades marketId={market.id} />
       </TabPanel>
+
+      {/* Place Bet Modal */}
+      <PlaceBetModal open={betModalOpen} onClose={() => setBetModalOpen(false)} market={market} />
     </Container>
   );
 }

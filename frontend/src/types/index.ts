@@ -128,4 +128,3 @@ export interface SignedTransaction {
   to: string;
   signature: string;
 }
-

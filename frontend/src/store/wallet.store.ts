@@ -21,7 +21,7 @@ export interface WalletState {
 
 export const useWalletStore = create<WalletState>()(
   persist(
-    (set) => ({
+    set => ({
       // Initial state
       isConnected: false,
       isConnecting: false,
@@ -52,18 +52,18 @@ export const useWalletStore = create<WalletState>()(
         });
       },
 
-      updateBalance: (balance) => {
+      updateBalance: balance => {
         set({ balance });
       },
 
-      setConnecting: (isConnecting) => {
+      setConnecting: isConnecting => {
         set({ isConnecting });
       },
     }),
     {
       name: 'wallet-storage',
       // Only persist address and networkId, not the provider
-      partialize: (state) => ({
+      partialize: state => ({
         address: state.address,
         networkId: state.networkId,
       }),

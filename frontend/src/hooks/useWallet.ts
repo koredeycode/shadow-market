@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
-import { useWalletStore } from '../store/wallet.store';
 import toast from 'react-hot-toast';
+import { useWalletStore } from '../store/wallet.store';
 
 // Declare Lace wallet types
 declare global {
@@ -61,9 +61,7 @@ export function useWallet() {
       // Validate network
       const expectedNetworkId = import.meta.env.VITE_NETWORK_ID || 'undeployed';
       if (walletNetworkId !== expectedNetworkId) {
-        toast.error(
-          `Wrong network. Please switch to ${expectedNetworkId} network in Lace wallet.`
-        );
+        toast.error(`Wrong network. Please switch to ${expectedNetworkId} network in Lace wallet.`);
         setConnecting(false);
         return;
       }

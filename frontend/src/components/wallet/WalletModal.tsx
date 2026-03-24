@@ -1,24 +1,18 @@
+import { AccountBalanceWallet, Close, ContentCopy, OpenInNew, Refresh } from '@mui/icons-material';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Box,
-  Typography,
-  IconButton,
-  Divider,
   Alert,
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  IconButton,
+  Typography,
 } from '@mui/material';
-import {
-  Close,
-  ContentCopy,
-  Refresh,
-  OpenInNew,
-  AccountBalanceWallet,
-} from '@mui/icons-material';
-import { useWallet } from '../../hooks/useWallet';
 import toast from 'react-hot-toast';
+import { useWallet } from '../../hooks/useWallet';
 
 interface WalletModalProps {
   open: boolean;
@@ -104,11 +98,7 @@ export function WalletModal({ open, onClose }: WalletModalProps) {
                 <IconButton size="small" onClick={handleCopyAddress} title="Copy address">
                   <ContentCopy fontSize="small" />
                 </IconButton>
-                <IconButton
-                  size="small"
-                  onClick={handleViewExplorer}
-                  title="View in explorer"
-                >
+                <IconButton size="small" onClick={handleViewExplorer} title="View in explorer">
                   <OpenInNew fontSize="small" />
                 </IconButton>
               </Box>
