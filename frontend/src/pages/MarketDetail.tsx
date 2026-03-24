@@ -21,6 +21,8 @@ import { MarketStats } from '../components/market/MarketStats';
 import { OrderBook } from '../components/market/OrderBook';
 import { RecentTrades } from '../components/market/RecentTrades';
 import { PlaceBetModal } from '../components/wager/PlaceBetModal';
+import { CreateP2PWagerModal } from '../components/wager/CreateP2PWagerModal';
+import { P2PWagersList } from '../components/wager/P2PWagersList';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -42,6 +44,7 @@ export function MarketDetail() {
   const [tabValue, setTabValue] = useState(0);
   const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d' | '30d' | 'all'>('24h');
   const [betModalOpen, setBetModalOpen] = useState(false);
+  const [p2pModalOpen, setP2pModalOpen] = useState(false);
 
   const {
     data: market,
@@ -146,10 +149,29 @@ export function MarketDetail() {
         </Grid>
 
         {/* Action Button */}
-        {market.status === 'OPEN' && ( onClick={() => setBetModalOpen(true)}
-          <Button variant="contained" fullWidth size="large">
-            Place Bet
-          </Button>
+        {market.status === 'OPEN' && (
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <Button
+                variant="contained"
+                fullWidth
+                size="large"
+                onClick={() => setBetModalOpen(true)}
+              >
+                Place AMM Bet
+              </Button>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Button
+                variant="outlined"
+                fullWidth
+                size="large"
+                onClick={() => setP2pModalOpen(true)}
+              >
+                Create P2P Wager
+              </Button>
+            </Grid>
+          </Grid>
         )}
 
         {market.status === 'RESOLVED' && market.outcome !== null && (
@@ -164,6 +186,7 @@ export function MarketDetail() {
         <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}>
           <Tab label="Overview" />
           <Tab label="Chart" />
+          <Tab label="P2P Wagers" />
           <Tab label="Order Book" />
           <Tab label="Recent Trades" />
         </Tabs>
@@ -193,15 +216,22 @@ export function MarketDetail() {
       </TabPanel>
 
       <TabPanel value={tabValue} index={2}>
-        <OrderBook marketId={market.id} />
+        <P2PWagersList marketId={market.id} />
       </TabPanel>
 
       <TabPanel value={tabValue} index={3}>
+        <OrderBook marketId={market.id} />
+      </TabPanel>
+
+      <TabPanel value={tabValue} index={4}>
         <RecentTrades marketId={market.id} />
       </TabPanel>
 
       {/* Place Bet Modal */}
       <PlaceBetModal open={betModalOpen} onClose={() => setBetModalOpen(false)} market={market} />
+      
+      {/* Create P2P Wager Modal */}
+      <CreateP2PWagerModal open={p2pModalOpen} onClose={() => setP2pModalOpen(false)} market={market} />
     </Container>
   );
 }
