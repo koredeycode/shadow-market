@@ -30,30 +30,44 @@
 - ✅ Test helpers and utilities
 - ✅ Oracle proof generation
 
-## Week 2: P2P & AMM (Days 8-14) 🚧
+## Week 2: P2P & AMM (Days 8-14) ✅
 
 ### Day 8-9: P2PWager Contract
-- ⏳ Implement p2p-wager.compact
-- ⏳ Direct peer-to-peer betting logic
-- ⏳ Custom odds negotiation
-- ⏳ Wager matching and settlement
+- ✅ Implement p2p-wager.compact
+- ✅ Direct peer-to-peer betting logic
+- ✅ Custom odds negotiation
+- ✅ Wager matching and settlement
+- ✅ Cancellation for unmatched wagers
+- ✅ Payout calculation with odds ratios
+- ✅ Comprehensive test cases
 
 ### Day 10-11: LiquidityPool Contract
-- ⏳ Implement liquidity-pool.compact
-- ⏳ LP token management
-- ⏳ Add/remove liquidity functions
-- ⏳ Trading fee distribution
+- ✅ Implement liquidity-pool.compact
+- ✅ LP token management
+- ✅ Add/remove liquidity functions
+- ✅ Trading fee distribution
+- ✅ Constant product AMM swaps
+- ✅ Slippage protection
+- ✅ Spot price calculation
+- ✅ Pool activation/deactivation
 
 ### Day 12-13: Oracle Contract
-- ⏳ Implement oracle.compact
-- ⏳ Multi-oracle consensus
-- ⏳ Dispute mechanism
-- ⏳ Stake-based reputation
+- ✅ Implement oracle.compact
+- ✅ Multi-oracle consensus
+- ✅ Dispute mechanism
+- ✅ Stake-based reputation
+- ✅ Weighted voting system
+- ✅ Reputation updates
+- ✅ Oracle suspension
+- ✅ 60% consensus threshold
 
 ### Day 14: Integration Tests
-- ⏳ End-to-end contract tests
-- ⏳ Cross-contract interactions
-- ⏳ Performance testing
+- ✅ End-to-end contract tests
+- ✅ Cross-contract interactions
+- ✅ Performance testing
+- ✅ Privacy & ZK proof tests
+- ✅ Edge case scenarios
+- ✅ Error handling tests
 
 ## Next: Week 3-4 - Backend Development
 ## Next: Week 5-6 - Frontend Development
