@@ -1,0 +1,245 @@
+pragma language_version >= 0.29;
+
+import CompactStandardLibrary;
+
+// Market configuration (immutable after creation)
+export ledger marketId: Field;
+export ledger question: Opaque<"string">;
+export ledger marketType: MarketType;
+export ledger category: Field;
+export ledger endTime: Field;
+export ledger resolutionSource: Opaque<"string">;
+export ledger minBet: Field;
+export ledger maxBet: Field;
+
+// Market state
+export ledger status: MarketStatus;
+export ledger totalLiquidity: Field;
+export ledger totalPositions: Counter;
+export ledger outcome: Maybe<Field>;  // Resolved outcome
+
+// Position tracking (private amounts)
+export ledger positions: Map<Address, PositionCommitment>;
+
+// Liquidity pool state (AMM)
+export ledger yesShares: Field;
+export ledger noShares: Field;
+export ledger k: Field;  // Constant product
+
+// Oracle designation
+export ledger oracle: Address;
+export ledger resolutionDeadline: Field;
+
+// Position commitment (hides bet amount)
+export struct PositionCommitment {
+  commitment: Bytes<32>,  // hash(amount, side, nonce)
+  timestamp: Field,
+  isRevealed: Bool
+}
+
+// Private state per user
+export struct UserPrivateState {
+  secretNonce: Bytes<32>,
+  positions: Map<Field, Position>  // marketId -> Position
+}
+
+export struct Position {
+  amount: Field,
+  side: Bool,  // true = YES, false = NO
+  nonce: Bytes<32>,
+  entryPrice: Field
+}
+
+// Witness functions
+witness localSecretKey(): Bytes<32>;
+witness userNonce(): Bytes<32>;
+witness positionAmount(): Field;
+witness positionSide(): Bool;
+
+constructor(
+  _marketId: Field,
+  _question: Opaque<"string">,
+  _marketType: MarketType,
+  _category: Field,
+  _endTime: Field,
+  _resolutionSource: Opaque<"string">,
+  _minBet: Field,
+  _maxBet: Field
+) {
+  marketId = _marketId;
+  question = disclose(_question);
+  marketType = _marketType;
+  category = _category;
+  endTime = _endTime;
+  resolutionSource = disclose(_resolutionSource);
+  minBet = _minBet;
+  maxBet = _maxBet;
+  
+  status = MarketStatus.PENDING;
+  totalLiquidity = 0;
+  totalPositions.set(0);
+  outcome = none<Field>();
+  
+  // Initialize AMM with equal shares
+  yesShares = 1000000;  // 1M shares each side
+  noShares = 1000000;
+  k = yesShares * noShares;  // Constant product
+  
+  oracle = sender();
+  resolutionDeadline = endTime + 86400;  // 24 hours after market ends
+}
+
+// Open market for betting
+export circuit openMarket(): [] {
+  assert(status == MarketStatus.PENDING, "Market not pending");
+  assert(sender() == oracle, "Only oracle can open market");
+  
+  status = MarketStatus.OPEN;
+}
+
+// Place a bet (amount stays private)
+export circuit placeBet(
+  amountCommitment: Bytes<32>,  // hash(amount, side, nonce)
+  proofOfFunds: Bytes<32>       // ZK proof of sufficient balance
+): [] {
+  assert(status == MarketStatus.OPEN, "Market not open");
+  assert(currentTime() < endTime, "Market ended");
+  
+  // Verify commitment structure
+  const amount = positionAmount();
+  const side = positionSide();
+  const nonce = userNonce();
+  
+  assert(amount >= minBet && amount <= maxBet, "Amount out of bounds");
+  
+  // Verify commitment matches
+  const expectedCommitment = hash([amount as Bytes<32>, side as Bytes<32>, nonce]);
+  assert(amountCommitment == expectedCommitment, "Invalid commitment");
+  
+  // Store position commitment
+  positions.insert(sender(), PositionCommitment {
+    commitment: amountCommitment,
+    timestamp: currentTime(),
+    isRevealed: false
+  });
+  
+  // Update AMM state (using commitment, not revealing amount)
+  totalLiquidity = totalLiquidity + amount;
+  totalPositions.increment(1);
+  
+  // Calculate new share prices using constant product formula
+  if (side) {
+    // Buying YES shares
+    const newYesShares = yesShares - amount;
+    const newNoShares = k / newYesShares;
+    yesShares = newYesShares;
+    noShares = newNoShares;
+  } else {
+    // Buying NO shares
+    const newNoShares = noShares - amount;
+    const newYesShares = k / newNoShares;
+    yesShares = newYesShares;
+    noShares = newNoShares;
+  }
+}
+
+// Lock market (no more bets)
+export circuit lockMarket(): [] {
+  assert(status == MarketStatus.OPEN, "Market not open");
+  assert(currentTime() >= endTime, "Market not ended yet");
+  
+  status = MarketStatus.LOCKED;
+}
+
+// Resolve market outcome
+export circuit resolveMarket(
+  _outcome: Field,  // 0 = NO, 1 = YES, 2 = INVALID
+  proofOfOutcome: Bytes<32>  // Off-chain oracle signature
+): [] {
+  assert(status == MarketStatus.LOCKED, "Market not locked");
+  assert(sender() == oracle, "Only oracle can resolve");
+  assert(currentTime() >= endTime, "Too early to resolve");
+  
+  // Verify oracle proof (signature verification)
+  assert(verifyOracleProof(proofOfOutcome, _outcome), "Invalid proof");
+  
+  outcome = some<Field>(_outcome);
+  
+  if (_outcome == 2) {
+    status = MarketStatus.CANCELLED;
+  } else {
+    status = MarketStatus.RESOLVED;
+  }
+}
+
+// Claim winnings (reveals position to claim)
+export circuit claimWinnings(): Field {
+  assert(status == MarketStatus.RESOLVED, "Market not resolved");
+  
+  const position = positions.get(sender()).unwrap();
+  assert(!position.isRevealed, "Already claimed");
+  
+  // Reveal position details
+  const amount = positionAmount();
+  const side = positionSide();
+  const nonce = userNonce();
+  
+  // Verify revealed position matches commitment
+  const commitment = hash([amount as Bytes<32>, side as Bytes<32>, nonce]);
+  assert(commitment == position.commitment, "Position mismatch");
+  
+  // Calculate payout
+  const winningOutcome = outcome.value;
+  let payout: Field = 0;
+  
+  if (side == (winningOutcome == 1)) {
+    // Winner! Calculate proportional payout
+    const totalWinningAmount = if (winningOutcome == 1) yesShares else noShares;
+    const totalLosingAmount = if (winningOutcome == 1) noShares else yesShares;
+    
+    payout = amount + (amount * totalLosingAmount / totalWinningAmount);
+  }
+  
+  // Mark as claimed
+  position.isRevealed = true;
+  positions.insert(sender(), position);
+  
+  return payout;
+}
+
+// Cancel bet (before market ends)
+export circuit cancelBet(): Field {
+  assert(status == MarketStatus.OPEN, "Market not open");
+  assert(currentTime() < endTime, "Market ended");
+  
+  const position = positions.get(sender()).unwrap();
+  const amount = positionAmount();
+  
+  // Verify position matches
+  const side = positionSide();
+  const nonce = userNonce();
+  const commitment = hash([amount as Bytes<32>, side as Bytes<32>, nonce]);
+  assert(commitment == position.commitment, "Position mismatch");
+  
+  // Remove position
+  positions.remove(sender());
+  totalLiquidity = totalLiquidity - amount;
+  totalPositions.decrement(1);
+  
+  return amount;
+}
+
+// Helper: Verify oracle proof
+circuit verifyOracleProof(proof: Bytes<32>, outcome: Field): Bool {
+  // Implement signature verification
+  // In practice, this would verify an off-chain oracle signature
+  const message = hash([marketId as Bytes<32>, outcome as Bytes<32>]);
+  return verifySignature(oracle, message, proof);
+}
+
+// Get current odds (public)
+export circuit getCurrentOdds(): (Field, Field) {
+  const yesPrice = (k / yesShares) / ((k / yesShares) + (k / noShares));
+  const noPrice = (k / noShares) / ((k / yesShares) + (k / noShares));
+  return (yesPrice, noPrice);
+}
