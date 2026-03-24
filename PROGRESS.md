@@ -160,7 +160,21 @@
 - ✅ YES/NO price displays
 - ✅ Time remaining countdown
 
-### Day 35: Wallet Integration
+### Day 35: Wallet Integration ✅
+
+- ✅ Zustand wallet store with persist
+- ✅ useWallet hook for connection management
+- ✅ Lace wallet browser detection
+- ✅ Connect/disconnect functionality
+- ✅ Wallet state (address, balance, network)
+- ✅ WalletModal component
+- ✅ Dynamic Navbar wallet button
+- ✅ Balance display and auto-refresh
+- ✅ Copy address & explorer link
+- ✅ Account/network change handlers
+- ✅ Toast notifications
+- ✅ Network validation
+- ✅ Transaction signing support
 
 ### Day 36-37: Place Bet Modal
 
