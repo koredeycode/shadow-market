@@ -296,6 +296,80 @@
 - ✅ Loading and error states for all charts
 - ✅ Currency and date formatting utilities
 
-## Next: Week 7 - Integration & Testing
+## Week 7: Integration & Testing (Days 43-49)
+
+### Days 43-44: End-to-End Testing ✅
+
+- ✅ Installed and configured Playwright
+- ✅ Created test fixtures (authenticatedPage)
+- ✅ Created test helpers module:
+  - mockApiResponse for API mocking
+  - waitForPageLoad helper
+  - connectWallet helper
+  - fillField for forms
+  - waitForToast notifications
+  - clickAndWait async operations
+  - createMockMarket helper
+  - createMockPosition helper
+- ✅ Markets flow tests (markets.spec.ts):
+  - Market browsing and listing
+  - Category filtering
+  - Search functionality
+  - Volume sorting
+  - Market detail page
+  - Tab navigation
+  - Real-time price updates
+  - Market creation
+  - Form validation
+  - Authentication checks (10 test cases)
+- ✅ Betting flow tests (betting.spec.ts):
+  - AMM bet modal
+  - YES/NO bet placement
+  - Quick amount buttons
+  - Min/max bet validation
+  - Price impact calculation
+  - Insufficient balance handling
+  - Slippage tolerance
+  - Bet confirmation
+  - Modal interactions (11 test cases)
+- ✅ P2P wager tests (p2p-wagers.spec.ts):
+  - P2P wager creation modal
+  - Custom odds input
+  - Implied probability calculation
+  - Odds validation
+  - Open wagers list
+  - Accept wager
+  - Cancel wager
+  - Time remaining display
+  - Creator identification
+  - Empty state (11 test cases)
+- ✅ Portfolio & analytics tests (portfolio-analytics.spec.ts):
+  - Portfolio statistics display
+  - Active/settled tabs
+  - Position cards
+  - Claim winnings
+  - Portfolio value chart
+  - Data export
+  - Platform statistics
+  - Top markets table
+  - Top traders leaderboard
+  - Market volume chart (18 test cases)
+- ✅ GitHub Actions CI/CD workflow:
+  - PostgreSQL service setup
+  - Redis service setup
+  - Multi-browser testing
+  - Artifact upload (reports, screenshots)
+  - Automated test execution
+- ✅ Comprehensive E2E README documentation
+- ✅ Playwright configuration:
+  - Multiple browsers (chromium, firefox, webkit)
+  - Mobile viewports (Pixel 5, iPhone 12)
+  - HTML, JSON, JUnit reporters
+  - Screenshot/video on failure
+  - Trace on retry
+  - Dev server auto-start
+- ✅ Total: 50+ E2E test cases across 4 spec files
+
+### Days 45-46: Bug Fixes & Optimization
 
 ## Next: Week 8 - Polish & Deployment
