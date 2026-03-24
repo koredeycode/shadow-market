@@ -19,18 +19,21 @@ This document outlines the security measures, vulnerabilities, and audit finding
 ### ✅ Implemented Measures
 
 #### Access Control
+
 - ✅ **Role-based permissions**: Owner, Oracle, User roles clearly defined
 - ✅ **Function modifiers**: Restricted access to critical functions
 - ✅ **Owner functions**: Market creation, pause/unpause, oracle management
 - ✅ **No reentrancy vulnerabilities**: Single state update per transaction
 
 #### Privacy & Cryptography
+
 - ✅ **Zero-knowledge commitments**: Pedersen commitments for bet amounts
 - ✅ **Private positions**: Encrypted amounts, sides, and nonces
 - ✅ **No amount leakage**: Position sizes not revealed publicly
 - ✅ **Secure randomness**: Proper nonce generation for commitments
 
 #### Economic Security
+
 - ✅ **Min/max bet limits**: Prevents dust attacks and whale manipulation
 - ✅ **Slippage protection**: User-defined tolerance for price movements
 - ✅ **Fee caps**: 0.3% trading fee, cannot be changed arbitrarily
@@ -38,6 +41,7 @@ This document outlines the security measures, vulnerabilities, and audit finding
 - ✅ **Dispute mechanism**: 100 token minimum for disputing reports
 
 #### Market Integrity
+
 - ✅ **Market lifecycle**: PENDING → OPEN → LOCKED → RESOLVED → CANCELLED
 - ✅ **Time-locked resolution**: Cannot resolve before endTime
 - ✅ **Multi-oracle consensus**: Requires 3+ confirmations for resolution
@@ -46,6 +50,7 @@ This document outlines the security measures, vulnerabilities, and audit finding
 ### ⚠️ Potential Risks
 
 #### Medium Risk
+
 - ⚠️ **Oracle collusion**: If 3+ oracles collude, they can resolve incorrectly
   - **Mitigation**: Stake slashing on dispute, reputation system
 - ⚠️ **Front-running**: Public price updates can be front-run
@@ -54,6 +59,7 @@ This document outlines the security measures, vulnerabilities, and audit finding
   - **Mitigation**: Min/max bet limits, slippage protection
 
 #### Low Risk
+
 - ⚠️ **Integer overflow**: Compact uses Field type (256-bit)
   - **Mitigation**: Language-level overflow protection
 - ⚠️ **Denial of service**: Spam market creation
@@ -74,6 +80,7 @@ This document outlines the security measures, vulnerabilities, and audit finding
 ### ✅ Implemented Measures
 
 #### Authentication & Authorization
+
 - ✅ **JWT Authentication**: Short-lived tokens (15 minutes)
 - ✅ **Refresh tokens**: Longer-lived refresh tokens (7 days)
 - ✅ **Token validation**: Signature verification on every request
@@ -81,6 +88,7 @@ This document outlines the security measures, vulnerabilities, and audit finding
 - ✅ **No hardcoded secrets**: Environment variables for keys
 
 #### Input Validation
+
 - ✅ **Zod schemas**: All request bodies validated with Zod
 - ✅ **Type safety**: TypeScript end-to-end
 - ✅ **SQL injection**: Drizzle ORM with parameterized queries
@@ -88,25 +96,29 @@ This document outlines the security measures, vulnerabilities, and audit finding
 - ✅ **Path traversal**: No file system access from user input
 
 #### Rate Limiting
+
 - ✅ **Redis-based**: Distributed rate limiting across instances
 - ✅ **Tiered limits**: auth (5/15min), api (60/min), write (20/min), expensive (5/min)
 - ✅ **IP + User**: Rate limits per IP and per authenticated user
-- ✅ **Rate limit headers**: X-RateLimit-* headers in responses
+- ✅ **Rate limit headers**: X-RateLimit-\* headers in responses
 - ✅ **Fail-open**: Continues on Redis failure (logs error)
 
 #### Response Caching
+
 - ✅ **Redis cache**: GET requests cached with TTL
 - ✅ **Cache invalidation**: Manual invalidation on data changes
 - ✅ **Cache headers**: X-Cache header (HIT/MISS)
 - ✅ **Cache bypass**: No caching for authenticated endpoints
 
 #### Error Handling
+
 - ✅ **Custom error classes**: AppError with status codes
 - ✅ **No stack traces in production**: Only in development
 - ✅ **Structured logging**: Winston with JSON format
 - ✅ **Error monitoring**: Log aggregation ready (Sentry, DataDog)
 
 #### Data Encryption
+
 - ✅ **TLS/SSL**: HTTPS enforced in production
 - ✅ **At-rest encryption**: Position amounts encrypted with AES-256-GCM
 - ✅ **Environment secrets**: Never logged or exposed
@@ -115,6 +127,7 @@ This document outlines the security measures, vulnerabilities, and audit finding
 ### ⚠️ Potential Risks
 
 #### Medium Risk
+
 - ⚠️ **Session fixation**: JWT rotation not implemented
   - **Mitigation**: Short token expiry (15 minutes)
 - ⚠️ **CORS misconfiguration**: Wildcard origins in development
@@ -123,6 +136,7 @@ This document outlines the security measures, vulnerabilities, and audit finding
   - **Mitigation**: Implement comprehensive helmet.js configuration
 
 #### Low Risk
+
 - ⚠️ **Timing attacks**: JWT validation timing
   - **Mitigation**: Constant-time comparison for sensitive operations
 - ⚠️ **Cache poisoning**: Malicious cache entries
@@ -143,29 +157,34 @@ This document outlines the security measures, vulnerabilities, and audit finding
 ### ✅ Implemented Measures
 
 #### Wallet Security
+
 - ✅ **No private keys stored**: Keys managed by Lace wallet
 - ✅ **Transaction verification**: Review before signing
 - ✅ **Explicit permissions**: User must approve all transactions
 - ✅ **Secure communication**: HTTPS only
 
 #### XSS Prevention
+
 - ✅ **React auto-escaping**: JSX escapes by default
 - ✅ **No dangerouslySetInnerHTML**: Avoided throughout
 - ✅ **Sanitize user input**: DOMPurify for rich text (if needed)
 - ✅ **TypeScript**: Type safety prevents many injection vectors
 
 #### CSRF Protection
+
 - ✅ **JWT in headers**: Authorization header (not cookies)
 - ✅ **SameSite cookies**: Not using cookies for auth
 - ✅ **Origin validation**: CORS headers checked
 
 #### Data Protection
+
 - ✅ **Local storage security**: Only non-sensitive data stored
 - ✅ **Session storage**: Cleared on logout
 - ✅ **Memory cleanup**: Sensitive data cleared after use
 - ✅ **No console.logs in production**: Removed via Terser
 
 #### Dependency Security
+
 - ✅ **Package audits**: npm audit / pnpm audit run regularly
 - ✅ **Known vulnerabilities**: Checked before deployment
 - ✅ **Locked versions**: package-lock.json / pnpm-lock.yaml
@@ -174,6 +193,7 @@ This document outlines the security measures, vulnerabilities, and audit finding
 ### ⚠️ Potential Risks
 
 #### Medium Risk
+
 - ⚠️ **Clickjacking**: No X-Frame-Options header
   - **Mitigation**: Implement frame-ancestors CSP
 - ⚠️ **Open redirects**: URL redirection not validated
@@ -182,6 +202,7 @@ This document outlines the security measures, vulnerabilities, and audit finding
   - **Mitigation**: Warn users about browser updates
 
 #### Low Risk
+
 - ⚠️ **Local storage XSS**: XSS could access localStorage
   - **Mitigation**: No sensitive data in localStorage
 - ⚠️ **Dependency vulnerabilities**: Third-party packages
@@ -202,6 +223,7 @@ This document outlines the security measures, vulnerabilities, and audit finding
 ### ✅ Implemented Measures
 
 #### Database Security
+
 - ✅ **Parameterized queries**: Drizzle ORM prevents SQL injection
 - ✅ **Least privilege**: Database user has minimal permissions
 - ✅ **Connection pooling**: Limited connections (max 20)
@@ -209,6 +231,7 @@ This document outlines the security measures, vulnerabilities, and audit finding
 - ✅ **Backup strategy**: Daily automated backups
 
 #### Container Security
+
 - ✅ **Official images**: Using official Docker images
 - ✅ **Image scanning**: Trivy/Snyk for vulnerability scanning
 - ✅ **Non-root users**: Containers run as non-root
@@ -216,6 +239,7 @@ This document outlines the security measures, vulnerabilities, and audit finding
 - ✅ **Resource limits**: CPU/memory limits set
 
 #### Environment Variables
+
 - ✅ **No hardcoded secrets**: All secrets in .env
 - ✅ **.env not committed**: .gitignore includes .env
 - ✅ **Secret rotation**: Plan for regular rotation
@@ -224,12 +248,14 @@ This document outlines the security measures, vulnerabilities, and audit finding
 ### ⚠️ Potential Risks
 
 #### High Risk
+
 - ⚠️ **Redis unauthenticated**: Redis has no password in development
   - **Mitigation**: Require password in production
 - ⚠️ **PostgreSQL exposed**: Port 5432 exposed to host
   - **Mitigation**: Bind to localhost only, use firewall
 
 #### Medium Risk
+
 - ⚠️ **Container escape**: Potential container breakout
   - **Mitigation**: Keep Docker updated, use AppArmor/SELinux
 - ⚠️ **Log exposure**: Logs may contain sensitive data
@@ -250,12 +276,14 @@ This document outlines the security measures, vulnerabilities, and audit finding
 ### ✅ Privacy Measures
 
 #### Zero-Knowledge Privacy
+
 - ✅ **Private amounts**: Bet amounts hidden using commitments
 - ✅ **Private sides**: YES/NO choice encrypted
 - ✅ **No position leakage**: Positions revealed only on claim
 - ✅ **Pseudo-anonymous**: Wallet addresses, no KYC
 
 #### Data Minimization
+
 - ✅ **Minimal storage**: Only essential data stored
 - ✅ **No PII**: No personally identifiable information collected
 - ✅ **Encryption at rest**: Sensitive data encrypted
@@ -264,6 +292,7 @@ This document outlines the security measures, vulnerabilities, and audit finding
 ### ⚠️ Compliance Considerations
 
 #### Regulatory Risks
+
 - ⚠️ **Gambling regulations**: May be classified as gambling
   - **Mitigation**: Legal review, geo-blocking if needed
 - ⚠️ **Securities laws**: Prediction markets may be securities
@@ -287,6 +316,7 @@ This document outlines the security measures, vulnerabilities, and audit finding
 
 **Response Time**: < 4 hours  
 **Actions**:
+
 1. Deploy emergency pause on affected contracts
 2. Notify users via Twitter, Discord, email
 3. Engage emergency response team
@@ -297,6 +327,7 @@ This document outlines the security measures, vulnerabilities, and audit finding
 
 **Response Time**: < 24 hours  
 **Actions**:
+
 1. Assess impact and affected users
 2. Deploy mitigation measures
 3. Notify affected users
@@ -307,6 +338,7 @@ This document outlines the security measures, vulnerabilities, and audit finding
 
 **Response Time**: < 7 days  
 **Actions**:
+
 1. Log issue and track in backlog
 2. Include in next sprint
 3. Deploy fix in next release
@@ -324,16 +356,19 @@ This document outlines the security measures, vulnerabilities, and audit finding
 ### Automated Testing
 
 #### Unit Tests
+
 - ✅ 120+ test cases for smart contracts
 - ✅ 50+ test cases for backend API
 - ✅ 30+ test cases for frontend components
 
 #### Integration Tests
+
 - ✅ End-to-end flows tested with Playwright
 - ✅ API endpoints tested with Supertest
 - ✅ WebSocket connections tested
 
 #### Security Scanning
+
 - ✅ `pnpm audit` for dependency vulnerabilities
 - ✅ ESLint security rules enabled
 - ✅ TypeScript strict mode enabled
@@ -341,11 +376,13 @@ This document outlines the security measures, vulnerabilities, and audit finding
 ### Manual Testing
 
 #### Penetration Testing
+
 - ⏳ **Planned**: Q2 2026
 - ⏳ **Scope**: Full application security testing
 - ⏳ **Provider**: TBD (Cure53, Trail of Bits, or similar)
 
 #### Code Review
+
 - ✅ Peer review for all pull requests
 - ✅ Security-focused review for critical changes
 - ⏳ External audit for smart contracts (planned)
@@ -356,14 +393,14 @@ This document outlines the security measures, vulnerabilities, and audit finding
 
 ### Current Status
 
-| Category | Rating | Notes |
-|----------|--------|-------|
-| Smart Contracts | 🟡 Medium | Needs external audit |
-| Backend API | 🟢 High | Well-protected |
-| Frontend | 🟢 High | React + TypeScript |
-| Infrastructure | 🟡 Medium | Redis auth needed |
-| Privacy | 🟢 High | ZK proofs implemented |
-| Compliance | 🟡 Medium | Legal review needed |
+| Category        | Rating    | Notes                 |
+| --------------- | --------- | --------------------- |
+| Smart Contracts | 🟡 Medium | Needs external audit  |
+| Backend API     | 🟢 High   | Well-protected        |
+| Frontend        | 🟢 High   | React + TypeScript    |
+| Infrastructure  | 🟡 Medium | Redis auth needed     |
+| Privacy         | 🟢 High   | ZK proofs implemented |
+| Compliance      | 🟡 Medium | Legal review needed   |
 
 ### Key Metrics
 
@@ -404,17 +441,20 @@ This document outlines the security measures, vulnerabilities, and audit finding
 ## 10. Continuous Security
 
 ### Weekly Tasks
+
 - Dependency vulnerability scan (`pnpm audit`)
 - Review access logs for anomalies
 - Check error rates and failed logins
 
 ### Monthly Tasks
+
 - Rotate API keys and secrets
 - Review security policies
 - Update security documentation
 - Security team meeting
 
 ### Quarterly Tasks
+
 - External security assessment
 - Disaster recovery drill
 - Security training for team
@@ -425,15 +465,18 @@ This document outlines the security measures, vulnerabilities, and audit finding
 ## 📚 References
 
 ### Security Standards
+
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [OWASP Smart Contract Top 10](https://owasp.org/www-project-smart-contract-top-10/)
 - [CWE Top 25](https://cwe.mitre.org/top25/)
 
 ### Midnight Network Security
+
 - [Midnight Security Best Practices](https://docs.midnight.network/security/)
 - [Compact Security Guidelines](https://docs.midnight.network/develop/security/)
 
 ### Tools & Resources
+
 - [Snyk](https://snyk.io/) - Dependency scanning
 - [Trivy](https://trivy.dev/) - Container scanning
 - [OWASP ZAP](https://www.zaproxy.org/) - Security testing

@@ -71,7 +71,7 @@ export const corsConfig = cors({
     }
 
     // In production, check against whitelist
-    const allowedOrigins = config.corsOrigin.split(',').map((o) => o.trim());
+    const allowedOrigins = config.corsOrigin.split(',').map(o => o.trim());
 
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -98,10 +98,7 @@ export const additionalSecurityHeaders = (req: any, res: any, next: any) => {
   }
 
   // Permissions Policy (formerly Feature Policy)
-  res.setHeader(
-    'Permissions-Policy',
-    'camera=(), microphone=(), geolocation=(), payment=()',
-  );
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
 
   // X-Content-Type-Options
   res.setHeader('X-Content-Type-Options', 'nosniff');

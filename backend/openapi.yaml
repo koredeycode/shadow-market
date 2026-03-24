@@ -1,0 +1,776 @@
+openapi: 3.0.3
+info:
+  title: ShadowMarket API
+  version: 1.0.0
+  description: |
+    Privacy-preserving prediction market API powered by Midnight Network.
+    
+    ## Features
+    - **Privacy-First**: Zero-knowledge proofs for private betting
+    - **Dual Markets**: AMM and P2P wagering
+    - **Real-time Updates**: WebSocket support
+    - **Decentralized Oracles**: Fair outcome resolution
+    
+    ## Authentication
+    Most endpoints require JWT authentication. Include the token in the Authorization header:
+    ```
+    Authorization: Bearer <your_jwt_token>
+    ```
+  contact:
+    name: ShadowMarket Team
+    email: api@shadowmarket.io
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+  - url: https://api-testnet.shadowmarket.io
+    description: Testnet
+  - url: https://api.shadowmarket.io
+    description: Production
+
+tags:
+  - name: Markets
+    description: Prediction market operations
+  - name: Wagers
+    description: Betting and P2P wagering
+  - name: Positions
+    description: User positions and portfolio
+  - name: Oracles
+    description: Oracle registration and reporting
+  - name: Users
+    description: User profile management
+  - name: Analytics
+    description: Platform statistics and analytics
+
+paths:
+  /api/markets:
+    get:
+      tags: [Markets]
+      summary: List all markets
+      description: Get a list of prediction markets with optional filtering and sorting
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, OPEN, LOCKED, RESOLVED, CANCELLED]
+          description: Filter by market status
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [volume, liquidity, ending_soon, newest]
+          description: Sort order
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search query
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Number of results
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Market'
+                  count:
+                    type: integer
+    
+    post:
+      tags: [Markets]
+      summary: Create a new market
+      description: Create a new prediction market (requires authentication)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMarketRequest'
+      responses:
+        '201':
+          description: Market created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Market'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /api/markets/{id}:
+    get:
+      tags: [Markets]
+      summary: Get market details
+      description: Get detailed information about a specific market
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Market ID
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/MarketDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/markets/{id}/chart:
+    get:
+      tags: [Markets]
+      summary: Get market price history
+      description: Get historical price data for charting
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: timeRange
+          in: query
+          schema:
+            type: string
+            enum: ['1h', '24h', '7d', '30d', 'all']
+            default: '24h'
+      responses:
+        '200':
+          description: Price history data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PricePoint'
+
+  /api/wagers:
+    post:
+      tags: [Wagers]
+      summary: Place a bet on a market
+      description: Place an AMM bet with zero-knowledge privacy
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceBetRequest'
+      responses:
+        '201':
+          description: Bet placed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Wager'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/wagers/p2p:
+    post:
+      tags: [Wagers]
+      summary: Create P2P wager offer
+      description: Create a peer-to-peer wager with custom odds
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateP2PWagerRequest'
+      responses:
+        '201':
+          description: P2P wager created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/P2PWager'
+
+  /api/wagers/p2p/{id}/accept:
+    post:
+      tags: [Wagers]
+      summary: Accept a P2P wager
+      description: Match with an existing P2P wager offer
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Wager accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/P2PWager'
+
+  /api/positions:
+    get:
+      tags: [Positions]
+      summary: Get user positions
+      description: Get all positions for the authenticated user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, settled]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: User positions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      totalValue:
+                        type: string
+                      activePositions:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Position'
+                      settledPositions:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Position'
+
+  /api/positions/stats:
+    get:
+      tags: [Positions]
+      summary: Get portfolio statistics
+      description: Get aggregated statistics for user portfolio
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Portfolio stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioStats'
+
+  /api/oracles/register:
+    post:
+      tags: [Oracles]
+      summary: Register as an oracle
+      description: Stake tokens to become an oracle
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                stake:
+                  type: string
+                  description: Amount to stake (minimum 1000 tokens)
+      responses:
+        '201':
+          description: Oracle registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Oracle'
+
+  /api/oracles/report:
+    post:
+      tags: [Oracles]
+      summary: Submit outcome report
+      description: Report the outcome of a market
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitReportRequest'
+      responses:
+        '201':
+          description: Report submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/OracleReport'
+
+  /api/analytics/platform:
+    get:
+      tags: [Analytics]
+      summary: Get platform statistics
+      description: Get aggregated platform-wide statistics
+      responses:
+        '200':
+          description: Platform stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformStats'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Market:
+      type: object
+      properties:
+        id:
+          type: string
+        onchainId:
+          type: string
+        question:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [PENDING, OPEN, LOCKED, RESOLVED, CANCELLED]
+        yesPrice:
+          type: string
+          description: Current YES price (0-1)
+        noPrice:
+          type: string
+          description: Current NO price (0-1)
+        totalVolume:
+          type: string
+        totalLiquidity:
+          type: string
+        endTime:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    MarketDetail:
+      allOf:
+        - $ref: '#/components/schemas/Market'
+        - type: object
+          properties:
+            creator:
+              $ref: '#/components/schemas/User'
+            recentPositions:
+              type: array
+              items:
+                $ref: '#/components/schemas/Position'
+
+    CreateMarketRequest:
+      type: object
+      required:
+        - question
+        - category
+        - endTime
+        - minBet
+        - maxBet
+        - resolutionSource
+      properties:
+        question:
+          type: string
+          minLength: 10
+          maxLength: 500
+        description:
+          type: string
+          maxLength: 5000
+        category:
+          type: string
+          enum: [Crypto, Sports, Politics, Tech, Entertainment, Other]
+        tags:
+          type: array
+          items:
+            type: string
+        endTime:
+          type: string
+          format: date-time
+        minBet:
+          type: string
+        maxBet:
+          type: string
+        resolutionSource:
+          type: string
+
+    PlaceBetRequest:
+      type: object
+      required:
+        - marketId
+        - amount
+        - side
+        - commitment
+      properties:
+        marketId:
+          type: string
+        amount:
+          type: string
+        side:
+          type: string
+          enum: [YES, NO]
+        slippage:
+          type: number
+          minimum: 0
+          maximum: 50
+          default: 1
+        commitment:
+          type: string
+          description: ZK commitment hash
+
+    CreateP2PWagerRequest:
+      type: object
+      required:
+        - marketId
+        - amount
+        - odds
+        - creatorSide
+        - duration
+      properties:
+        marketId:
+          type: string
+        amount:
+          type: string
+        odds:
+          type: array
+          items:
+            type: integer
+          minItems: 2
+          maxItems: 2
+          description: '[numerator, denominator]'
+        creatorSide:
+          type: string
+          enum: [YES, NO]
+        duration:
+          type: integer
+          minimum: 3600
+          maximum: 2592000
+
+    Wager:
+      type: object
+      properties:
+        id:
+          type: string
+        marketId:
+          type: string
+        userId:
+          type: string
+        amount:
+          type: string
+        side:
+          type: string
+        entryPrice:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    P2PWager:
+      type: object
+      properties:
+        id:
+          type: string
+        marketId:
+          type: string
+        creatorId:
+          type: string
+        takerId:
+          type: string
+        amount:
+          type: string
+        odds:
+          type: array
+          items:
+            type: integer
+        creatorSide:
+          type: string
+        status:
+          type: string
+          enum: [OPEN, MATCHED, SETTLED, CANCELLED]
+        expiresAt:
+          type: string
+          format: date-time
+
+    Position:
+      type: object
+      properties:
+        id:
+          type: string
+        marketId:
+          type: string
+        market:
+          $ref: '#/components/schemas/Market'
+        entryPrice:
+          type: string
+        isSettled:
+          type: boolean
+        payout:
+          type: string
+        profitLoss:
+          type: string
+
+    PortfolioStats:
+      type: object
+      properties:
+        winRate:
+          type: number
+        totalProfit:
+          type: string
+        totalLoss:
+          type: string
+        averageReturn:
+          type: number
+        totalVolume:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        address:
+          type: string
+        username:
+          type: string
+        avatar:
+          type: string
+        reputation:
+          type: integer
+
+    Oracle:
+      type: object
+      properties:
+        address:
+          type: string
+        stake:
+          type: string
+        isActive:
+          type: boolean
+        totalReports:
+          type: integer
+        successRate:
+          type: number
+
+    OracleReport:
+      type: object
+      properties:
+        id:
+          type: string
+        marketId:
+          type: string
+        reporterId:
+          type: string
+        outcome:
+          type: integer
+        status:
+          type: string
+          enum: [PENDING, DISPUTED, CONFIRMED]
+        confirmations:
+          type: integer
+        reportedAt:
+          type: string
+          format: date-time
+
+    SubmitReportRequest:
+      type: object
+      required:
+        - marketId
+        - outcome
+        - proofData
+      properties:
+        marketId:
+          type: string
+        outcome:
+          type: integer
+          minimum: 0
+          maximum: 1
+        proofData:
+          type: string
+
+    PricePoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        yesPrice:
+          type: string
+        noPrice:
+          type: string
+        volume:
+          type: string
+
+    PlatformStats:
+      type: object
+      properties:
+        totalVolume:
+          type: string
+        totalMarkets:
+          type: integer
+        activeUsers:
+          type: integer
+        totalValueLocked:
+          type: string
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    RateLimited:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+          description: Request limit per time window
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+          description: Remaining requests
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+          description: Time when limit resets (Unix timestamp)
