@@ -1,32 +1,23 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  Box,
-  Typography,
-  Paper,
-  Grid,
-  Chip,
-  Button,
-  CircularProgress,
-  Alert,
-  IconButton,
-} from '@mui/material';
-import {
-  TrendingUp,
-  TrendingDown,
-  AccessTime,
-  Person,
-  Close,
-} from '@mui/icons-material';
+import { AccessTime, Close, Person, TrendingDown, TrendingUp } from '@mui/icons-material';
+import { Alert, Box, Button, Chip, CircularProgress, Grid, Paper, Typography } from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { wagersApi } from '../../api/wagers';
 import { useWallet } from '../../hooks/useWallet';
 import { Wager } from '../../types';
-import toast from 'react-hot-toast';
 
 interface P2PWagersListProps {
   marketId: string;
 }
 
-function WagerCard({ wager, onAccept, onCancel, isUserCreator, isAccepting, isCanceling }: {
+function WagerCard({
+  wager,
+  onAccept,
+  onCancel,
+  isUserCreator,
+  isAccepting,
+  isCanceling,
+}: {
   wager: Wager;
   onAccept?: () => void;
   onCancel?: () => void;
@@ -65,10 +56,12 @@ function WagerCard({ wager, onAccept, onCancel, isUserCreator, isAccepting, isCa
         p: 2,
         border: '1px solid',
         borderColor: 'divider',
-        '&:hover': isUserCreator ? undefined : {
-          borderColor: 'primary.main',
-          boxShadow: 2,
-        },
+        '&:hover': isUserCreator
+          ? undefined
+          : {
+              borderColor: 'primary.main',
+              boxShadow: 2,
+            },
       }}
     >
       <Grid container spacing={2} alignItems="center">
@@ -163,7 +156,9 @@ function WagerCard({ wager, onAccept, onCancel, isUserCreator, isAccepting, isCa
 
         {/* Footer */}
         <Grid item xs={12}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}
+          >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <Person fontSize="small" color="disabled" />
@@ -215,7 +210,11 @@ export function P2PWagersList({ marketId }: P2PWagersListProps) {
   const { address } = useWallet();
   const queryClient = useQueryClient();
 
-  const { data: wagers, isLoading, error } = useQuery({
+  const {
+    data: wagers,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['p2p-wagers', marketId],
     queryFn: async () => {
       // In real implementation, this would call an API endpoint
@@ -283,7 +282,7 @@ export function P2PWagersList({ marketId }: P2PWagersListProps) {
         {wagers.length} open wager{wagers.length !== 1 ? 's' : ''}
       </Typography>
 
-      {wagers.map((wager) => {
+      {wagers.map(wager => {
         const isUserCreator = address === wager.creatorId;
         return (
           <WagerCard

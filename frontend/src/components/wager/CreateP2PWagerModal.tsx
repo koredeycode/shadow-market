@@ -1,31 +1,31 @@
-import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Close, Info, Timer, TrendingDown, TrendingUp } from '@mui/icons-material';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Box,
-  Typography,
-  TextField,
-  ToggleButtonGroup,
-  ToggleButton,
-  IconButton,
   Alert,
+  Box,
+  Button,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
-  InputAdornment,
   Grid,
+  IconButton,
+  InputAdornment,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
 } from '@mui/material';
-import { Close, TrendingUp, TrendingDown, Info, Timer } from '@mui/icons-material';
-import { useWallet } from '../../hooks/useWallet';
-import { wagersApi } from '../../api/wagers';
-import { Market } from '../../types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
+import { z } from 'zod';
+import { wagersApi } from '../../api/wagers';
+import { useWallet } from '../../hooks/useWallet';
+import { Market } from '../../types';
 
 const p2pWagerSchema = z.object({
   amount: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {

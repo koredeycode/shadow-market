@@ -20,9 +20,9 @@ import { MarketChart } from '../components/market/MarketChart';
 import { MarketStats } from '../components/market/MarketStats';
 import { OrderBook } from '../components/market/OrderBook';
 import { RecentTrades } from '../components/market/RecentTrades';
-import { PlaceBetModal } from '../components/wager/PlaceBetModal';
 import { CreateP2PWagerModal } from '../components/wager/CreateP2PWagerModal';
 import { P2PWagersList } from '../components/wager/P2PWagersList';
+import { PlaceBetModal } from '../components/wager/PlaceBetModal';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -229,9 +229,13 @@ export function MarketDetail() {
 
       {/* Place Bet Modal */}
       <PlaceBetModal open={betModalOpen} onClose={() => setBetModalOpen(false)} market={market} />
-      
+
       {/* Create P2P Wager Modal */}
-      <CreateP2PWagerModal open={p2pModalOpen} onClose={() => setP2pModalOpen(false)} market={market} />
+      <CreateP2PWagerModal
+        open={p2pModalOpen}
+        onClose={() => setP2pModalOpen(false)}
+        market={market}
+      />
     </Container>
   );
 }
