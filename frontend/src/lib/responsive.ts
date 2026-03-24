@@ -14,7 +14,13 @@ import { Theme } from '@mui/material';
  * Responsive spacing helper
  * Usage: responsiveSpacing({ xs: 2, sm: 3, md: 4 })
  */
-export const responsiveSpacing = (values: { xs?: number; sm?: number; md?: number; lg?: number; xl?: number }) => ({
+export const responsiveSpacing = (values: {
+  xs?: number;
+  sm?: number;
+  md?: number;
+  lg?: number;
+  xl?: number;
+}) => ({
   xs: values.xs ?? 2,
   sm: values.sm ?? values.xs ?? 3,
   md: values.md ?? values.sm ?? values.xs ?? 4,

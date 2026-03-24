@@ -6,7 +6,7 @@ export class AppError extends Error {
   constructor(
     public statusCode: number,
     message: string,
-    public isOperational = true,
+    public isOperational = true
   ) {
     super(message);
     Object.setPrototypeOf(this, AppError.prototype);
@@ -40,7 +40,7 @@ export function errorHandler(err: Error, req: Request, res: Response, next: Next
     // Validation errors
     statusCode = 400;
     message = 'Validation failed';
-    errors = err.errors.map((e) => ({
+    errors = err.errors.map(e => ({
       field: e.path.join('.'),
       message: e.message,
     }));

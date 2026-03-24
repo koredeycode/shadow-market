@@ -75,12 +75,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 {this.state.errorInfo.componentStack}
               </Box>
             )}
-            <Button
-              variant="contained"
-              onClick={this.handleReset}
-              size="large"
-              sx={{ mt: 2 }}
-            >
+            <Button variant="contained" onClick={this.handleReset} size="large" sx={{ mt: 2 }}>
               Go to Home
             </Button>
           </Box>

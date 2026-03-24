@@ -14,7 +14,7 @@ export function cacheMiddleware(options: CacheOptions) {
   const {
     ttl,
     keyPrefix = 'cache',
-    keyGenerator = (req) => `${req.method}:${req.originalUrl}`,
+    keyGenerator = req => `${req.method}:${req.originalUrl}`,
   } = options;
 
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -40,7 +40,7 @@ export function cacheMiddleware(options: CacheOptions) {
         // Cache the response
         redisClient
           .setEx(cacheKey, ttl, JSON.stringify(data))
-          .catch((err) => console.error('Cache set error:', err));
+          .catch(err => console.error('Cache set error:', err));
 
         res.setHeader('X-Cache', 'MISS');
         return originalJson(data);

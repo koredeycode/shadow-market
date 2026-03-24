@@ -7,7 +7,7 @@ const redisClient = createClient({
   url: config.redisUrl,
 });
 
-redisClient.on('error', (err) => console.error('Redis Client Error:', err));
+redisClient.on('error', err => console.error('Redis Client Error:', err));
 redisClient.connect().catch(console.error);
 
 interface RateLimitOptions {
@@ -25,7 +25,7 @@ export function rateLimit(options: RateLimitOptions) {
     windowMs,
     maxRequests,
     message = 'Too many requests, please try again later',
-    keyGenerator = (req) => req.ip || 'unknown',
+    keyGenerator = req => req.ip || 'unknown',
   } = options;
 
   return async (req: Request, res: Response, next: NextFunction) => {

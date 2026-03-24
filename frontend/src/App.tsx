@@ -14,7 +14,9 @@ const Analytics = lazy(() => import('./pages/Analytics'));
 
 // Loading fallback component
 const PageLoader = () => (
-  <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+  <Container
+    sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}
+  >
     <CircularProgress />
   </Container>
 );

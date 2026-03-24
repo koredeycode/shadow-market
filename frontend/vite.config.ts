@@ -24,7 +24,12 @@ export default defineConfig({
         manualChunks: {
           // Vendor splitting for better caching
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'mui-vendor': ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
+          'mui-vendor': [
+            '@mui/material',
+            '@mui/icons-material',
+            '@emotion/react',
+            '@emotion/styled',
+          ],
           'charts-vendor': ['recharts'],
           'query-vendor': ['@tanstack/react-query'],
         },
