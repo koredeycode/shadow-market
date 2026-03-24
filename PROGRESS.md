@@ -176,7 +176,25 @@
 - ✅ Network validation
 - ✅ Transaction signing support
 
-### Day 36-37: Place Bet Modal
+### Day 36-37: Place Bet Modal ✅
+
+- ✅ WagersApi service (6 methods)
+- ✅ PlaceBetModal component (400+ LOC)
+- ✅ React Hook Form + Zod validation
+- ✅ Amount input with balance checks
+- ✅ YES/NO toggle button selector
+- ✅ Slippage tolerance slider (0-10%)
+- ✅ Price impact calculation
+- ✅ Potential payout estimation
+- ✅ Quick bet buttons (25%, 50%, 75%, 100%)
+- ✅ Min/max bet validation
+- ✅ High price impact warnings
+- ✅ Connect wallet for non-connected users
+- ✅ TanStack Query mutation
+- ✅ Toast notifications
+- ✅ Integration with MarketDetail page
+- ✅ Query cache invalidation
+- ✅ Responsive design
 
 ### Day 38-39: P2P Wager Interface
 
