@@ -1,5 +1,5 @@
-import { Paper, Typography, Box, Grid } from '@mui/material';
-import { TrendingUp, TrendingDown } from '@mui/icons-material';
+import { TrendingDown, TrendingUp } from '@mui/icons-material';
+import { Box, Grid, Paper, Typography } from '@mui/material';
 
 interface OrderBookProps {
   marketId: string;
@@ -39,11 +39,23 @@ export function OrderBook({ marketId }: OrderBookProps) {
             <Typography variant="h6">YES Orders</Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', mb: 1, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              mb: 1,
+              pb: 1,
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
             <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
               Price
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ flex: 1, textAlign: 'right' }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ flex: 1, textAlign: 'right' }}
+            >
               Amount
             </Typography>
           </Box>
@@ -78,11 +90,23 @@ export function OrderBook({ marketId }: OrderBookProps) {
             <Typography variant="h6">NO Orders</Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', mb: 1, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              mb: 1,
+              pb: 1,
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
             <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
               Price
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ flex: 1, textAlign: 'right' }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ flex: 1, textAlign: 'right' }}
+            >
               Amount
             </Typography>
           </Box>

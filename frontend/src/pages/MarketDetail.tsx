@@ -1,20 +1,20 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { ArrowBack, TrendingDown, TrendingUp } from '@mui/icons-material';
 import {
-  Container,
-  Typography,
+  Alert,
   Box,
+  Button,
   Chip,
+  CircularProgress,
+  Container,
   Grid,
   Paper,
-  Tabs,
   Tab,
-  Button,
-  CircularProgress,
-  Alert,
+  Tabs,
+  Typography,
 } from '@mui/material';
-import { ArrowBack, TrendingUp, TrendingDown } from '@mui/icons-material';
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { marketsApi } from '../api/markets';
 import { MarketChart } from '../components/market/MarketChart';
 import { MarketStats } from '../components/market/MarketStats';
@@ -41,7 +41,11 @@ export function MarketDetail() {
   const [tabValue, setTabValue] = useState(0);
   const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d' | '30d' | 'all'>('24h');
 
-  const { data: market, isLoading, error } = useQuery({
+  const {
+    data: market,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['market', id],
     queryFn: () => marketsApi.getById(id!),
     enabled: !!id,
@@ -73,11 +77,7 @@ export function MarketDetail() {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 8 }}>
-      <Button
-        startIcon={<ArrowBack />}
-        onClick={() => navigate('/markets')}
-        sx={{ mb: 2 }}
-      >
+      <Button startIcon={<ArrowBack />} onClick={() => navigate('/markets')} sx={{ mb: 2 }}>
         Back to Markets
       </Button>
 
@@ -175,7 +175,7 @@ export function MarketDetail() {
       <TabPanel value={tabValue} index={1}>
         <Paper sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
-            {(['1h', '24h', '7d', '30d', 'all'] as const).map((range) => (
+            {(['1h', '24h', '7d', '30d', 'all'] as const).map(range => (
               <Button
                 key={range}
                 variant={timeRange === range ? 'contained' : 'outlined'}

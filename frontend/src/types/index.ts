@@ -1,0 +1,131 @@
+export type MarketType = 'BINARY' | 'CATEGORICAL' | 'SCALAR';
+export type MarketStatus = 'PENDING' | 'OPEN' | 'LOCKED' | 'RESOLVED' | 'CANCELLED';
+
+export interface Market {
+  id: string;
+  onchainId: string;
+  contractAddress: string;
+  question: string;
+  description?: string;
+  marketType: MarketType;
+  category: string;
+  tags: string[];
+  createdAt: string;
+  endTime: string;
+  resolvedAt?: string;
+  status: MarketStatus;
+  outcome?: number;
+  resolutionSource: string;
+  minBet: string;
+  maxBet: string;
+  totalVolume: string;
+  totalLiquidity: string;
+  totalPositions: number;
+  yesPrice: string;
+  noPrice: string;
+  creator?: {
+    id: string;
+    username?: string;
+    address: string;
+    reputation: number;
+  };
+}
+
+export interface Position {
+  id: string;
+  marketId: string;
+  amount: string;
+  side: 'yes' | 'no';
+  entryPrice: string;
+  currentValue: string;
+  profitLoss: string;
+  isSettled: boolean;
+}
+
+export interface Wager {
+  id: string;
+  onchainId: string;
+  creatorId: string;
+  takerId?: string;
+  marketId: string;
+  amount: string;
+  odds: [number, number];
+  creatorSide: string;
+  status: 'OPEN' | 'MATCHED' | 'RESOLVED' | 'CANCELLED';
+  winner?: string;
+  createdAt: string;
+  expiresAt: string;
+  matchedAt?: string;
+  settledAt?: string;
+  creator?: {
+    id: string;
+    username?: string;
+    reputation: number;
+  };
+}
+
+export interface PricePoint {
+  timestamp: number;
+  yesPrice: string;
+  noPrice: string;
+  volume: string;
+}
+
+export interface PortfolioStats {
+  totalValue: string;
+  totalProfitLoss: string;
+  winRate: number;
+  activePositions: number;
+  totalBets: number;
+  totalVolume: string;
+}
+
+export interface MarketFilters {
+  status?: MarketStatus;
+  category?: string;
+  sortBy?: 'volume' | 'liquidity' | 'ending_soon' | 'newest';
+  limit?: number;
+  offset?: number;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  timestamp: number;
+}
+
+// Wallet Types
+export interface WalletProvider {
+  isLace: boolean;
+  enable: () => Promise<any>;
+  getAddress: () => Promise<string>;
+  getBalance: () => Promise<string>;
+  getNetworkId: () => Promise<string>;
+  signTransaction: (tx: any) => Promise<any>;
+  on?: (event: string, handler: (...args: any[]) => void) => void;
+  off?: (event: string, handler: (...args: any[]) => void) => void;
+}
+
+export interface TransactionRequest {
+  to: string;
+  data: string;
+  value?: string;
+  gasLimit?: string;
+}
+
+export interface SignedTransaction {
+  hash: string;
+  from: string;
+  to: string;
+  signature: string;
+}
+

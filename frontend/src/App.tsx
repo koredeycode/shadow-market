@@ -1,11 +1,11 @@
-import { Routes, Route } from 'react-router-dom';
 import { Box } from '@mui/material';
+import { Route, Routes } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
-import { Home } from './pages/Home';
-import { Markets } from './pages/Markets';
-import { MarketDetail } from './pages/MarketDetail';
-import { Portfolio } from './pages/Portfolio';
 import { CreateMarket } from './pages/CreateMarket';
+import { Home } from './pages/Home';
+import { MarketDetail } from './pages/MarketDetail';
+import { Markets } from './pages/Markets';
+import { Portfolio } from './pages/Portfolio';
 
 function App() {
   return (

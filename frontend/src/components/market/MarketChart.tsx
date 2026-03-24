@@ -1,15 +1,15 @@
+import { Alert, Box, CircularProgress } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import {
-  LineChart,
+  CartesianGrid,
+  Legend,
   Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
 } from 'recharts';
-import { Box, CircularProgress, Alert } from '@mui/material';
 import { marketsApi } from '../../api/markets';
 
 interface MarketChartProps {
@@ -18,7 +18,11 @@ interface MarketChartProps {
 }
 
 export function MarketChart({ marketId, timeRange }: MarketChartProps) {
-  const { data: priceHistory, isLoading, error } = useQuery({
+  const {
+    data: priceHistory,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['market-chart', marketId, timeRange],
     queryFn: () => marketsApi.getPriceHistory(marketId, timeRange),
     refetchInterval: 15000,
@@ -36,7 +40,7 @@ export function MarketChart({ marketId, timeRange }: MarketChartProps) {
     return <Alert severity="error">Failed to load chart data</Alert>;
   }
 
-  const chartData = priceHistory.map((point) => ({
+  const chartData = priceHistory.map(point => ({
     timestamp: new Date(point.timestamp).toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -51,16 +55,12 @@ export function MarketChart({ marketId, timeRange }: MarketChartProps) {
     <ResponsiveContainer width="100%" height={400}>
       <LineChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-        <XAxis
-          dataKey="timestamp"
-          stroke="#999"
-          style={{ fontSize: '12px' }}
-        />
+        <XAxis dataKey="timestamp" stroke="#999" style={{ fontSize: '12px' }} />
         <YAxis
           stroke="#999"
           style={{ fontSize: '12px' }}
           domain={[0, 100]}
-          tickFormatter={(value) => `${value}%`}
+          tickFormatter={value => `${value}%`}
         />
         <Tooltip
           contentStyle={{

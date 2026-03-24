@@ -1,6 +1,6 @@
-import { Container, Typography, Button, Box, Grid, Card, CardContent } from '@mui/material';
+import { Group, Lock, Speed, TrendingUp } from '@mui/icons-material';
+import { Box, Button, Card, CardContent, Container, Grid, Typography } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { TrendingUp, Lock, Speed, Group } from '@mui/icons-material';
 
 export function Home() {
   return (
@@ -30,8 +30,13 @@ export function Home() {
               <br />
               keep it to yourself
             </Typography>
-            <Typography variant="h5" color="text.secondary" sx={{ mb: 4, maxWidth: 600, mx: 'auto' }}>
-              Privacy-preserving prediction markets powered by Midnight Network's zero-knowledge technology
+            <Typography
+              variant="h5"
+              color="text.secondary"
+              sx={{ mb: 4, maxWidth: 600, mx: 'auto' }}
+            >
+              Privacy-preserving prediction markets powered by Midnight Network's zero-knowledge
+              technology
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
               <Button
@@ -71,7 +76,8 @@ export function Home() {
                   Private Betting
                 </Typography>
                 <Typography color="text.secondary">
-                  Your bet amounts remain hidden using zero-knowledge proofs. Only you know your positions.
+                  Your bet amounts remain hidden using zero-knowledge proofs. Only you know your
+                  positions.
                 </Typography>
               </CardContent>
             </Card>
@@ -85,7 +91,8 @@ export function Home() {
                   Fair Pricing
                 </Typography>
                 <Typography color="text.secondary">
-                  Automated Market Maker ensures fair, transparent pricing based on supply and demand.
+                  Automated Market Maker ensures fair, transparent pricing based on supply and
+                  demand.
                 </Typography>
               </CardContent>
             </Card>

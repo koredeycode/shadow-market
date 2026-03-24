@@ -1,12 +1,12 @@
-import { Grid, Paper, Typography, Box } from '@mui/material';
 import {
-  ShowChart,
-  AccountBalance,
-  People,
   AccessTime,
+  AccountBalance,
   CheckCircle,
+  People,
+  ShowChart,
   Source,
 } from '@mui/icons-material';
+import { Box, Grid, Paper, Typography } from '@mui/material';
 import { Market } from '../../types';
 
 interface MarketStatsProps {

@@ -1,5 +1,5 @@
-import { Paper, Typography, Box, Chip } from '@mui/material';
-import { TrendingUp, TrendingDown } from '@mui/icons-material';
+import { TrendingDown, TrendingUp } from '@mui/icons-material';
+import { Box, Chip, Paper, Typography } from '@mui/material';
 
 interface RecentTradesProps {
   marketId: string;
@@ -73,7 +73,7 @@ export function RecentTrades({ marketId }: RecentTradesProps) {
       </Box>
 
       {/* Trades */}
-      {trades.map((trade) => (
+      {trades.map(trade => (
         <Box
           key={trade.id}
           sx={{
@@ -137,7 +137,12 @@ export function RecentTrades({ marketId }: RecentTradesProps) {
         </Box>
       ))}
 
-      <Typography variant="caption" color="text.secondary" fontStyle="italic" sx={{ display: 'block', mt: 2 }}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        fontStyle="italic"
+        sx={{ display: 'block', mt: 2 }}
+      >
         Note: Real-time trade data will be implemented in a future update
       </Typography>
     </Paper>

@@ -1,19 +1,19 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import {
-  Container,
-  Typography,
-  Box,
-  Grid,
-  TextField,
-  MenuItem,
-  CircularProgress,
-  Alert,
-} from '@mui/material';
-import { SearchOutlined } from '@mui/icons-material';
-import { marketsApi } from '../api/markets';
 import { MarketCard } from '@/components/market/MarketCard';
 import type { MarketFilters } from '@/types';
+import { SearchOutlined } from '@mui/icons-material';
+import {
+  Alert,
+  Box,
+  CircularProgress,
+  Container,
+  Grid,
+  MenuItem,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { marketsApi } from '../api/markets';
 
 export function Markets() {
   const [filters, setFilters] = useState<MarketFilters>({
@@ -45,7 +45,7 @@ export function Markets() {
           select
           label="Status"
           value={filters.status || 'OPEN'}
-          onChange={(e) => setFilters({ ...filters, status: e.target.value as any })}
+          onChange={e => setFilters({ ...filters, status: e.target.value as any })}
           sx={{ minWidth: 150 }}
         >
           <MenuItem value="OPEN">Open</MenuItem>
@@ -57,7 +57,7 @@ export function Markets() {
           select
           label="Sort By"
           value={filters.sortBy || 'volume'}
-          onChange={(e) => setFilters({ ...filters, sortBy: e.target.value as any })}
+          onChange={e => setFilters({ ...filters, sortBy: e.target.value as any })}
           sx={{ minWidth: 150 }}
         >
           <MenuItem value="volume">Volume</MenuItem>
@@ -91,7 +91,7 @@ export function Markets() {
       {data && (
         <>
           <Grid container spacing={3}>
-            {data.items.map((market) => (
+            {data.items.map(market => (
               <Grid item xs={12} md={6} lg={4} key={market.id}>
                 <MarketCard market={market} />
               </Grid>
