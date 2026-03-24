@@ -12,7 +12,8 @@ import { oraclesRouter } from './routes/oracles';
 import { usersRouter } from './routes/users';
 import { errorHandler } from './middleware/error-handler';
 import { notFound } from './middleware/not-found';
-import { setupWebSocket } from './websocket';
+import { setupWebSocket, getConnectionStats } from './websocket';
+import { startBackgroundJobs } from './db/jobs';
 
 // Create Express app
 export const app = express();
@@ -24,6 +25,7 @@ export const io = new Server(httpServer, {
     origin: config.corsOrigin,
     credentials: true,
   },
+  transports: ['websocket', 'polling'],
 });
 
 setupWebSocket(io);
@@ -38,6 +40,12 @@ app.use(express.urlencoded({ extended: true }));
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });
+});
+
+// WebSocket stats
+app.get('/ws/stats', (req, res) => {
+  const stats = getConnectionStats(io);
+  res.json({ success: true, data: stats });
 });
 
 // API Routes
@@ -59,11 +67,20 @@ export async function startServer() {
       throw new Error('Database connection failed');
     }
 
+    // Start background jobs
+    if (config.nodeEnv === 'production' || config.nodeEnv === 'development') {
+      startBackgroundJobs();
+    }
+
     // Start listening
     httpServer.listen(config.port, () => {
-      console.log(`🚀 Server running on http://${config.host}:${config.port}`);
-      console.log(`🌐 WebSocket server ready`);
+      console.log('');
+      console.log('🚀 ShadowMarket Backend Server');
+      console.log(`📍 Server: http://${config.host}:${config.port}`);
+      console.log(`🌐 WebSocket: ws://${config.host}:${config.port}`);
       console.log(`📊 Environment: ${config.nodeEnv}`);
+      console.log(`💾 Database: Connected`);
+      console.log('');
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
@@ -74,6 +91,14 @@ export async function startServer() {
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully...');
+  httpServer.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('\nSIGINT received, shutting down gracefully...');
   httpServer.close(() => {
     console.log('Server closed');
     process.exit(0);
