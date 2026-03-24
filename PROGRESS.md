@@ -196,7 +196,28 @@
 - ✅ Query cache invalidation
 - ✅ Responsive design
 
-### Day 38-39: P2P Wager Interface
+### Day 38-39: P2P Wager Interface ✅
+
+- ✅ CreateP2PWagerModal component (450+ LOC)
+- ✅ React Hook Form + Zod validation
+- ✅ Custom odds input (numerator:denominator)
+- ✅ Duration selector (1-168 hours)
+- ✅ Your stake vs opponent stake display
+- ✅ Potential payout calculation
+- ✅ Implied probability display
+- ✅ Total pool visualization
+- ✅ P2PWagersList component
+- ✅ Display open P2P wagers for market
+- ✅ WagerCard component
+- ✅ Accept wager functionality
+- ✅ Cancel wager (creator only)
+- ✅ Time remaining countdown
+- ✅ Real-time refetching (10s)
+- ✅ Toast notifications
+- ✅ P2P Wagers tab in MarketDetail
+- ✅ Split AMM/P2P action buttons
+- ✅ Empty state for no wagers
+- ✅ Responsive design
 
 ### Day 40-41: Portfolio Dashboard
 
