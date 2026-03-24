@@ -1,0 +1,97 @@
+pragma language_version >= 0.29;
+
+import CompactStandardLibrary;
+
+// Market types
+export enum MarketType {
+  BINARY,        // YES/NO only
+  CATEGORICAL,   // Multiple outcomes
+  SCALAR         // Numeric range
+}
+
+export enum MarketStatus {
+  PENDING,      // Created, not yet open
+  OPEN,         // Accepting bets
+  LOCKED,       // Betting closed, awaiting resolution
+  RESOLVED,     // Outcome determined
+  CANCELLED     // Market cancelled/invalid
+}
+
+// Factory state
+export ledger marketCount: Counter;
+export ledger marketRegistry: Map<Field, ContractAddress>;
+export ledger creatorRegistry: Map<Address, Vector<100, Field>>;
+
+// Market metadata (stored on-chain)
+export struct MarketMetadata {
+  marketId: Field,
+  creator: Address,
+  marketType: MarketType,
+  question: Opaque<"string">,
+  category: Field,
+  endTime: Field,
+  resolutionSource: Opaque<"string">,
+  minBet: Field,
+  maxBet: Field,
+  createdAt: Field
+}
+
+// Private: Market creation fee paid
+witness creationFee(): Field;
+
+// Create a new prediction market
+export circuit createMarket(
+  question: Opaque<"string">,
+  marketType: MarketType,
+  category: Field,
+  endTime: Field,
+  resolutionSource: Opaque<"string">,
+  minBet: Field,
+  maxBet: Field
+): ContractAddress {
+  
+  // Increment market counter
+  const marketId = marketCount.value;
+  marketCount.increment(1);
+  
+  // Validate inputs
+  assert(endTime > currentTime(), "End time must be in future");
+  assert(minBet > 0 && minBet < maxBet, "Invalid bet limits");
+  
+  // Deploy new PredictionMarket contract
+  const marketAddress = deployContract<PredictionMarket>(
+    marketId,
+    question,
+    marketType,
+    category,
+    endTime,
+    resolutionSource,
+    minBet,
+    maxBet
+  );
+  
+  // Register market
+  marketRegistry.insert(marketId, marketAddress);
+  
+  // Add to creator's markets
+  let creatorMarkets = creatorRegistry.get(sender()).unwrap_or(emptyVector<100, Field>());
+  creatorMarkets.push(marketId);
+  creatorRegistry.insert(sender(), creatorMarkets);
+  
+  return marketAddress;
+}
+
+// Get market address by ID
+export circuit getMarket(marketId: Field): ContractAddress {
+  return marketRegistry.get(marketId).unwrap();
+}
+
+// Get markets created by address
+export circuit getCreatorMarkets(creator: Address): Vector<100, Field> {
+  return creatorRegistry.get(creator).unwrap_or(emptyVector<100, Field>());
+}
+
+// Get total market count
+export circuit getTotalMarkets(): Field {
+  return marketCount.value;
+}
