@@ -1,12 +1,7 @@
+import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { db } from '../db/client';
-import { markets, users, positions, pricePoints, liquidityPools } from '../db/schema';
-import { eq, desc, and, sql, or, ilike } from 'drizzle-orm';
-import type {
-  CreateMarketRequest,
-  MarketFilters,
-  PaginatedResponse,
-  PricePoint,
-} from '../types';
+import { markets, positions, pricePoints } from '../db/schema';
+import type { CreateMarketRequest, MarketFilters, PaginatedResponse, PricePoint } from '../types';
 import { generateId } from '../utils/crypto';
 
 export class MarketService {
@@ -120,10 +115,7 @@ export class MarketService {
   /**
    * Update market status
    */
-  async updateMarketStatus(
-    marketId: string,
-    status: typeof markets.$inferSelect.status
-  ) {
+  async updateMarketStatus(marketId: string, status: typeof markets.$inferSelect.status) {
     const [updated] = await db
       .update(markets)
       .set({ status, updatedAt: new Date() })
@@ -153,12 +145,7 @@ export class MarketService {
   /**
    * Record price point for charting
    */
-  async recordPricePoint(
-    marketId: string,
-    yesPrice: string,
-    noPrice: string,
-    volume: string
-  ) {
+  async recordPricePoint(marketId: string, yesPrice: string, noPrice: string, volume: string) {
     await db.insert(pricePoints).values({
       id: generateId(),
       marketId,
@@ -198,15 +185,10 @@ export class MarketService {
     const points = await db
       .select()
       .from(pricePoints)
-      .where(
-        and(
-          eq(pricePoints.marketId, marketId),
-          sql`${pricePoints.timestamp} >= ${since}`
-        )
-      )
+      .where(and(eq(pricePoints.marketId, marketId), sql`${pricePoints.timestamp} >= ${since}`))
       .orderBy(pricePoints.timestamp);
 
-    return points.map((point) => ({
+    return points.map(point => ({
       timestamp: point.timestamp.getTime(),
       yesPrice: point.yesPrice,
       noPrice: point.noPrice,
@@ -233,12 +215,7 @@ export class MarketService {
     return await db
       .select()
       .from(markets)
-      .where(
-        or(
-          ilike(markets.question, `%${query}%`),
-          ilike(markets.description, `%${query}%`)
-        )
-      )
+      .where(or(ilike(markets.question, `%${query}%`), ilike(markets.description, `%${query}%`)))
       .limit(limit);
   }
 

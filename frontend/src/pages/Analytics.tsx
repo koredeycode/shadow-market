@@ -1,34 +1,28 @@
-import { useState } from 'react';
+import { Assessment, BarChart as BarChartIcon, People, TrendingUp } from '@mui/icons-material';
 import {
-  Container,
-  Typography,
+  Alert,
   Box,
-  Grid,
   Card,
   CardContent,
+  Chip,
+  CircularProgress,
+  Container,
+  Grid,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Chip,
-  CircularProgress,
-  Alert,
   Tabs,
-  Tab,
+  Typography,
 } from '@mui/material';
-import {
-  TrendingUp,
-  BarChart as BarChartIcon,
-  People,
-  Assessment,
-} from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
-import { analyticsApi, PlatformStats, TopMarket, TopTrader, CategoryStats } from '../api/analytics';
-import { PortfolioValueChart } from '../components/analytics/PortfolioValueChart';
-import { MarketVolumeChart } from '../components/analytics/MarketVolumeChart';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { analyticsApi, CategoryStats, PlatformStats, TopMarket, TopTrader } from '../api/analytics';
+import { MarketVolumeChart } from '../components/analytics/MarketVolumeChart';
 
 interface StatCardProps {
   title: string;
@@ -41,7 +35,7 @@ function StatCard({ title, value, icon, color }: StatCardProps) {
   return (
     <Card
       sx={{
-        background: (theme) =>
+        background: theme =>
           `linear-gradient(135deg, ${theme.palette[color].dark} 0%, ${theme.palette[color].main} 100%)`,
         color: 'white',
       }}
@@ -261,12 +255,8 @@ export function Analytics() {
                       {topTraders.map((trader, index) => (
                         <TableRow key={trader.address} hover>
                           <TableCell>{index + 1}</TableCell>
-                          <TableCell>
-                            {trader.username || formatAddress(trader.address)}
-                          </TableCell>
-                          <TableCell align="right">
-                            {formatCurrency(trader.totalVolume)}
-                          </TableCell>
+                          <TableCell>{trader.username || formatAddress(trader.address)}</TableCell>
+                          <TableCell align="right">{formatCurrency(trader.totalVolume)}</TableCell>
                           <TableCell
                             align="right"
                             sx={{
@@ -309,7 +299,7 @@ export function Analytics() {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {categoryStats.map((cat) => (
+                      {categoryStats.map(cat => (
                         <TableRow key={cat.category} hover>
                           <TableCell>
                             <Chip label={cat.category} color="primary" />
@@ -332,3 +322,5 @@ export function Analytics() {
     </Container>
   );
 }
+
+export default Analytics;

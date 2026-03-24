@@ -1,28 +1,27 @@
-import { useState } from 'react';
 import {
+  Alert,
   Box,
   Card,
   CardContent,
-  Typography,
+  CircularProgress,
   ToggleButton,
   ToggleButtonGroup,
-  CircularProgress,
-  Alert,
+  Typography,
 } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import {
-  BarChart,
   Bar,
-  XAxis,
-  YAxis,
   CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
+  ComposedChart,
   Legend,
   Line,
-  ComposedChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
-import { useQuery } from '@tanstack/react-query';
-import { analyticsApi, TimeRange, MarketVolumePoint } from '../../api/analytics';
+import { analyticsApi, MarketVolumePoint, TimeRange } from '../../api/analytics';
 
 interface MarketVolumeChartProps {
   showLegend?: boolean;
@@ -50,7 +49,7 @@ export function MarketVolumeChart({ showLegend = true, height = 400 }: MarketVol
 
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
-    
+
     if (timeRange === '1h' || timeRange === '24h') {
       return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     } else if (timeRange === '7d') {
@@ -131,27 +130,18 @@ export function MarketVolumeChart({ showLegend = true, height = 400 }: MarketVol
         <ResponsiveContainer width="100%" height={height}>
           <ComposedChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-            
-            <XAxis
-              dataKey="formattedTime"
-              stroke="#888"
-              style={{ fontSize: '12px' }}
-            />
-            
+
+            <XAxis dataKey="formattedTime" stroke="#888" style={{ fontSize: '12px' }} />
+
             <YAxis
               yAxisId="left"
               stroke="#888"
               style={{ fontSize: '12px' }}
-              tickFormatter={(value) => formatCurrency(value)}
+              tickFormatter={value => formatCurrency(value)}
             />
-            
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              stroke="#888"
-              style={{ fontSize: '12px' }}
-            />
-            
+
+            <YAxis yAxisId="right" orientation="right" stroke="#888" style={{ fontSize: '12px' }} />
+
             <Tooltip
               contentStyle={{
                 backgroundColor: '#1a1a1a',
@@ -166,16 +156,11 @@ export function MarketVolumeChart({ showLegend = true, height = 400 }: MarketVol
                 return [value, name];
               }}
             />
-            
+
             {showLegend && <Legend />}
-            
-            <Bar
-              yAxisId="left"
-              dataKey="Volume"
-              fill="#7c3aed"
-              radius={[8, 8, 0, 0]}
-            />
-            
+
+            <Bar yAxisId="left" dataKey="Volume" fill="#7c3aed" radius={[8, 8, 0, 0]} />
+
             <Line
               yAxisId="right"
               type="monotone"
@@ -184,7 +169,7 @@ export function MarketVolumeChart({ showLegend = true, height = 400 }: MarketVol
               strokeWidth={2}
               dot={{ r: 4 }}
             />
-            
+
             <Line
               yAxisId="right"
               type="monotone"

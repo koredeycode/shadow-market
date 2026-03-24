@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { MarketService } from '../services/market.service';
+import { z } from 'zod';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
-import { z } from 'zod';
+import { MarketService } from '../services/market.service';
 import { asyncHandler } from '../utils/async-handler';
 
 export const marketsRouter = Router();
@@ -15,7 +15,7 @@ const createMarketSchema = z.object({
   marketType: z.enum(['BINARY', 'CATEGORICAL', 'SCALAR']),
   category: z.string().min(1).max(100),
   tags: z.array(z.string()).optional(),
-  endTime: z.string().transform((val) => new Date(val)),
+  endTime: z.string().transform(val => new Date(val)),
   resolutionSource: z.string().min(1),
   minBet: z.string(),
   maxBet: z.string(),

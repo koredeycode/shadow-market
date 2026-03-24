@@ -1,10 +1,10 @@
-import { test, expect } from '../fixtures';
+import { expect, test } from '../fixtures';
 import {
-  mockApiResponse,
-  createMockMarket,
-  waitForPageLoad,
-  fillField,
   clickAndWait,
+  createMockMarket,
+  fillField,
+  mockApiResponse,
+  waitForPageLoad,
   waitForToast,
 } from '../helpers/test-helpers';
 
@@ -30,12 +30,7 @@ test.describe('Betting Flow', () => {
     });
 
     test('should place a YES bet successfully', async ({ authenticatedPage: page }) => {
-      await mockApiResponse(
-        page,
-        '**/api/wagers',
-        { wagerId: 'wager-123', success: true },
-        201
-      );
+      await mockApiResponse(page, '**/api/wagers', { wagerId: 'wager-123', success: true }, 201);
 
       await page.goto(`/markets/${mockMarket.id}`);
       await waitForPageLoad(page);
@@ -66,12 +61,7 @@ test.describe('Betting Flow', () => {
     });
 
     test('should place a NO bet successfully', async ({ authenticatedPage: page }) => {
-      await mockApiResponse(
-        page,
-        '**/api/wagers',
-        { wagerId: 'wager-124', success: true },
-        201
-      );
+      await mockApiResponse(page, '**/api/wagers', { wagerId: 'wager-124', success: true }, 201);
 
       await page.goto(`/markets/${mockMarket.id}`);
       await waitForPageLoad(page);
@@ -173,7 +163,7 @@ test.describe('Betting Flow', () => {
 
       // Price impact should be visible
       await expect(page.locator('text=/price impact/i')).toBeVisible();
-      
+
       // Should show warning for high impact
       const impact = await page.locator('[data-testid="price-impact"]').textContent();
       if (impact && parseFloat(impact) > 5) {

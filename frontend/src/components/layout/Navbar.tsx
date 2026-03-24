@@ -1,7 +1,7 @@
 import {
+  Assessment as AnalyticsIcon,
   ShowChart as ChartIcon,
   AccountBalanceWallet as WalletIcon,
-  Assessment as AnalyticsIcon,
 } from '@mui/icons-material';
 import {
   AppBar,

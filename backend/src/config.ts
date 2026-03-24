@@ -43,12 +43,7 @@ export const config = {
 };
 
 // Validate required config
-const required = [
-  'databaseUrl',
-  'sessionSecret',
-  'jwtSecret',
-  'encryptionKey',
-];
+const required = ['databaseUrl', 'sessionSecret', 'jwtSecret', 'encryptionKey'];
 
 for (const key of required) {
   if (!config[key as keyof typeof config]) {

@@ -1,10 +1,10 @@
-import { test, expect } from '../fixtures';
+import { expect, test } from '../fixtures';
 import {
-  mockApiResponse,
-  createMockMarket,
-  waitForPageLoad,
-  fillField,
   clickAndWait,
+  createMockMarket,
+  fillField,
+  mockApiResponse,
+  waitForPageLoad,
   waitForToast,
 } from '../helpers/test-helpers';
 
@@ -199,12 +199,7 @@ test.describe('P2P Wager Flow', () => {
       };
 
       await mockApiResponse(page, `**/api/wagers/p2p*`, [mockWager]);
-      await mockApiResponse(
-        page,
-        `**/api/wagers/p2p/${mockWager.id}`,
-        { success: true },
-        200
-      );
+      await mockApiResponse(page, `**/api/wagers/p2p/${mockWager.id}`, { success: true }, 200);
 
       await page.goto(`/markets/${mockMarket.id}`);
       await waitForPageLoad(page);

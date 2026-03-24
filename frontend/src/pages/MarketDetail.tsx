@@ -239,3 +239,5 @@ export function MarketDetail() {
     </Container>
   );
 }
+
+export default MarketDetail;

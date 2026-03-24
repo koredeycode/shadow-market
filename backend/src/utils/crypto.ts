@@ -27,12 +27,7 @@ export function encrypt(plaintext: string, masterSecret: string): string {
   const authTag = cipher.getAuthTag();
 
   // Format: salt:iv:authTag:ciphertext
-  return [
-    salt.toString('hex'),
-    iv.toString('hex'),
-    authTag.toString('hex'),
-    encrypted,
-  ].join(':');
+  return [salt.toString('hex'), iv.toString('hex'), authTag.toString('hex'), encrypted].join(':');
 }
 
 /**

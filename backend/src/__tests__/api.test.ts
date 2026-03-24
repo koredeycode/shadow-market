@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
+import { afterAll, describe, expect, it } from 'vitest';
 import { app } from '../app';
-import { db, closeDb } from '../db/client';
+import { closeDb } from '../db/client';
 
 describe('Markets API', () => {
   afterAll(async () => {
@@ -18,9 +18,7 @@ describe('Markets API', () => {
     });
 
     it('should filter by status', async () => {
-      const res = await request(app)
-        .get('/api/markets?status=OPEN')
-        .expect(200);
+      const res = await request(app).get('/api/markets?status=OPEN').expect(200);
 
       expect(res.body.success).toBe(true);
     });
@@ -37,9 +35,7 @@ describe('Markets API', () => {
 
   describe('GET /api/markets/:id', () => {
     it('should return 404 for non-existent market', async () => {
-      const res = await request(app)
-        .get('/api/markets/nonexistent')
-        .expect(404);
+      const res = await request(app).get('/api/markets/nonexistent').expect(404);
 
       expect(res.body.success).toBe(false);
     });

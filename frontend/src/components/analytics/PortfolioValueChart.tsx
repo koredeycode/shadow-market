@@ -1,28 +1,26 @@
-import { useState } from 'react';
 import {
+  Alert,
   Box,
   Card,
   CardContent,
-  Typography,
+  CircularProgress,
   ToggleButton,
   ToggleButtonGroup,
-  CircularProgress,
-  Alert,
+  Typography,
 } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
   Area,
   AreaChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
-import { useQuery } from '@tanstack/react-query';
-import { analyticsApi, TimeRange, PortfolioValuePoint } from '../../api/analytics';
+import { analyticsApi, PortfolioValuePoint, TimeRange } from '../../api/analytics';
 
 interface PortfolioValueChartProps {
   showLegend?: boolean;
@@ -49,7 +47,7 @@ export function PortfolioValueChart({ showLegend = true, height = 400 }: Portfol
 
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
-    
+
     if (timeRange === '1h' || timeRange === '24h') {
       return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     } else if (timeRange === '7d') {
@@ -140,19 +138,15 @@ export function PortfolioValueChart({ showLegend = true, height = 400 }: Portfol
             </defs>
 
             <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-            
-            <XAxis
-              dataKey="formattedTime"
-              stroke="#888"
-              style={{ fontSize: '12px' }}
-            />
-            
+
+            <XAxis dataKey="formattedTime" stroke="#888" style={{ fontSize: '12px' }} />
+
             <YAxis
               stroke="#888"
               style={{ fontSize: '12px' }}
-              tickFormatter={(value) => formatCurrency(value)}
+              tickFormatter={value => formatCurrency(value)}
             />
-            
+
             <Tooltip
               contentStyle={{
                 backgroundColor: '#1a1a1a',
@@ -162,9 +156,9 @@ export function PortfolioValueChart({ showLegend = true, height = 400 }: Portfol
               labelStyle={{ color: '#fff' }}
               formatter={(value: number) => formatCurrency(value)}
             />
-            
+
             {showLegend && <Legend />}
-            
+
             <Area
               type="monotone"
               dataKey="Total Value"
@@ -173,7 +167,7 @@ export function PortfolioValueChart({ showLegend = true, height = 400 }: Portfol
               fill="url(#colorValue)"
               strokeWidth={2}
             />
-            
+
             <Area
               type="monotone"
               dataKey="P&L"

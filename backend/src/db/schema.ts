@@ -1,23 +1,19 @@
+import { relations } from 'drizzle-orm';
 import {
-  pgTable,
-  text,
-  varchar,
-  timestamp,
-  decimal,
-  integer,
   boolean,
+  decimal,
+  index,
+  integer,
   json,
   pgEnum,
-  index,
+  pgTable,
+  text,
+  timestamp,
+  varchar,
 } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
 
 // Enums
-export const marketTypeEnum = pgEnum('market_type', [
-  'BINARY',
-  'CATEGORICAL',
-  'SCALAR',
-]);
+export const marketTypeEnum = pgEnum('market_type', ['BINARY', 'CATEGORICAL', 'SCALAR']);
 
 export const marketStatusEnum = pgEnum('market_status', [
   'PENDING',
@@ -27,24 +23,11 @@ export const marketStatusEnum = pgEnum('market_status', [
   'CANCELLED',
 ]);
 
-export const wagerStatusEnum = pgEnum('wager_status', [
-  'OPEN',
-  'MATCHED',
-  'RESOLVED',
-  'CANCELLED',
-]);
+export const wagerStatusEnum = pgEnum('wager_status', ['OPEN', 'MATCHED', 'RESOLVED', 'CANCELLED']);
 
-export const reportStatusEnum = pgEnum('report_status', [
-  'PENDING',
-  'DISPUTED',
-  'CONFIRMED',
-]);
+export const reportStatusEnum = pgEnum('report_status', ['PENDING', 'DISPUTED', 'CONFIRMED']);
 
-export const oracleStatusEnum = pgEnum('oracle_status', [
-  'ACTIVE',
-  'SUSPENDED',
-  'REMOVED',
-]);
+export const oracleStatusEnum = pgEnum('oracle_status', ['ACTIVE', 'SUSPENDED', 'REMOVED']);
 
 // Users table
 export const users = pgTable(
@@ -62,9 +45,7 @@ export const users = pgTable(
     encryptedSeed: text('encrypted_seed'),
 
     // Stats
-    totalVolume: decimal('total_volume', { precision: 20, scale: 0 })
-      .default('0')
-      .notNull(),
+    totalVolume: decimal('total_volume', { precision: 20, scale: 0 }).default('0').notNull(),
     totalProfitLoss: decimal('total_profit_loss', { precision: 20, scale: 0 })
       .default('0')
       .notNull(),
@@ -74,7 +55,7 @@ export const users = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
-  (table) => ({
+  table => ({
     addressIdx: index('users_address_idx').on(table.address),
     usernameIdx: index('users_username_idx').on(table.username),
   })
@@ -110,26 +91,18 @@ export const markets = pgTable(
     maxBet: decimal('max_bet', { precision: 20, scale: 0 }).notNull(),
 
     // Stats
-    totalVolume: decimal('total_volume', { precision: 20, scale: 0 })
-      .default('0')
-      .notNull(),
-    totalLiquidity: decimal('total_liquidity', { precision: 20, scale: 0 })
-      .default('0')
-      .notNull(),
+    totalVolume: decimal('total_volume', { precision: 20, scale: 0 }).default('0').notNull(),
+    totalLiquidity: decimal('total_liquidity', { precision: 20, scale: 0 }).default('0').notNull(),
     totalPositions: integer('total_positions').default(0).notNull(),
-    yesPrice: decimal('yes_price', { precision: 18, scale: 17 })
-      .default('0.5')
-      .notNull(),
-    noPrice: decimal('no_price', { precision: 18, scale: 17 })
-      .default('0.5')
-      .notNull(),
+    yesPrice: decimal('yes_price', { precision: 18, scale: 17 }).default('0.5').notNull(),
+    noPrice: decimal('no_price', { precision: 18, scale: 17 }).default('0.5').notNull(),
 
     // Foreign keys
     creatorId: text('creator_id')
       .references(() => users.id)
       .notNull(),
   },
-  (table) => ({
+  table => ({
     statusIdx: index('markets_status_idx').on(table.status),
     categoryIdx: index('markets_category_idx').on(table.category),
     endTimeIdx: index('markets_end_time_idx').on(table.endTime),
@@ -172,7 +145,7 @@ export const positions = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
-  (table) => ({
+  table => ({
     userIdx: index('positions_user_idx').on(table.userId),
     marketIdx: index('positions_market_idx').on(table.marketId),
     settledIdx: index('positions_settled_idx').on(table.isSettled),
@@ -207,7 +180,7 @@ export const wagers = pgTable(
     matchedAt: timestamp('matched_at'),
     settledAt: timestamp('settled_at'),
   },
-  (table) => ({
+  table => ({
     statusIdx: index('wagers_status_idx').on(table.status),
     creatorIdx: index('wagers_creator_idx').on(table.creatorId),
     takerIdx: index('wagers_taker_idx').on(table.takerId),
@@ -229,7 +202,7 @@ export const pricePoints = pgTable(
     noPrice: decimal('no_price', { precision: 18, scale: 17 }).notNull(),
     volume: decimal('volume', { precision: 20, scale: 0 }).default('0').notNull(),
   },
-  (table) => ({
+  table => ({
     marketTimestampIdx: index('price_points_market_timestamp_idx').on(
       table.marketId,
       table.timestamp
@@ -254,7 +227,7 @@ export const oracles = pgTable(
     registeredAt: timestamp('registered_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
-  (table) => ({
+  table => ({
     addressIdx: index('oracles_address_idx').on(table.address),
     statusIdx: index('oracles_status_idx').on(table.status),
   })
@@ -284,7 +257,7 @@ export const oracleReports = pgTable(
     reportedAt: timestamp('reported_at').defaultNow().notNull(),
     confirmedAt: timestamp('confirmed_at'),
   },
-  (table) => ({
+  table => ({
     marketIdx: index('oracle_reports_market_idx').on(table.marketId),
     reporterIdx: index('oracle_reports_reporter_idx').on(table.reporterId),
     statusIdx: index('oracle_reports_status_idx').on(table.status),
@@ -311,7 +284,7 @@ export const liquidityPools = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
-  (table) => ({
+  table => ({
     marketIdx: index('liquidity_pools_market_idx').on(table.marketId),
   })
 );
@@ -334,7 +307,7 @@ export const lpPositions = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
-  (table) => ({
+  table => ({
     userPoolIdx: index('lp_positions_user_pool_idx').on(table.userId, table.poolId),
   })
 );

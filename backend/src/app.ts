@@ -1,19 +1,19 @@
-import express from 'express';
 import cors from 'cors';
+import express from 'express';
 import helmet from 'helmet';
-import morgan from 'morgan';
 import { createServer } from 'http';
+import morgan from 'morgan';
 import { Server } from 'socket.io';
 import { config } from './config';
 import { testConnection } from './db/client';
-import { marketsRouter } from './routes/markets';
-import { wagersRouter } from './routes/wagers';
-import { oraclesRouter } from './routes/oracles';
-import { usersRouter } from './routes/users';
+import { startBackgroundJobs } from './db/jobs';
 import { errorHandler } from './middleware/error-handler';
 import { notFound } from './middleware/not-found';
-import { setupWebSocket, getConnectionStats } from './websocket';
-import { startBackgroundJobs } from './db/jobs';
+import { marketsRouter } from './routes/markets';
+import { oraclesRouter } from './routes/oracles';
+import { usersRouter } from './routes/users';
+import { wagersRouter } from './routes/wagers';
+import { getConnectionStats, setupWebSocket } from './websocket';
 
 // Create Express app
 export const app = express();

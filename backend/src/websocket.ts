@@ -2,7 +2,7 @@ import { Server } from 'socket.io';
 import type { WebSocketEvents } from './types';
 
 export function setupWebSocket(io: Server) {
-  io.on('connection', (socket) => {
+  io.on('connection', socket => {
     console.log('✅ Client connected:', socket.id);
 
     // Subscribe to market updates
@@ -34,11 +34,11 @@ export function setupWebSocket(io: Server) {
       socket.emit('pong', { timestamp: Date.now() });
     });
 
-    socket.on('disconnect', (reason) => {
+    socket.on('disconnect', reason => {
       console.log(`❌ Client disconnected: ${socket.id} (${reason})`);
     });
 
-    socket.on('error', (error) => {
+    socket.on('error', error => {
       console.error('WebSocket error:', error);
     });
   });
@@ -72,11 +72,7 @@ export function broadcastMarketUpdate(
 /**
  * Broadcast market resolution
  */
-export function broadcastMarketResolved(
-  io: Server,
-  marketId: string,
-  outcome: number
-) {
+export function broadcastMarketResolved(io: Server, marketId: string, outcome: number) {
   const event: WebSocketEvents['market:resolved'] = {
     marketId,
     outcome,
@@ -127,11 +123,7 @@ export function notifyWagerMatched(
 /**
  * Broadcast to all connected clients
  */
-export function broadcastGlobal(
-  io: Server,
-  event: string,
-  data: any
-) {
+export function broadcastGlobal(io: Server, event: string, data: any) {
   io.emit(event, data);
 }
 

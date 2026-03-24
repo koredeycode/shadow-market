@@ -67,6 +67,7 @@ pnpm exec playwright test markets.spec.ts --debug
 ## 📋 Test Coverage
 
 ### Markets Flow (markets.spec.ts)
+
 - ✅ Display markets list
 - ✅ Filter markets by category
 - ✅ Search markets
@@ -79,6 +80,7 @@ pnpm exec playwright test markets.spec.ts --debug
 - ✅ Authentication checks
 
 ### Betting Flow (betting.spec.ts)
+
 - ✅ Open place bet modal
 - ✅ Place YES bet
 - ✅ Place NO bet
@@ -91,6 +93,7 @@ pnpm exec playwright test markets.spec.ts --debug
 - ✅ Close modal on cancel
 
 ### P2P Wagers (p2p-wagers.spec.ts)
+
 - ✅ Open create P2P wager modal
 - ✅ Create P2P wager with custom odds
 - ✅ Validate odds input
@@ -103,6 +106,7 @@ pnpm exec playwright test markets.spec.ts --debug
 - ✅ Display time remaining
 
 ### Portfolio & Analytics (portfolio-analytics.spec.ts)
+
 - ✅ Display portfolio statistics
 - ✅ Switch between active/settled positions tabs
 - ✅ Display position cards
@@ -230,12 +234,14 @@ Failed tests automatically capture screenshots in `test-results/`
 ## 📊 CI/CD Integration
 
 Tests run automatically on:
+
 - Push to `main`, `master`, or `develop` branches
 - Pull requests to these branches
 
 GitHub Actions workflow: `.github/workflows/e2e-tests.yml`
 
 Artifacts generated:
+
 - HTML test report (retained for 30 days)
 - Screenshots of failed tests (retained for 7 days)
 

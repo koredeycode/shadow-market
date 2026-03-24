@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { WagerService } from '../services/wager.service';
+import { z } from 'zod';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
-import { z } from 'zod';
+import { WagerService } from '../services/wager.service';
 import { asyncHandler } from '../utils/async-handler';
 
 export const wagersRouter = Router();

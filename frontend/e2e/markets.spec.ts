@@ -1,10 +1,10 @@
-import { test, expect } from '../fixtures';
+import { expect, test } from '../fixtures';
 import {
-  mockApiResponse,
-  createMockMarket,
-  waitForPageLoad,
-  fillField,
   clickAndWait,
+  createMockMarket,
+  fillField,
+  mockApiResponse,
+  waitForPageLoad,
   waitForToast,
 } from '../helpers/test-helpers';
 
@@ -30,7 +30,11 @@ test.describe('Markets Flow', () => {
 
     test('should filter markets by category', async ({ page }) => {
       const cryptoMarket = createMockMarket({ id: '1', category: 'Crypto' });
-      const sportsMarket = createMockMarket({ id: '2', category: 'Sports', question: 'Who will win?' });
+      const sportsMarket = createMockMarket({
+        id: '2',
+        category: 'Sports',
+        question: 'Who will win?',
+      });
 
       await mockApiResponse(page, '**/api/markets*', { markets: [cryptoMarket, sportsMarket] });
 
@@ -70,7 +74,9 @@ test.describe('Markets Flow', () => {
       const highVolumeMarket = createMockMarket({ id: '1', totalVolume: '100000' });
       const lowVolumeMarket = createMockMarket({ id: '2', totalVolume: '1000' });
 
-      await mockApiResponse(page, '**/api/markets*', { markets: [highVolumeMarket, lowVolumeMarket] });
+      await mockApiResponse(page, '**/api/markets*', {
+        markets: [highVolumeMarket, lowVolumeMarket],
+      });
 
       await page.goto('/markets');
       await waitForPageLoad(page);
@@ -146,7 +152,7 @@ test.describe('Markets Flow', () => {
       await page.evaluate(() => {
         window.dispatchEvent(
           new CustomEvent('market:update', {
-            detail: { marketId: 'market-1', yesPrice: 0.70, noPrice: 0.30 },
+            detail: { marketId: 'market-1', yesPrice: 0.7, noPrice: 0.3 },
           })
         );
       });
@@ -160,7 +166,12 @@ test.describe('Markets Flow', () => {
 
   test.describe('Market Creation', () => {
     test('should create a new market', async ({ authenticatedPage: page }) => {
-      await mockApiResponse(page, '**/api/markets', { marketId: 'new-market-123', status: 'created' }, 201);
+      await mockApiResponse(
+        page,
+        '**/api/markets',
+        { marketId: 'new-market-123', status: 'created' },
+        201
+      );
 
       await page.goto('/markets/create');
       await waitForPageLoad(page);
@@ -168,20 +179,20 @@ test.describe('Markets Flow', () => {
       // Fill in market details
       await fillField(page, /question/i, 'Will AI surpass human intelligence?');
       await fillField(page, /description/i, 'Prediction about AGI development');
-      
+
       // Select category
       await page.click('[data-testid="category-select"]');
       await page.click('text=Technology');
-      
+
       // Set end date (30 days from now)
       const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
       const dateString = futureDate.toISOString().split('T')[0];
       await fillField(page, /end date/i, dateString);
-      
+
       // Set betting limits
       await fillField(page, /minimum bet/i, '10');
       await fillField(page, /maximum bet/i, '10000');
-      
+
       // Set resolution source
       await fillField(page, /resolution source/i, 'Official AI benchmark');
 

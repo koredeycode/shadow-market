@@ -260,3 +260,5 @@ export function Portfolio() {
     </Container>
   );
 }
+
+export default Portfolio;

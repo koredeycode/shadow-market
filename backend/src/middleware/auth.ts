@@ -1,9 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
+import { eq } from 'drizzle-orm';
+import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import { db } from '../db/client';
 import { users } from '../db/schema';
-import { eq } from 'drizzle-orm';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -16,11 +16,7 @@ export interface AuthRequest extends Request {
 /**
  * Authenticate requests using JWT
  */
-export async function authenticate(
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) {
+export async function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
   try {
     const authHeader = req.headers.authorization;
 
@@ -72,11 +68,7 @@ export async function authenticate(
 /**
  * Optional authentication - doesn't fail if no token
  */
-export async function optionalAuth(
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) {
+export async function optionalAuth(req: AuthRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {

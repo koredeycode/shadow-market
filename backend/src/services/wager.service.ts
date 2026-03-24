@@ -1,14 +1,14 @@
+import { and, desc, eq, or, sql } from 'drizzle-orm';
+import { config } from '../config';
 import { db } from '../db/client';
-import { positions, wagers, markets, users } from '../db/schema';
-import { eq, and, or, desc, sql } from 'drizzle-orm';
+import { markets, positions, users, wagers } from '../db/schema';
 import type {
-  PlaceBetRequest,
   CreateP2PWagerRequest,
   DecryptedPosition,
+  PlaceBetRequest,
   PortfolioStats,
 } from '../types';
-import { generateId, encrypt, decrypt } from '../utils/crypto';
-import { config } from '../config';
+import { decrypt, encrypt, generateId } from '../utils/crypto';
 
 export class WagerService {
   /**
@@ -32,10 +32,7 @@ export class WagerService {
 
     // Generate commitment (hash of amount + side + nonce)
     const commitmentInput = `${data.amount}:${data.side}:${nonceEncrypted}`;
-    const commitment = require('crypto')
-      .createHash('sha256')
-      .update(commitmentInput)
-      .digest('hex');
+    const commitment = require('crypto').createHash('sha256').update(commitmentInput).digest('hex');
 
     // Determine entry price
     const entryPrice = data.side === 'yes' ? market.yesPrice : market.noPrice;
@@ -152,14 +149,13 @@ export class WagerService {
       },
     });
 
-    return userPositions.map((pos) => {
+    return userPositions.map(pos => {
       // Decrypt private data
       const amount = decrypt(pos.amountEncrypted, config.encryptionKey);
       const side = decrypt(pos.sideEncrypted, config.encryptionKey);
 
       // Calculate current value and P&L
-      const currentPrice =
-        side === 'yes' ? pos.market.yesPrice : pos.market.noPrice;
+      const currentPrice = side === 'yes' ? pos.market.yesPrice : pos.market.noPrice;
       const entryPrice = pos.entryPrice;
       const amountNum = parseFloat(amount);
 
@@ -201,9 +197,9 @@ export class WagerService {
     });
 
     return {
-      active: userWagers.filter((w) => w.status === 'OPEN' || w.status === 'MATCHED'),
-      completed: userWagers.filter((w) => w.status === 'RESOLVED'),
-      cancelled: userWagers.filter((w) => w.status === 'CANCELLED'),
+      active: userWagers.filter(w => w.status === 'OPEN' || w.status === 'MATCHED'),
+      completed: userWagers.filter(w => w.status === 'RESOLVED'),
+      cancelled: userWagers.filter(w => w.status === 'CANCELLED'),
     };
   }
 
@@ -213,24 +209,13 @@ export class WagerService {
   async getPortfolioStats(userId: string): Promise<PortfolioStats> {
     const userPositions = await this.getUserPositions(userId);
 
-    const totalValue = userPositions.reduce(
-      (sum, pos) => sum + parseFloat(pos.currentValue),
-      0
-    );
+    const totalValue = userPositions.reduce((sum, pos) => sum + parseFloat(pos.currentValue), 0);
 
-    const totalProfitLoss = userPositions.reduce(
-      (sum, pos) => sum + parseFloat(pos.profitLoss),
-      0
-    );
+    const totalProfitLoss = userPositions.reduce((sum, pos) => sum + parseFloat(pos.profitLoss), 0);
 
-    const settledPositions = userPositions.filter((p) => p.isSettled);
-    const wonPositions = settledPositions.filter(
-      (p) => parseFloat(p.profitLoss) > 0
-    );
-    const winRate =
-      settledPositions.length > 0
-        ? wonPositions.length / settledPositions.length
-        : 0;
+    const settledPositions = userPositions.filter(p => p.isSettled);
+    const wonPositions = settledPositions.filter(p => parseFloat(p.profitLoss) > 0);
+    const winRate = settledPositions.length > 0 ? wonPositions.length / settledPositions.length : 0;
 
     // Get user data
     const user = await db.query.users.findFirst({
@@ -241,7 +226,7 @@ export class WagerService {
       totalValue: totalValue.toString(),
       totalProfitLoss: totalProfitLoss.toString(),
       winRate,
-      activePositions: userPositions.filter((p) => !p.isSettled).length,
+      activePositions: userPositions.filter(p => !p.isSettled).length,
       totalBets: userPositions.length,
       totalVolume: user?.totalVolume || '0',
     };

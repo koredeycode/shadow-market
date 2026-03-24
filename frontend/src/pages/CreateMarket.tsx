@@ -12,3 +12,5 @@ export function CreateMarket() {
     </Container>
   );
 }
+
+export default CreateMarket;

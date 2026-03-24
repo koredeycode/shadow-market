@@ -110,3 +110,5 @@ export function Markets() {
     </Container>
   );
 }
+
+export default Markets;

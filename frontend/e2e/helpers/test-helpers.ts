@@ -9,7 +9,7 @@ export async function mockApiResponse(
   response: any,
   status: number = 200
 ) {
-  await page.route(url, (route) => {
+  await page.route(url, route => {
     route.fulfill({
       status,
       contentType: 'application/json',
@@ -32,10 +32,10 @@ export async function waitForPageLoad(page: Page) {
 export async function connectWallet(page: Page) {
   // Click connect wallet button
   await page.getByRole('button', { name: /connect wallet/i }).click();
-  
+
   // Wait for wallet modal or connection confirmation
   await page.waitForTimeout(1000);
-  
+
   // Verify connection
   await expect(page.getByText(/0x[0-9a-f]+/i)).toBeVisible();
 }
@@ -63,25 +63,26 @@ export async function fillField(page: Page, label: string, value: string) {
 export async function waitForToast(page: Page, message?: string) {
   const toast = page.locator('[role="alert"], .toast, [class*="toast"]').first();
   await expect(toast).toBeVisible({ timeout: 5000 });
-  
+
   if (message) {
     await expect(toast).toContainText(message);
   }
-  
+
   return toast;
 }
 
 /**
  * Helper to click button and wait for response
  */
-export async function clickAndWait(page: Page, buttonText: string, waitForResponse?: string | RegExp) {
+export async function clickAndWait(
+  page: Page,
+  buttonText: string,
+  waitForResponse?: string | RegExp
+) {
   const button = page.getByRole('button', { name: new RegExp(buttonText, 'i') });
-  
+
   if (waitForResponse) {
-    const [response] = await Promise.all([
-      page.waitForResponse(waitForResponse),
-      button.click(),
-    ]);
+    const [response] = await Promise.all([page.waitForResponse(waitForResponse), button.click()]);
     return response;
   } else {
     await button.click();
@@ -124,7 +125,7 @@ export function createMockPosition(overrides?: Partial<any>) {
     marketQuestion: 'Will BTC hit $100k by EOY 2026?',
     side: 'yes',
     amount: '1000',
-    entryPrice: 0.60,
+    entryPrice: 0.6,
     currentPrice: 0.65,
     entryTimestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     isSettled: false,

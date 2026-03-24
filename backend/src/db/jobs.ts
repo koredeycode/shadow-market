@@ -1,8 +1,8 @@
-import { db } from './client';
-import { markets, positions } from './schema';
 import { eq } from 'drizzle-orm';
 import { io } from '../app';
 import { broadcastMarketUpdate, notifyPositionUpdate } from '../websocket';
+import { db } from './client';
+import { markets, positions } from './schema';
 
 /**
  * Background job to sync market data from blockchain
@@ -18,7 +18,7 @@ export async function syncMarketPrices() {
     for (const market of openMarkets) {
       // In production, fetch from contract
       // For now, simulate price updates
-      
+
       // Broadcast update to subscribed clients
       broadcastMarketUpdate(io, market.id, {
         yesPrice: market.yesPrice,
@@ -49,7 +49,7 @@ export async function updatePositionValues() {
       if (position.market.status === 'OPEN') {
         // Calculate current value based on market price
         // In production, decrypt and calculate actual values
-        
+
         // Notify user of position update
         notifyPositionUpdate(io, position.userId, {
           marketId: position.marketId,

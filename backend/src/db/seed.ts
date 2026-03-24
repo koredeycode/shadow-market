@@ -1,6 +1,6 @@
-import { db } from './client';
-import { users, markets, oracles } from './schema';
 import { randomBytes } from 'crypto';
+import { db } from './client';
+import { markets, oracles, users } from './schema';
 
 // Generate random ID
 const generateId = () => randomBytes(16).toString('hex');
@@ -72,7 +72,8 @@ async function seed() {
         onchainId: '1',
         contractAddress: '0xmarket1' + randomBytes(20).toString('hex'),
         question: 'Will Bitcoin reach $100,000 by end of 2026?',
-        description: 'This market resolves YES if Bitcoin (BTC) reaches or exceeds $100,000 USD on any major exchange by December 31, 2026.',
+        description:
+          'This market resolves YES if Bitcoin (BTC) reaches or exceeds $100,000 USD on any major exchange by December 31, 2026.',
         marketType: 'BINARY',
         category: 'crypto',
         tags: ['bitcoin', 'crypto', 'price-prediction'],
@@ -92,7 +93,8 @@ async function seed() {
         onchainId: '2',
         contractAddress: '0xmarket2' + randomBytes(20).toString('hex'),
         question: 'Will Ethereum 3.0 launch in 2026?',
-        description: 'This market resolves YES if Ethereum officially launches version 3.0 of the protocol in 2026.',
+        description:
+          'This market resolves YES if Ethereum officially launches version 3.0 of the protocol in 2026.',
         marketType: 'BINARY',
         category: 'crypto',
         tags: ['ethereum', 'technology', 'crypto'],
@@ -112,7 +114,8 @@ async function seed() {
         onchainId: '3',
         contractAddress: '0xmarket3' + randomBytes(20).toString('hex'),
         question: 'Will AI surpass human performance in competitive programming by 2027?',
-        description: 'Resolves YES if an AI system achieves top 10% ranking in Codeforces or similar platform.',
+        description:
+          'Resolves YES if an AI system achieves top 10% ranking in Codeforces or similar platform.',
         marketType: 'BINARY',
         category: 'technology',
         tags: ['artificial-intelligence', 'technology', 'programming'],

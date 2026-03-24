@@ -1,9 +1,9 @@
-import { test, expect } from '../fixtures';
+import { expect, test } from '../fixtures';
 import {
-  mockApiResponse,
-  createMockPosition,
-  waitForPageLoad,
   clickAndWait,
+  createMockPosition,
+  mockApiResponse,
+  waitForPageLoad,
   waitForToast,
 } from '../helpers/test-helpers';
 
@@ -56,9 +56,7 @@ test.describe('Portfolio & Analytics', () => {
     }) => {
       const mockPortfolio = {
         activePositions: [createMockPosition({ id: '1' })],
-        settledPositions: [
-          createMockPosition({ id: '2', isSettled: true, payout: '2000' }),
-        ],
+        settledPositions: [createMockPosition({ id: '2', isSettled: true, payout: '2000' })],
         stats: {
           totalValue: '5000',
           totalProfitLoss: '800',
@@ -202,7 +200,7 @@ test.describe('Portfolio & Analytics', () => {
 
       // Chart should be visible
       await expect(page.locator('text=/portfolio value over time/i')).toBeVisible();
-      
+
       // Time range selector should be visible
       await expect(page.getByRole('button', { name: /7d/i })).toBeVisible();
     });
@@ -226,7 +224,7 @@ test.describe('Portfolio & Analytics', () => {
       await mockApiResponse(page, '**/api/positions', mockPortfolio);
 
       // Mock CSV export
-      await page.route('**/api/analytics/export/portfolio*', (route) => {
+      await page.route('**/api/analytics/export/portfolio*', route => {
         route.fulfill({
           status: 200,
           contentType: 'text/csv',
@@ -240,7 +238,7 @@ test.describe('Portfolio & Analytics', () => {
       // Start waiting for download before clicking
       const downloadPromise = page.waitForEvent('download');
       await page.getByRole('button', { name: /export data/i }).click();
-      
+
       // Select time range if dropdown appears
       if (await page.getByText(/last 7 days/i).isVisible()) {
         await page.getByText(/last 7 days/i).click();
@@ -378,7 +376,7 @@ test.describe('Portfolio & Analytics', () => {
 
       // Chart should be visible
       await expect(page.locator('text=/market volume.*activity/i')).toBeVisible();
-      
+
       // Time range buttons should be visible
       await expect(page.getByRole('button', { name: /24h/i })).toBeVisible();
     });
