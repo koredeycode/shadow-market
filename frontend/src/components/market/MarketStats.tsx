@@ -129,15 +129,6 @@ export function MarketStats({ market }: MarketStatsProps) {
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                Market Type
-              </Typography>
-              <Typography variant="body1" fontWeight="medium">
-                {market.marketType}
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
                 Category
               </Typography>
               <Typography variant="body1" fontWeight="medium" sx={{ textTransform: 'capitalize' }}>

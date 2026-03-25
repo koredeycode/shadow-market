@@ -13,8 +13,6 @@ import {
 } from 'drizzle-orm/pg-core';
 
 // Enums
-export const marketTypeEnum = pgEnum('market_type', ['BINARY', 'CATEGORICAL', 'SCALAR']);
-
 export const marketStatusEnum = pgEnum('market_status', [
   'PENDING',
   'OPEN',
@@ -72,7 +70,6 @@ export const markets = pgTable(
     // Market config
     question: text('question').notNull(),
     description: text('description'),
-    marketType: marketTypeEnum('market_type').notNull(),
     category: varchar('category', { length: 100 }).notNull(),
     tags: json('tags').$type<string[]>().default([]).notNull(),
 

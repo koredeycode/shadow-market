@@ -108,7 +108,6 @@ marketsRouter.post(
         contractAddress: `0x${Date.now().toString(16)}`,
         question,
         description,
-        marketType: 'BINARY',
         category,
         status: 'PENDING',
         endTime: new Date(endTime),

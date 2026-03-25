@@ -20,7 +20,6 @@ export class MarketService {
         contractAddress: '0x' + generateId(20), // Temporary
         question: data.question,
         description: data.description,
-        marketType: data.marketType,
         category: data.category,
         tags: data.tags || [],
         endTime: data.endTime,

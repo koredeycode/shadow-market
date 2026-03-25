@@ -5,7 +5,6 @@ import CompactStandardLibrary;
 // Market configuration (immutable after creation)
 export ledger marketId: Field;
 export ledger question: Opaque<"string">;
-export ledger marketType: MarketType;
 export ledger category: Field;
 export ledger endTime: Field;
 export ledger resolutionSource: Opaque<"string">;
@@ -59,7 +58,6 @@ witness positionSide(): Bool;
 constructor(
   _marketId: Field,
   _question: Opaque<"string">,
-  _marketType: MarketType,
   _category: Field,
   _endTime: Field,
   _resolutionSource: Opaque<"string">,
@@ -68,7 +66,6 @@ constructor(
 ) {
   marketId = _marketId;
   question = disclose(_question);
-  marketType = _marketType;
   category = _category;
   endTime = _endTime;
   resolutionSource = disclose(_resolutionSource);

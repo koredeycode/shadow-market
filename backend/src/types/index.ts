@@ -1,5 +1,4 @@
 // Market types
-export type MarketType = 'BINARY' | 'CATEGORICAL' | 'SCALAR';
 export type MarketStatus = 'PENDING' | 'OPEN' | 'LOCKED' | 'RESOLVED' | 'CANCELLED';
 
 // Wager types
@@ -13,7 +12,6 @@ export type ReportStatus = 'PENDING' | 'DISPUTED' | 'CONFIRMED';
 export interface CreateMarketRequest {
   question: string;
   description?: string;
-  marketType: MarketType;
   category: string;
   tags?: string[];
   endTime: Date;

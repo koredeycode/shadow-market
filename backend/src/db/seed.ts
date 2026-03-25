@@ -74,7 +74,6 @@ async function seed() {
         question: 'Will Bitcoin reach $100,000 by end of 2026?',
         description:
           'This market resolves YES if Bitcoin (BTC) reaches or exceeds $100,000 USD on any major exchange by December 31, 2026.',
-        marketType: 'BINARY',
         category: 'crypto',
         tags: ['bitcoin', 'crypto', 'price-prediction'],
         endTime,
@@ -95,7 +94,6 @@ async function seed() {
         question: 'Will Ethereum 3.0 launch in 2026?',
         description:
           'This market resolves YES if Ethereum officially launches version 3.0 of the protocol in 2026.',
-        marketType: 'BINARY',
         category: 'crypto',
         tags: ['ethereum', 'technology', 'crypto'],
         endTime,
@@ -116,7 +114,6 @@ async function seed() {
         question: 'Will AI surpass human performance in competitive programming by 2027?',
         description:
           'Resolves YES if an AI system achieves top 10% ranking in Codeforces or similar platform.',
-        marketType: 'BINARY',
         category: 'technology',
         tags: ['artificial-intelligence', 'technology', 'programming'],
         endTime: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year

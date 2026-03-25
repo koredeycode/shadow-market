@@ -12,7 +12,6 @@ const marketService = new MarketService();
 const createMarketSchema = z.object({
   question: z.string().min(10).max(500),
   description: z.string().max(2000).optional(),
-  marketType: z.enum(['BINARY', 'CATEGORICAL', 'SCALAR']),
   category: z.string().min(1).max(100),
   tags: z.array(z.string()).optional(),
   endTime: z.string().transform(val => new Date(val)),

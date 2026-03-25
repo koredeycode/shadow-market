@@ -1,4 +1,3 @@
-export type MarketType = 'BINARY' | 'CATEGORICAL' | 'SCALAR';
 export type MarketStatus = 'PENDING' | 'OPEN' | 'LOCKED' | 'RESOLVED' | 'CANCELLED';
 
 export interface Market {
@@ -7,7 +6,6 @@ export interface Market {
   contractAddress: string;
   question: string;
   description?: string;
-  marketType: MarketType;
   category: string;
   tags: string[];
   createdAt: string;
