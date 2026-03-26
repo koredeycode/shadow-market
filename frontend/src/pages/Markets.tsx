@@ -31,7 +31,10 @@ export function Markets() {
   return (
     <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 } }}>
       <Box sx={{ mb: 5 }}>
-        <Typography variant="h2" sx={{ mb: 2, fontWeight: 700, fontSize: { xs: '2rem', md: '2.5rem' } }}>
+        <Typography
+          variant="h2"
+          sx={{ mb: 2, fontWeight: 700, fontSize: { xs: '2rem', md: '2.5rem' } }}
+        >
           Prediction Markets
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem' }}>

@@ -1,5 +1,14 @@
 import { Group, Lock, Speed, TrendingUp } from '@mui/icons-material';
-import { Box, Button, Card, CardContent, Container, Grid, Typography, keyframes } from '@mui/material';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Container,
+  Grid,
+  Typography,
+  keyframes,
+} from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 
 const fadeInUp = keyframes`
@@ -28,7 +37,8 @@ export function Home() {
           py: { xs: 6, md: 10 },
           borderBottom: 1,
           borderColor: 'divider',
-          background: 'radial-gradient(ellipse at top, rgba(124, 58, 237, 0.15) 0%, transparent 50%)',
+          background:
+            'radial-gradient(ellipse at top, rgba(124, 58, 237, 0.15) 0%, transparent 50%)',
           position: 'relative',
           overflow: 'hidden',
           '&::before': {
@@ -287,7 +297,8 @@ export function Home() {
             right: 0,
             bottom: 0,
             left: 0,
-            background: 'radial-gradient(circle at top right, rgba(167, 139, 250, 0.3) 0%, transparent 50%)',
+            background:
+              'radial-gradient(circle at top right, rgba(167, 139, 250, 0.3) 0%, transparent 50%)',
           },
         }}
       >

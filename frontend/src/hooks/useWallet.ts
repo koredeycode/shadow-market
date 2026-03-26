@@ -1,8 +1,8 @@
+import { ConnectedAPI, type InitialAPI } from '@midnight-ntwrk/dapp-connector-api';
 import { useCallback, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
-import { useWalletStore } from '../store/wallet.store';
-import { ConnectedAPI, type InitialAPI } from '@midnight-ntwrk/dapp-connector-api';
 import semver from 'semver';
+import { useWalletStore } from '../store/wallet.store';
 
 // Declare global window types for Lace wallet
 declare global {
@@ -17,13 +17,13 @@ const NETWORK_ID = import.meta.env.VITE_NETWORK_ID || 'undeployed';
 // Find the first compatible Lace wallet from window.midnight object
 const getFirstCompatibleWallet = (): InitialAPI | undefined => {
   if (!window.midnight) return undefined;
-  
+
   return Object.values(window.midnight).find(
     (wallet): wallet is InitialAPI =>
       !!wallet &&
       typeof wallet === 'object' &&
       'apiVersion' in wallet &&
-      semver.satisfies(wallet.apiVersion, COMPATIBLE_CONNECTOR_API_VERSION),
+      semver.satisfies(wallet.apiVersion, COMPATIBLE_CONNECTOR_API_VERSION)
   );
 };
 
@@ -62,13 +62,13 @@ export function useWallet() {
 
     try {
       const initialAPI = getFirstCompatibleWallet();
-      
+
       if (!initialAPI) {
         throw new Error('Could not find compatible Midnight Lace wallet');
       }
 
       console.log('Connecting to Lace wallet with network:', NETWORK_ID);
-      
+
       // Connect to wallet with network ID
       const connectedAPI = await initialAPI.connect(NETWORK_ID);
       connectedAPIRef.current = connectedAPI;
@@ -82,7 +82,7 @@ export function useWallet() {
 
       // Use shielded coin public key as the wallet address
       const walletAddress = shieldedAddresses.shieldedCoinPublicKey;
-      
+
       // Get balance (placeholder - might need different method)
       const walletBalance = '0'; // TODO: Implement balance fetching
 
@@ -92,9 +92,8 @@ export function useWallet() {
       toast.success('Wallet connected successfully!');
     } catch (error) {
       console.error('Failed to connect wallet:', error);
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'Failed to connect wallet. Please try again.';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to connect wallet. Please try again.';
       toast.error(errorMessage);
       setConnecting(false);
     }
@@ -161,7 +160,7 @@ export function useWallet() {
     // TODO: Check if ConnectedAPI provides event listeners for state changes
     // The DApp Connector API v4.0 may handle this differently
     // For now, event listeners are not implemented
-    
+
     // Cleanup on unmount
     return () => {
       // Cleanup if needed

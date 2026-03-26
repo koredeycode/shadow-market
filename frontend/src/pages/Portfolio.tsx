@@ -106,7 +106,14 @@ export function Portfolio() {
   if (isLoading) {
     return (
       <Container maxWidth="xl" sx={{ py: 8 }}>
-        <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="50vh" gap={2}>
+        <Box
+          display="flex"
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="50vh"
+          gap={2}
+        >
           <CircularProgress size={50} thickness={3.5} />
           <Typography variant="body1" color="text.secondary">
             Loading portfolio...

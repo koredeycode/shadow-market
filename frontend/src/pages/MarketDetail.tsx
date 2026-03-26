@@ -113,7 +113,8 @@ export function MarketDetail() {
         sx={{
           p: { xs: 3, md: 4 },
           mb: 4,
-          background: 'linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(26, 26, 26, 0.8) 100%)',
+          background:
+            'linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(26, 26, 26, 0.8) 100%)',
           backdropFilter: 'blur(20px)',
           border: '1px solid rgba(255, 255, 255, 0.08)',
           borderRadius: 3,
@@ -153,10 +154,7 @@ export function MarketDetail() {
         </Typography>
 
         {market.description && (
-          <Typography
-            color="text.secondary"
-            sx={{ mb: 4, fontSize: '1.05rem', lineHeight: 1.7 }}
-          >
+          <Typography color="text.secondary" sx={{ mb: 4, fontSize: '1.05rem', lineHeight: 1.7 }}>
             {market.description}
           </Typography>
         )}
@@ -168,7 +166,8 @@ export function MarketDetail() {
               sx={{
                 p: 3,
                 borderRadius: 3,
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%)',
+                background:
+                  'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%)',
                 border: '2px solid rgba(16, 185, 129, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
@@ -206,7 +205,8 @@ export function MarketDetail() {
               sx={{
                 p: 3,
                 borderRadius: 3,
-                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%)',
+                background:
+                  'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%)',
                 border: '2px solid rgba(239, 68, 68, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
