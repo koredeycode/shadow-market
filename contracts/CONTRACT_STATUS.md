@@ -3,6 +3,7 @@
 ## Current Implementation: Stub Contracts
 
 The contracts in this project are currently **STUB IMPLEMENTATIONS** designed to:
+
 1. Compile successfully with Compact 0.22 (language version 0.22.0)
 2. Provide basic structure for backend/frontend development
 3. Be replaced with full implementations when Compact 0.29+ is available
@@ -12,12 +13,14 @@ The contracts in this project are currently **STUB IMPLEMENTATIONS** designed to
 The `market-stub.compact` contract provides only minimal functionality:
 
 ### What Works
+
 - ✅ Contract compiles successfully
 - ✅ Basic market state tracking (OPEN → CLOSED → RESOLVED)
 - ✅ Placeholder bet commitments
 - ✅ Simple counter for bets
 
 ### What's Missing (To Be Implemented)
+
 - ❌ **No privacy features** - Witness values are disclosed
 - ❌ **No AMM pricing** - Just tracks totals
 - ❌ **No payout calculation** - Returns would not be calculated
@@ -32,6 +35,7 @@ The `market-stub.compact` contract provides only minimal functionality:
 The current Compact toolchain has significant restrictions:
 
 ### Missing Features
+
 - No `sender()` function - cannot get caller address within circuits
 - No `deployContract<T>()` - no factory pattern support
 - No `Bool` type - must use Field (0/1) instead
@@ -41,6 +45,7 @@ The current Compact toolchain has significant restrictions:
 - No `Address` or `ContractAddress` types - use `Bytes<32>`
 
 ### What This Means
+
 The original contract designs from the planning docs **cannot be implemented** with Compact 0.22. They assumed features from Compact 0.29+ which don't exist yet.
 
 ## Migration Plan
@@ -69,14 +74,16 @@ When Compact 0.29+ becomes available:
 ## Current Development Approach
 
 For now, focus on:
+
 - ✅ Backend API development (can use mock contract data)
-- ✅ Frontend UI implementation  
+- ✅ Frontend UI implementation
 - ✅ Database schema and migrations
 - ✅ WebSocket real-time updates
 - ✅ Authentication and authorization
 - ✅ Overall application architecture
 
 The stub contract provides enough structure to:
+
 - Test contract interaction patterns
 - Validate TypeScript interfaces
 - Build out the full application stack

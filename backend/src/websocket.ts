@@ -1,7 +1,18 @@
+import { Server as HTTPServer } from 'http';
 import { Server } from 'socket.io';
-import type { WebSocketEvents } from './types';
+import { config } from './config.js';
 
-export function setupWebSocket(io: Server) {
+let io: Server | null = null;
+
+export function initWebSocket(httpServer: HTTPServer): Server {
+  io = new Server(httpServer, {
+    cors: {
+      origin: config.corsOrigin,
+      credentials: true,
+    },
+    transports: ['websocket', 'polling'],
+  });
+
   io.on('connection', socket => {
     console.log('✅ Client connected:', socket.id);
 
@@ -34,6 +45,7 @@ export function setupWebSocket(io: Server) {
       socket.emit('pong', { timestamp: Date.now() });
     });
 
+    // Handle disconnect
     socket.on('disconnect', reason => {
       console.log(`❌ Client disconnected: ${socket.id} (${reason})`);
     });
@@ -44,99 +56,22 @@ export function setupWebSocket(io: Server) {
   });
 
   console.log('🌐 WebSocket server initialized');
+  return io;
 }
 
-/**
- * Broadcast market price update
- */
-export function broadcastMarketUpdate(
-  io: Server,
-  marketId: string,
-  data: {
-    yesPrice: string;
-    noPrice: string;
-    totalVolume: string;
-    totalLiquidity: string;
+export function getIO(): Server | null {
+  return io;
+}
+
+// Helper functions for broadcasting events (for future use)
+export function broadcastToMarket(marketId: string, event: string, data: any) {
+  if (io) {
+    io.to(`market:${marketId}`).emit(event, data);
   }
-) {
-  const event: WebSocketEvents['market:update'] = {
-    marketId,
-    ...data,
-    timestamp: Date.now(),
-  };
-
-  io.to(`market:${marketId}`).emit('market:update', event);
-  console.log(`📡 Broadcast market update for ${marketId}`);
 }
 
-/**
- * Broadcast market resolution
- */
-export function broadcastMarketResolved(io: Server, marketId: string, outcome: number) {
-  const event: WebSocketEvents['market:resolved'] = {
-    marketId,
-    outcome,
-    timestamp: Date.now(),
-  };
-
-  io.to(`market:${marketId}`).emit('market:resolved', event);
-  console.log(`🎯 Broadcast market resolved: ${marketId} => ${outcome}`);
-}
-
-/**
- * Notify user of position update
- */
-export function notifyPositionUpdate(
-  io: Server,
-  userId: string,
-  data: {
-    marketId: string;
-    value: string;
-    profitLoss: string;
+export function broadcastToUser(userId: string, event: string, data: any) {
+  if (io) {
+    io.to(`user:${userId}`).emit(event, data);
   }
-) {
-  const event: WebSocketEvents['position:update'] = {
-    ...data,
-  };
-
-  io.to(`user:${userId}`).emit('position:update', event);
-}
-
-/**
- * Notify wager matched
- */
-export function notifyWagerMatched(
-  io: Server,
-  creatorId: string,
-  wagerId: string,
-  takerAddress: string
-) {
-  const event: WebSocketEvents['wager:matched'] = {
-    wagerId,
-    taker: takerAddress,
-  };
-
-  io.to(`user:${creatorId}`).emit('wager:matched', event);
-  console.log(`🤝 Notify wager matched: ${wagerId}`);
-}
-
-/**
- * Broadcast to all connected clients
- */
-export function broadcastGlobal(io: Server, event: string, data: any) {
-  io.emit(event, data);
-}
-
-/**
- * Get connection statistics
- */
-export function getConnectionStats(io: Server) {
-  const sockets = io.sockets.sockets;
-  const rooms = io.sockets.adapter.rooms;
-
-  return {
-    totalConnections: sockets.size,
-    totalRooms: rooms.size,
-    timestamp: Date.now(),
-  };
 }

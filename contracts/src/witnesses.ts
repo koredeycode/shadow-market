@@ -1,25 +1,23 @@
 // Witness function implementations
 // These provide private inputs to the ZK circuits
 
-import { Bytes } from '@midnight-ntwrk/compact-runtime';
-
 /**
  * Get the local secret key for the current user
  * Used for proving ownership of positions
  */
-export function localSecretKey(): Bytes<32> {
+export function localSecretKey(): Uint8Array {
   // In production, this would derive from user's wallet
   // For now, return a test key
-  return new Uint8Array(32).fill(0) as Bytes<32>;
+  return new Uint8Array(32).fill(0);
 }
 
 /**
  * Generate a unique nonce for commitment
  */
-export function userNonce(): Bytes<32> {
+export function userNonce(): Uint8Array {
   const nonce = new Uint8Array(32);
   crypto.getRandomValues(nonce);
-  return nonce as Bytes<32>;
+  return nonce;
 }
 
 /**
