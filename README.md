@@ -16,6 +16,8 @@ ShadowMarket combines the best of prediction markets (like Polymarket) with the 
 
 ## 🚀 Quick Start
 
+> **⚠️ Note**: Currently using stub smart contracts. See [contracts/CONTRACT_STATUS.md](contracts/CONTRACT_STATUS.md) for details.
+
 ```bash
 # Install dependencies
 pnpm install

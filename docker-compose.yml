@@ -1,7 +1,5 @@
 version: '3.8'
 
-name: shadow-market
-
 services:
   # ==============================================
   # Midnight Network Services
@@ -52,53 +50,60 @@ services:
       - shadow-network
 
   # ==============================================
-  # Backend Services
+  # Backend Services (Using Local Instances)
   # ==============================================
-
-  postgres:
-    image: postgres:16-alpine
-    container_name: shadow-postgres
-    restart: unless-stopped
-    ports:
-      - '5432:5432'
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: shadowmarket
-      POSTGRES_HOST_AUTH_METHOD: trust
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - shadow-network
-
-  redis:
-    image: redis:7-alpine
-    container_name: shadow-redis
-    restart: unless-stopped
-    ports:
-      - '6379:6379'
-    command: redis-server --appendonly yes
-    volumes:
-      - redis-data:/data
-    healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    networks:
-      - shadow-network
+  # PostgreSQL and Redis services are commented out because
+  # local instances are already running on the host machine.
+  #
+  # Uncomment these if you want to use containerized services instead:
+  #
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: shadow-postgres
+  #   restart: unless-stopped
+  #   ports:
+  #     - '5432:5432'
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: postgres
+  #     POSTGRES_DB: shadowmarket
+  #     POSTGRES_HOST_AUTH_METHOD: trust
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ['CMD-SHELL', 'pg_isready -U postgres']
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
+  #   networks:
+  #     - shadow-network
+  #
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: shadow-redis
+  #   restart: unless-stopped
+  #   ports:
+  #     - '6379:6379'
+  #   command: redis-server --appendonly yes
+  #   volumes:
+  #     - redis-data:/data
+  #   healthcheck:
+  #     test: ['CMD', 'redis-cli', 'ping']
+  #     interval: 5s
+  #     timeout: 3s
+  #     retries: 5
+  #   networks:
+  #     - shadow-network
 
 networks:
   shadow-network:
     driver: bridge
 
-volumes:
-  postgres-data:
-    driver: local
-  redis-data:
-    driver: local
+# Volumes are commented out since we're using local PostgreSQL and Redis
+# Uncomment if you enable the containerized services:
+#
+# volumes:
+#   postgres-data:
+#     driver: local
+#   redis-data:
+#     driver: local

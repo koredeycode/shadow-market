@@ -13,8 +13,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@midnight-ntwrk/midnight-js-contracts": "^2.4.0",
-    "@midnight-ntwrk/midnight-js-types": "^2.4.0",
+    "@midnight-ntwrk/midnight-js-contracts": "^4.0.2",
+    "@midnight-ntwrk/midnight-js-types": "^4.0.2",
     "@shadow-market/contracts": "workspace:*"
   },
   "devDependencies": {

@@ -1,4 +1,5 @@
 import { randomBytes } from 'crypto';
+import 'dotenv/config';
 import { db } from './client';
 import { markets, oracles, users } from './schema';
 

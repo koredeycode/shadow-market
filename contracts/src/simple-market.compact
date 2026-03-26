@@ -1,0 +1,143 @@
+pragma language_version 0.22;
+
+import CompactStandardLibrary;
+
+// Market states
+export enum MarketState {
+  OPEN,
+  CLOSED,
+  RESOLVED
+}
+
+// Market configuration (set at deployment)
+export ledger state: MarketState;
+export ledger question: Opaque<'string'>;
+export ledger endTime: Field;
+export ledger outcome: Maybe<Field>;  // 1 = YES, 0 = NO
+
+// Bet tracking (public totals)
+export ledger totalYesBets: Field;
+export ledger totalNoBets: Field;
+export ledger totalBets: Counter;
+
+// User bet commitments (private bet amounts and sides)
+export ledger betCommitments: Map<Bytes<32>, Bytes<32>>;  // userPubKey -> commitment
+
+constructor(
+  marketQuestion: Opaque<'string'>,
+  marketEndTime: Field
+) {
+  state = MarketState.OPEN;
+  question = disclose(marketQuestion);
+  endTime = marketEndTime;
+  outcome = none<Field>();
+  totalYesBets = 0;
+  totalNoBets = 0;
+  totalBets.increment(0);
+}
+
+// Witness: User's secret key for identity
+witness userSecretKey(): Bytes<32>;
+
+// Witness: Bet details (private)
+witness betAmount(): Field;
+witness betSide(): Field;  // true = YES, false = NO
+witness betNonce(): Bytes<32>;
+
+// Place a bet
+export circuit placeBet(): [] {
+  assert(state == MarketState.OPEN, "Market not open");
+  
+  const amount = betAmount();
+  const side = betSide();
+  const nonce = betNonce();
+  
+  assert(amount > 0, "Invalid bet amount");
+  
+  //Update public totals - add to both and one will be zero
+  const sideField = side as Field;
+  totalYesBets = totalYesBets + (sideField * amount);
+  totalNoBets = totalNoBets + ((1 - sideField) * amount);
+  
+  // Create commitment: hash(amount, side, nonce)
+  const commitment = persistentHash<Vector<3, Bytes<32>>>([
+    amount as Bytes<32>,
+    sideField as Bytes<32>,
+    nonce
+  ]);
+  
+  // Store commitment for this user
+  const userPubKey = derivePublicKey(userSecretKey());
+  betCommitments.insert(userPubKey, disclose(commitment));
+  
+  totalBets.increment(1);
+}
+
+// Close market (no more bets)
+export circuit closeMarket(): [] {
+  assert(state == MarketState.OPEN, "Market not open");
+  
+  state = MarketState.CLOSED;
+}
+
+// Resolve market with outcome
+export circuit resolveMarket(result: Field): [] {
+  assert(state == MarketState.CLOSED, "Market not closed");
+  
+  outcome = disclose(some<Field>(result));
+  state = MarketState.RESOLVED;
+}
+
+// Claim winnings (requires revealing bet)
+export circuit claimWinnings(): Field {
+  assert(state == MarketState.RESOLVED, "Market not resolved");
+  
+  const amount = betAmount();
+  const side = betSide();
+  const nonce = betNonce();
+  
+  // Verify commitment matches
+  const commitment = persistentHash<Vector<3, Bytes<32>>>([
+    amount as Bytes<32>,
+    (side as Field) as Bytes<32>,
+    nonce
+  ]);
+  
+  const userPubKey = derivePublicKey(userSecretKey());
+  const storedCommitment = betCommitments.get(userPubKey).unwrap();
+  
+  assert(commitment == storedCommitment, "Invalid bet proof");
+  
+  // Check if user won
+  const wonBet = (side == outcome.value);
+  assert(wonBet, "Bet did not win");
+  
+  // Simple payout: return the bet amount (1:1 for winners)
+  // In production, calculate based on pool ratios
+  const payout = amount;
+  
+  // Remove commitment (can only claim once)
+  betCommitments.remove(userPubKey);
+  
+  return payout;
+}
+
+// Helper: Derive public key from secret key
+circuit derivePublicKey(secretKey: Bytes<32>): Bytes<32> {
+  return persistentHash<Bytes<32>>(secretKey);
+}
+
+// Get YES total
+export circuit getYesTotal(): Field {
+  return totalYesBets;
+}
+
+// Get NO total 
+export circuit getNoTotal(): Field {
+  return totalNoBets;
+}
+
+// Get bet count
+export circuit getBetCount(): Field {
+  return totalBets.value;
+}
