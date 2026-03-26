@@ -59,16 +59,28 @@ export function MarketDetail() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="xl" sx={{ mt: 4, textAlign: 'center' }}>
-        <CircularProgress />
+      <Container maxWidth="xl" sx={{ py: 8, textAlign: 'center' }}>
+        <CircularProgress size={50} thickness={3.5} />
+        <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
+          Loading market details...
+        </Typography>
       </Container>
     );
   }
 
   if (error || !market) {
     return (
-      <Container maxWidth="xl" sx={{ mt: 4 }}>
-        <Alert severity="error">Failed to load market details</Alert>
+      <Container maxWidth="xl" sx={{ py: 8 }}>
+        <Alert
+          severity="error"
+          sx={{
+            borderRadius: 3,
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            bgcolor: 'rgba(239, 68, 68, 0.1)',
+          }}
+        >
+          Failed to load market details. Please try again.
+        </Alert>
       </Container>
     );
   }
@@ -81,46 +93,109 @@ export function MarketDetail() {
   }[market.status] as 'success' | 'default' | 'warning' | 'error';
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 8 }}>
-      <Button startIcon={<ArrowBack />} onClick={() => navigate('/markets')} sx={{ mb: 2 }}>
+    <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 } }}>
+      <Button
+        startIcon={<ArrowBack />}
+        onClick={() => navigate('/markets')}
+        sx={{
+          mb: 3,
+          fontWeight: 600,
+          '&:hover': {
+            bgcolor: 'rgba(124, 58, 237, 0.08)',
+          },
+        }}
+      >
         Back to Markets
       </Button>
 
       {/* Market Header */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-          <Chip label={market.category} size="small" sx={{ textTransform: 'capitalize' }} />
-          <Chip label={market.status} color={statusColor} size="small" />
+      <Paper
+        sx={{
+          p: { xs: 3, md: 4 },
+          mb: 4,
+          background: 'linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(26, 26, 26, 0.8) 100%)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 3,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+          <Chip
+            label={market.category}
+            size="medium"
+            sx={{
+              textTransform: 'capitalize',
+              fontWeight: 600,
+              bgcolor: 'rgba(124, 58, 237, 0.15)',
+              color: 'primary.light',
+              borderRadius: 2,
+            }}
+          />
+          <Chip
+            label={market.status}
+            color={statusColor}
+            size="medium"
+            sx={{ fontWeight: 600, borderRadius: 2 }}
+          />
         </Box>
 
-        <Typography variant="h4" gutterBottom>
+        <Typography
+          variant="h3"
+          gutterBottom
+          sx={{
+            fontWeight: 700,
+            fontSize: { xs: '1.75rem', md: '2.25rem' },
+            lineHeight: 1.3,
+            mb: 2,
+          }}
+        >
           {market.question}
         </Typography>
 
         {market.description && (
-          <Typography color="text.secondary" sx={{ mb: 3 }}>
+          <Typography
+            color="text.secondary"
+            sx={{ mb: 4, fontSize: '1.05rem', lineHeight: 1.7 }}
+          >
             {market.description}
           </Typography>
         )}
 
         {/* Price Display */}
-        <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid item xs={12} md={6}>
             <Box
               sx={{
-                p: 2,
-                borderRadius: 2,
-                bgcolor: 'success.dark',
+                p: 3,
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%)',
+                border: '2px solid rgba(16, 185, 129, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 8px 24px rgba(16, 185, 129, 0.3)',
+                  borderColor: 'rgba(16, 185, 129, 0.5)',
+                },
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <TrendingUp />
-                <Typography variant="h6">YES</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 2,
+                    bgcolor: 'rgba(16, 185, 129, 0.2)',
+                  }}
+                >
+                  <TrendingUp sx={{ color: 'success.main', fontSize: 28 }} />
+                </Box>
+                <Typography variant="h5" fontWeight={700} sx={{ color: 'success.light' }}>
+                  YES
+                </Typography>
               </Box>
-              <Typography variant="h4" fontWeight="bold">
+              <Typography variant="h3" fontWeight={800} sx={{ color: 'success.main' }}>
                 {(market.yesPrice * 100).toFixed(1)}%
               </Typography>
             </Box>
@@ -129,19 +204,36 @@ export function MarketDetail() {
           <Grid item xs={12} md={6}>
             <Box
               sx={{
-                p: 2,
-                borderRadius: 2,
-                bgcolor: 'error.dark',
+                p: 3,
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%)',
+                border: '2px solid rgba(239, 68, 68, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 8px 24px rgba(239, 68, 68, 0.3)',
+                  borderColor: 'rgba(239, 68, 68, 0.5)',
+                },
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <TrendingDown />
-                <Typography variant="h6">NO</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 2,
+                    bgcolor: 'rgba(239, 68, 68, 0.2)',
+                  }}
+                >
+                  <TrendingDown sx={{ color: 'error.main', fontSize: 28 }} />
+                </Box>
+                <Typography variant="h5" fontWeight={700} sx={{ color: 'error.light' }}>
+                  NO
+                </Typography>
               </Box>
-              <Typography variant="h4" fontWeight="bold">
+              <Typography variant="h3" fontWeight={800} sx={{ color: 'error.main' }}>
                 {(market.noPrice * 100).toFixed(1)}%
               </Typography>
             </Box>
@@ -150,13 +242,18 @@ export function MarketDetail() {
 
         {/* Action Button */}
         {market.status === 'OPEN' && (
-          <Grid container spacing={2}>
+          <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <Button
                 variant="contained"
                 fullWidth
                 size="large"
                 onClick={() => setBetModalOpen(true)}
+                sx={{
+                  py: 2,
+                  fontSize: '1.1rem',
+                  fontWeight: 700,
+                }}
               >
                 Place AMM Bet
               </Button>
@@ -167,6 +264,11 @@ export function MarketDetail() {
                 fullWidth
                 size="large"
                 onClick={() => setP2pModalOpen(true)}
+                sx={{
+                  py: 2,
+                  fontSize: '1.1rem',
+                  fontWeight: 700,
+                }}
               >
                 Create P2P Wager
               </Button>
@@ -175,15 +277,48 @@ export function MarketDetail() {
         )}
 
         {market.status === 'RESOLVED' && market.outcome !== null && (
-          <Alert severity="info" sx={{ mt: 2 }}>
-            Market resolved: {market.outcome === 1 ? 'YES' : 'NO'} wins
+          <Alert
+            severity="info"
+            sx={{
+              mt: 2,
+              borderRadius: 3,
+              border: '1px solid rgba(6, 182, 212, 0.3)',
+              bgcolor: 'rgba(6, 182, 212, 0.1)',
+              fontSize: '1.05rem',
+            }}
+          >
+            Market resolved: <strong>{market.outcome === 1 ? 'YES' : 'NO'}</strong> wins
           </Alert>
         )}
       </Paper>
 
       {/* Tabs */}
-      <Paper sx={{ mb: 3 }}>
-        <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}>
+      <Paper
+        sx={{
+          mb: 4,
+          borderRadius: 3,
+          overflow: 'hidden',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+        }}
+      >
+        <Tabs
+          value={tabValue}
+          onChange={(_, v) => setTabValue(v)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            '& .MuiTab-root': {
+              fontWeight: 600,
+              fontSize: '1rem',
+              textTransform: 'none',
+              py: 2.5,
+              minHeight: 'auto',
+            },
+            '& .Mui-selected': {
+              color: 'primary.main',
+            },
+          }}
+        >
           <Tab label="Overview" />
           <Tab label="Chart" />
           <Tab label="P2P Wagers" />
@@ -198,16 +333,26 @@ export function MarketDetail() {
       </TabPanel>
 
       <TabPanel value={tabValue} index={1}>
-        <Paper sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
+        <Paper
+          sx={{
+            p: { xs: 2, md: 3 },
+            borderRadius: 3,
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+          }}
+        >
+          <Box sx={{ display: 'flex', gap: 1.5, mb: 3, flexWrap: 'wrap' }}>
             {(['1h', '24h', '7d', '30d', 'all'] as const).map(range => (
               <Button
                 key={range}
                 variant={timeRange === range ? 'contained' : 'outlined'}
-                size="small"
+                size="medium"
                 onClick={() => setTimeRange(range)}
+                sx={{
+                  minWidth: 60,
+                  fontWeight: 600,
+                }}
               >
-                {range}
+                {range.toUpperCase()}
               </Button>
             ))}
           </Box>

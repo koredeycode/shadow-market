@@ -14,33 +14,36 @@
     "lint": "eslint src --ext ts,tsx"
   },
   "dependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-router-dom": "^6.21.1",
-    "@tanstack/react-query": "^5.17.9",
-    "@mui/material": "^7.0.0",
-    "@mui/icons-material": "^7.0.0",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
-    "zustand": "^4.4.7",
-    "recharts": "^2.10.3",
-    "socket.io-client": "^4.6.2",
-    "react-hook-form": "^7.49.3",
     "@hookform/resolvers": "^3.3.4",
-    "react-hot-toast": "^2.4.1",
-    "zod": "^3.22.4",
+    "@midnight-ntwrk/dapp-connector-api": "^4.0.1",
+    "@mui/icons-material": "^7.0.0",
+    "@mui/material": "^7.0.0",
+    "@tanstack/react-query": "^5.17.9",
     "axios": "^1.6.5",
-    "date-fns": "^3.0.0"
+    "date-fns": "^3.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.49.3",
+    "react-hot-toast": "^2.4.1",
+    "react-router-dom": "^6.21.1",
+    "recharts": "^2.10.3",
+    "semver": "^7.7.4",
+    "socket.io-client": "^4.6.2",
+    "zod": "^3.22.4",
+    "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.2.0",
+    "@testing-library/react": "^14.1.2",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/semver": "^7.7.1",
     "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^9.17.0",
     "typescript": "^5.7.2",
     "vite": "^6.0.3",
-    "vitest": "^2.1.8",
-    "@testing-library/react": "^14.1.2",
-    "@testing-library/jest-dom": "^6.2.0",
-    "eslint": "^9.17.0"
+    "vitest": "^2.1.8"
   }
 }

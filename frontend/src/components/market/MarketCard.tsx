@@ -29,20 +29,35 @@ export function MarketCard({ market }: MarketCardProps) {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        transition: 'all 0.2s',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: 4,
+          transform: 'translateY(-6px)',
+          boxShadow: '0 12px 40px rgba(124, 58, 237, 0.2)',
+          borderColor: 'rgba(124, 58, 237, 0.3)',
         },
       }}
     >
-      <CardContent sx={{ flex: 1 }}>
+      <CardContent sx={{ flex: 1, p: 3 }}>
         {/* Category & Status */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-          <Chip label={market.category} size="small" sx={{ textTransform: 'capitalize' }} />
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2.5 }}>
+          <Chip
+            label={market.category}
+            size="small"
+            sx={{
+              textTransform: 'capitalize',
+              fontWeight: 600,
+              bgcolor: 'rgba(124, 58, 237, 0.15)',
+              color: 'primary.light',
+              borderRadius: 2,
+            }}
+          />
           <Chip
             label={market.status}
             size="small"
+            sx={{
+              fontWeight: 600,
+              borderRadius: 2,
+            }}
             color={
               market.status === 'OPEN'
                 ? 'success'
@@ -57,42 +72,70 @@ export function MarketCard({ market }: MarketCardProps) {
         <Typography
           variant="h6"
           sx={{
-            mb: 2,
+            mb: 3,
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
             minHeight: '3.6em',
+            fontWeight: 600,
+            lineHeight: 1.4,
+            fontSize: '1.1rem',
           }}
         >
           {market.question}
         </Typography>
 
         {/* Price indicators */}
-        <Box sx={{ mb: 2 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <TrendingUp fontSize="small" color="success" />
-              <Typography variant="body2" fontWeight={600}>
-                YES {yesPercent.toFixed(0)}%
-              </Typography>
+        <Box sx={{ mb: 2.5 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  px: 1.5,
+                  py: 0.5,
+                  bgcolor: 'rgba(16, 185, 129, 0.15)',
+                  borderRadius: 2,
+                }}
+              >
+                <TrendingUp fontSize="small" sx={{ color: 'success.main' }} />
+                <Typography variant="body2" fontWeight={700} sx={{ color: 'success.main' }}>
+                  YES {yesPercent.toFixed(0)}%
+                </Typography>
+              </Box>
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Typography variant="body2" fontWeight={600}>
-                NO {noPercent.toFixed(0)}%
-              </Typography>
-              <TrendingDown fontSize="small" color="error" />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  px: 1.5,
+                  py: 0.5,
+                  bgcolor: 'rgba(239, 68, 68, 0.15)',
+                  borderRadius: 2,
+                }}
+              >
+                <Typography variant="body2" fontWeight={700} sx={{ color: 'error.main' }}>
+                  NO {noPercent.toFixed(0)}%
+                </Typography>
+                <TrendingDown fontSize="small" sx={{ color: 'error.main' }} />
+              </Box>
             </Box>
           </Box>
           <LinearProgress
             variant="determinate"
             value={yesPercent}
             sx={{
-              height: 8,
-              borderRadius: 1,
-              bgcolor: 'error.dark',
+              height: 10,
+              borderRadius: 2,
+              bgcolor: 'rgba(239, 68, 68, 0.2)',
               '& .MuiLinearProgress-bar': {
                 bgcolor: 'success.main',
+                borderRadius: 2,
               },
             }}
           />
@@ -102,29 +145,35 @@ export function MarketCard({ market }: MarketCardProps) {
         <Box
           sx={{
             display: 'flex',
-            gap: 2,
-            pt: 2,
+            gap: 3,
+            pt: 2.5,
             borderTop: 1,
-            borderColor: 'divider',
+            borderColor: 'rgba(255, 255, 255, 0.08)',
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <ShowChart fontSize="small" sx={{ color: 'text.secondary' }} />
-            <Typography variant="caption" color="text.secondary">
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ShowChart fontSize="small" sx={{ color: 'secondary.main' }} />
+            <Typography variant="body2" fontWeight={600} sx={{ color: 'text.secondary' }}>
               {volume}
             </Typography>
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <AccessTime fontSize="small" sx={{ color: 'text.secondary' }} />
-            <Typography variant="caption" color="text.secondary">
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <AccessTime fontSize="small" sx={{ color: 'warning.main' }} />
+            <Typography variant="body2" fontWeight={600} sx={{ color: 'text.secondary' }}>
               {timeLeft}
             </Typography>
           </Box>
         </Box>
       </CardContent>
 
-      <CardActions sx={{ p: 2, pt: 0 }}>
-        <Button component={RouterLink} to={`/markets/${market.id}`} variant="contained" fullWidth>
+      <CardActions sx={{ p: 3, pt: 0 }}>
+        <Button
+          component={RouterLink}
+          to={`/markets/${market.id}`}
+          variant="contained"
+          fullWidth
+          sx={{ py: 1.25, fontWeight: 600 }}
+        >
           Trade Now
         </Button>
       </CardActions>

@@ -1,22 +1,31 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useWalletStore } from '../store/wallet.store';
+import { ConnectedAPI, type InitialAPI } from '@midnight-ntwrk/dapp-connector-api';
+import semver from 'semver';
 
-// Declare Lace wallet types
+// Declare global window types for Lace wallet
 declare global {
   interface Window {
-    midnight?: {
-      isLace?: boolean;
-      enable: () => Promise<any>;
-      getAddress: () => Promise<string>;
-      getBalance: () => Promise<string>;
-      getNetworkId: () => Promise<string>;
-      signTransaction: (tx: any) => Promise<any>;
-      on?: (event: string, handler: (...args: any[]) => void) => void;
-      off?: (event: string, handler: (...args: any[]) => void) => void;
-    };
+    midnight?: Record<string, any>;
   }
 }
+
+const COMPATIBLE_CONNECTOR_API_VERSION = '4.x';
+const NETWORK_ID = import.meta.env.VITE_NETWORK_ID || 'undeployed';
+
+// Find the first compatible Lace wallet from window.midnight object
+const getFirstCompatibleWallet = (): InitialAPI | undefined => {
+  if (!window.midnight) return undefined;
+  
+  return Object.values(window.midnight).find(
+    (wallet): wallet is InitialAPI =>
+      !!wallet &&
+      typeof wallet === 'object' &&
+      'apiVersion' in wallet &&
+      semver.satisfies(wallet.apiVersion, COMPATIBLE_CONNECTOR_API_VERSION),
+  );
+};
 
 export function useWallet() {
   const {
@@ -32,9 +41,11 @@ export function useWallet() {
     setConnecting,
   } = useWalletStore();
 
+  const connectedAPIRef = useRef<ConnectedAPI | null>(null);
+
   // Check if Lace wallet is installed
   const isWalletInstalled = useCallback(() => {
-    return typeof window !== 'undefined' && !!window.midnight;
+    return typeof window !== 'undefined' && !!getFirstCompatibleWallet();
   }, []);
 
   // Connect to wallet
@@ -45,69 +56,84 @@ export function useWallet() {
       return;
     }
 
+    if (isConnecting || isConnected) return;
+
     setConnecting(true);
 
     try {
-      // Enable wallet
-      const walletProvider = await window.midnight!.enable();
-
-      // Get wallet details
-      const [walletAddress, walletBalance, walletNetworkId] = await Promise.all([
-        window.midnight!.getAddress(),
-        window.midnight!.getBalance(),
-        window.midnight!.getNetworkId(),
-      ]);
-
-      // Validate network
-      const expectedNetworkId = import.meta.env.VITE_NETWORK_ID || 'undeployed';
-      if (walletNetworkId !== expectedNetworkId) {
-        toast.error(`Wrong network. Please switch to ${expectedNetworkId} network in Lace wallet.`);
-        setConnecting(false);
-        return;
+      const initialAPI = getFirstCompatibleWallet();
+      
+      if (!initialAPI) {
+        throw new Error('Could not find compatible Midnight Lace wallet');
       }
 
-      // Connect to store
-      connect(walletProvider, walletAddress, walletNetworkId);
+      console.log('Connecting to Lace wallet with network:', NETWORK_ID);
+      
+      // Connect to wallet with network ID
+      const connectedAPI = await initialAPI.connect(NETWORK_ID);
+      connectedAPIRef.current = connectedAPI;
+
+      // Get connection status and configuration
+      const connectionStatus = await connectedAPI.getConnectionStatus();
+      console.log('Connection status:', connectionStatus);
+
+      const shieldedAddresses = await connectedAPI.getShieldedAddresses();
+      console.log('Shielded addresses:', shieldedAddresses);
+
+      // Use shielded coin public key as the wallet address
+      const walletAddress = shieldedAddresses.shieldedCoinPublicKey;
+      
+      // Get balance (placeholder - might need different method)
+      const walletBalance = '0'; // TODO: Implement balance fetching
+
+      connect(connectedAPI, walletAddress, NETWORK_ID);
       updateBalance(walletBalance);
 
       toast.success('Wallet connected successfully!');
     } catch (error) {
       console.error('Failed to connect wallet:', error);
-      toast.error('Failed to connect wallet. Please try again.');
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Failed to connect wallet. Please try again.';
+      toast.error(errorMessage);
       setConnecting(false);
     }
-  }, [isWalletInstalled, connect, updateBalance, setConnecting]);
+  }, [isWalletInstalled, connect, updateBalance, setConnecting, isConnecting, isConnected]);
 
   // Disconnect wallet
   const disconnectWallet = useCallback(() => {
+    connectedAPIRef.current = null;
     disconnect();
     toast.success('Wallet disconnected');
   }, [disconnect]);
 
   // Refresh balance
   const refreshBalance = useCallback(async () => {
-    if (!isConnected || !window.midnight) return;
+    if (!isConnected || !connectedAPIRef.current) return;
 
     try {
-      const newBalance = await window.midnight.getBalance();
+      // TODO: Implement balance refresh when API method is available
+      // The DApp Connector API might provide balance through getConfiguration()
+      const newBalance = '0';
       updateBalance(newBalance);
     } catch (error) {
       console.error('Failed to refresh balance:', error);
     }
   }, [isConnected, updateBalance]);
 
-  // Sign transaction
+  // Sign and submit transaction
   const signTransaction = useCallback(
     async (transaction: any) => {
-      if (!isConnected || !window.midnight) {
+      if (!isConnected || !connectedAPIRef.current) {
         throw new Error('Wallet not connected');
       }
 
       try {
-        const signedTx = await window.midnight.signTransaction(transaction);
-        return signedTx;
+        // Use ConnectedAPI's transaction methods
+        const txHash = await connectedAPIRef.current.submitTransaction(transaction);
+        return txHash;
       } catch (error) {
-        console.error('Failed to sign transaction:', error);
+        console.error('Failed to sign/submit transaction:', error);
         throw error;
       }
     },
@@ -123,36 +149,22 @@ export function useWallet() {
     return num.toFixed(2);
   }, [balance]);
 
-  // Format address for display (0x1234...5678)
+  // Format address for display (first 8...last 6 chars)
   const formattedAddress = useCallback(() => {
     if (!address) return '';
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+    if (address.length <= 20) return address;
+    return `${address.slice(0, 8)}...${address.slice(-6)}`;
   }, [address]);
 
   // Setup event listeners for account/network changes
   useEffect(() => {
-    if (!window.midnight?.on) return;
-
-    const handleAccountsChanged = () => {
-      // Disconnect and prompt user to reconnect
-      disconnect();
-      toast.info('Account changed. Please reconnect your wallet.');
-    };
-
-    const handleNetworkChanged = () => {
-      // Disconnect and prompt user to reconnect
-      disconnect();
-      toast.info('Network changed. Please reconnect your wallet.');
-    };
-
-    window.midnight.on('accountsChanged', handleAccountsChanged);
-    window.midnight.on('networkChanged', handleNetworkChanged);
-
+    // TODO: Check if ConnectedAPI provides event listeners for state changes
+    // The DApp Connector API v4.0 may handle this differently
+    // For now, event listeners are not implemented
+    
+    // Cleanup on unmount
     return () => {
-      if (window.midnight?.off) {
-        window.midnight.off('accountsChanged', handleAccountsChanged);
-        window.midnight.off('networkChanged', handleNetworkChanged);
-      }
+      // Cleanup if needed
     };
   }, [disconnect]);
 

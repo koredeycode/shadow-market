@@ -38,9 +38,14 @@ function StatCard({ title, value, icon, color }: StatCardProps) {
         background: theme =>
           `linear-gradient(135deg, ${theme.palette[color].dark} 0%, ${theme.palette[color].main} 100%)`,
         color: 'white',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        '&:hover': {
+          transform: 'translateY(-6px)',
+          boxShadow: theme => `0 12px 40px ${theme.palette[color].dark}80`,
+        },
       }}
     >
-      <CardContent>
+      <CardContent sx={{ p: 3 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Box>
             <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>
@@ -107,13 +112,18 @@ export function Analytics() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 } }}>
       {/* Header */}
-      <Box mb={4}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
+      <Box mb={5}>
+        <Typography
+          variant="h3"
+          fontWeight={700}
+          gutterBottom
+          sx={{ fontSize: { xs: '2rem', md: '2.5rem' } }}
+        >
           Analytics Dashboard
         </Typography>
-        <Typography variant="body1" color="text.secondary">
+        <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem' }}>
           Platform statistics, market trends, and performance metrics
         </Typography>
       </Box>
@@ -161,16 +171,34 @@ export function Analytics() {
       ) : null}
 
       {/* Charts */}
-      <Grid container spacing={3} mb={4}>
+      <Grid container spacing={3} mb={5}>
         <Grid item xs={12}>
-          <MarketVolumeChart height={350} />
+          <MarketVolumeChart height={380} />
         </Grid>
       </Grid>
 
       {/* Tabs for Additional Analytics */}
-      <Card>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={activeTab} onChange={(_, val) => setActiveTab(val)}>
+      <Card
+        sx={{
+          borderRadius: 3,
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+        }}
+      >
+        <Box sx={{ borderBottom: 1, borderColor: 'rgba(255, 255, 255, 0.08)' }}>
+          <Tabs
+            value={activeTab}
+            onChange={(_, val) => setActiveTab(val)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
+              '& .MuiTab-root': {
+                fontWeight: 600,
+                fontSize: '1rem',
+                textTransform: 'none',
+                py: 2.5,
+              },
+            }}
+          >
             <Tab label="Top Markets" />
             <Tab label="Top Traders" />
             <Tab label="Category Breakdown" />

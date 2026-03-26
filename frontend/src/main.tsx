@@ -1,3 +1,4 @@
+import '@midnight-ntwrk/dapp-connector-api';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';

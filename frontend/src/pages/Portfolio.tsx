@@ -44,9 +44,14 @@ function StatCard({ title, value, icon, trend, color }: StatCardProps) {
         background: theme =>
           `linear-gradient(135deg, ${theme.palette[color].dark} 0%, ${theme.palette[color].main} 100%)`,
         color: 'white',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        '&:hover': {
+          transform: 'translateY(-6px)',
+          boxShadow: theme => `0 12px 40px ${theme.palette[color].dark}80`,
+        },
       }}
     >
-      <CardContent>
+      <CardContent sx={{ p: 3 }}>
         <Box display="flex" justifyContent="space-between" alignItems="flex-start">
           <Box>
             <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>
@@ -100,9 +105,12 @@ export function Portfolio() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-          <CircularProgress />
+      <Container maxWidth="xl" sx={{ py: 8 }}>
+        <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="50vh" gap={2}>
+          <CircularProgress size={50} thickness={3.5} />
+          <Typography variant="body1" color="text.secondary">
+            Loading portfolio...
+          </Typography>
         </Box>
       </Container>
     );
@@ -149,14 +157,26 @@ export function Portfolio() {
   const isProfitable = totalPnLNum >= 0;
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 } }}>
       {/* Header */}
-      <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
+      <Box
+        mb={5}
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        flexWrap="wrap"
+        gap={2}
+      >
         <Box>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
+          <Typography
+            variant="h3"
+            fontWeight={700}
+            gutterBottom
+            sx={{ fontSize: { xs: '2rem', md: '2.5rem' } }}
+          >
             Portfolio
           </Typography>
-          <Typography variant="body1" color="text.secondary">
+          <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem' }}>
             Track your positions, performance, and earnings
           </Typography>
         </Box>
@@ -164,7 +184,7 @@ export function Portfolio() {
       </Box>
 
       {/* Stats Cards */}
-      <Grid container spacing={3} mb={4}>
+      <Grid container spacing={3} mb={5}>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Value"
@@ -215,13 +235,18 @@ export function Portfolio() {
       </Grid>
 
       {/* Portfolio Value Chart */}
-      <Box mb={4}>
-        <PortfolioValueChart height={300} />
+      <Box mb={5}>
+        <PortfolioValueChart height={320} />
       </Box>
 
       {/* Positions Tabs */}
-      <Card>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+      <Card
+        sx={{
+          borderRadius: 3,
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+        }}
+      >
+        <Box sx={{ borderBottom: 1, borderColor: 'rgba(255, 255, 255, 0.08)' }}>
           <Tabs
             value={activeTab}
             onChange={(_, newValue) => setActiveTab(newValue)}

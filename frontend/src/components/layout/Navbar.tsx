@@ -36,35 +36,57 @@ export function Navbar() {
       <AppBar
         position="sticky"
         elevation={0}
-        sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider' }}
+        sx={{
+          bgcolor: 'rgba(26, 26, 26, 0.95)',
+          backdropFilter: 'blur(20px)',
+          borderBottom: 1,
+          borderColor: 'rgba(255, 255, 255, 0.08)',
+        }}
       >
         <Container maxWidth="xl">
-          <Toolbar disableGutters>
+          <Toolbar disableGutters sx={{ py: 0.5 }}>
             {/* Logo */}
             <Typography
               variant="h6"
               component={RouterLink}
               to="/"
               sx={{
-                mr: 4,
-                fontWeight: 700,
-                color: 'primary.main',
+                mr: 5,
+                fontWeight: 800,
+                background: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
                 textDecoration: 'none',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1,
+                fontSize: '1.35rem',
+                letterSpacing: '-0.02em',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  transform: 'scale(1.02)',
+                },
               }}
             >
               🌙 ShadowMarket
             </Typography>
 
             {/* Navigation */}
-            <Box sx={{ flexGrow: 1, display: 'flex', gap: 1 }}>
+            <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, gap: 0.5 }}>
               <Button
                 component={RouterLink}
                 to="/markets"
                 startIcon={<ChartIcon />}
-                sx={{ color: 'text.primary' }}
+                sx={{
+                  color: 'text.primary',
+                  fontWeight: 600,
+                  px: 2.5,
+                  '&:hover': {
+                    bgcolor: 'rgba(124, 58, 237, 0.1)',
+                    color: 'primary.light',
+                  },
+                }}
               >
                 Markets
               </Button>
@@ -72,7 +94,15 @@ export function Navbar() {
                 component={RouterLink}
                 to="/portfolio"
                 startIcon={<WalletIcon />}
-                sx={{ color: 'text.primary' }}
+                sx={{
+                  color: 'text.primary',
+                  fontWeight: 600,
+                  px: 2.5,
+                  '&:hover': {
+                    bgcolor: 'rgba(124, 58, 237, 0.1)',
+                    color: 'primary.light',
+                  },
+                }}
               >
                 Portfolio
               </Button>
@@ -80,7 +110,15 @@ export function Navbar() {
                 component={RouterLink}
                 to="/analytics"
                 startIcon={<AnalyticsIcon />}
-                sx={{ color: 'text.primary' }}
+                sx={{
+                  color: 'text.primary',
+                  fontWeight: 600,
+                  px: 2.5,
+                  '&:hover': {
+                    bgcolor: 'rgba(124, 58, 237, 0.1)',
+                    color: 'primary.light',
+                  },
+                }}
               >
                 Analytics
               </Button>
@@ -91,18 +129,28 @@ export function Navbar() {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Chip
                   label={formattedBalance}
-                  size="small"
+                  size="medium"
                   sx={{
-                    bgcolor: 'success.dark',
-                    color: 'success.contrastText',
-                    fontWeight: 'bold',
+                    bgcolor: 'rgba(16, 185, 129, 0.15)',
+                    color: 'success.light',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    px: 1,
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
                   }}
                 />
                 <Button
                   variant="outlined"
                   startIcon={<WalletIcon />}
                   onClick={handleWalletClick}
-                  sx={{ ml: 1 }}
+                  sx={{
+                    fontWeight: 600,
+                    borderWidth: 2,
+                    '&:hover': {
+                      borderWidth: 2,
+                      bgcolor: 'rgba(124, 58, 237, 0.08)',
+                    },
+                  }}
                 >
                   {formattedAddress}
                 </Button>
@@ -110,10 +158,14 @@ export function Navbar() {
             ) : (
               <Button
                 variant="contained"
-                startIcon={isConnecting ? <CircularProgress size={16} /> : <WalletIcon />}
+                startIcon={isConnecting ? <CircularProgress size={18} /> : <WalletIcon />}
                 onClick={handleWalletClick}
                 disabled={isConnecting}
-                sx={{ ml: 2 }}
+                sx={{
+                  ml: 2,
+                  fontWeight: 700,
+                  px: 3,
+                }}
               >
                 {isConnecting ? 'Connecting...' : 'Connect Wallet'}
               </Button>
