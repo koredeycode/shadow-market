@@ -1,22 +1,11 @@
 import {
-  AccessTime,
-  Cancel,
-  CheckCircle,
-  OpenInNew,
-  TrendingDown,
-  TrendingUp,
-} from '@mui/icons-material';
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Grid,
-  LinearProgress,
-  Link as MuiLink,
-  Typography,
-} from '@mui/material';
+  Activity,
+  Trophy,
+  XCircle,
+  ExternalLink,
+  Clock,
+  Zap,
+} from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
@@ -29,7 +18,7 @@ interface PositionCardProps {
   onClaimSuccess: () => void;
 }
 
-function PositionCard({ position, isActive, onClaimSuccess }: PositionCardProps) {
+function PositionRow({ position, isActive: _isActive, onClaimSuccess }: PositionCardProps) {
   const queryClient = useQueryClient();
   const [claiming, setClaiming] = useState(false);
 
@@ -48,235 +37,173 @@ function PositionCard({ position, isActive, onClaimSuccess }: PositionCardProps)
     },
   });
 
-  const handleClaim = () => {
+  const handleClaim = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setClaiming(true);
     claimMutation.mutate();
   };
 
-  // Format currency
   const formatCurrency = (value: string) => {
     const num = parseFloat(value);
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
     }).format(num);
   };
 
-  // Calculate P&L
   const calculatePnL = () => {
     if (position.isSettled && position.profitLoss) {
       return parseFloat(position.profitLoss);
     }
-
-    // For active positions, calculate unrealized P&L
     const currentValue = parseFloat(position.amount) * position.currentPrice;
     const entryValue = parseFloat(position.amount) * position.entryPrice;
     return currentValue - entryValue;
   };
 
-  // Calculate ROI
   const calculateROI = () => {
     const pnl = calculatePnL();
     const investment = parseFloat(position.amount) * position.entryPrice;
-    return (pnl / investment) * 100;
+    return (pnl / Math.max(investment, 0.01)) * 100;
   };
 
   const pnl = calculatePnL();
   const roi = calculateROI();
   const isProfitable = pnl >= 0;
 
-  // Format time
   const formatTimeRemaining = (endTimeStr: string) => {
     const endTime = new Date(endTimeStr).getTime();
     const now = Date.now();
     const diff = endTime - now;
-
     if (diff <= 0) return 'Ended';
-
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
     if (days > 0) return `${days}d ${hours}h`;
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    return `${minutes}m`;
+    return `${hours}h`;
   };
 
-  // Can claim if settled, has payout, and payout > 0
   const canClaim = position.isSettled && position.payout && parseFloat(position.payout) > 0;
 
-  // Format date
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  const outcomeWon = position.marketStatus === 'resolved' && (
+    (position.side === 'yes' && position.marketOutcome === 1) ||
+    (position.side === 'no' && position.marketOutcome === 0)
+  );
 
   return (
-    <Card
-      sx={{
-        mb: 2,
-        border: 1,
-        borderColor: position.isSettled ? (pnl >= 0 ? 'success.main' : 'error.main') : 'divider',
-        '&:hover': {
-          boxShadow: 3,
-        },
-      }}
-    >
-      <CardContent>
-        <Grid container spacing={2}>
-          {/* Question & Status */}
-          <Grid item xs={12} md={6}>
-            <Box display="flex" alignItems="flex-start" gap={1} mb={1}>
-              <MuiLink
-                component={Link}
-                to={`/markets/${position.marketId}`}
-                sx={{
-                  textDecoration: 'none',
-                  '&:hover': { textDecoration: 'underline' },
-                }}
+    <div className="group border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+      <Link to={`/markets/${position.marketId}`} className="block">
+        {/* Desktop View */}
+        <div className="hidden lg:grid grid-cols-12 gap-4 items-center px-6 py-4">
+          <div className="col-span-4 space-y-1">
+            <h4 className="text-xs font-bold text-white group-hover:text-electric-blue transition-colors truncate">
+              {position.marketQuestion}
+            </h4>
+            <div className="flex items-center gap-2">
+              <span className={`text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-sm border ${
+                position.side === 'yes' ? 'border-success-green/30 text-success-green bg-success-green/5' : 'border-red-500/30 text-red-500 bg-red-500/5'
+              }`}>
+                {position.side}
+              </span>
+              <span className="text-[9px] font-mono text-slate-600 uppercase">ID: {position.marketId.slice(0, 8)}</span>
+            </div>
+          </div>
+
+          <div className="col-span-2 text-center flex flex-col items-center">
+            <span className="text-[9px] font-mono text-slate-500 uppercase mb-1">Status</span>
+            {position.marketStatus === 'resolved' ? (
+              <div className={`flex items-center gap-1.5 text-[10px] font-bold font-mono ${outcomeWon ? 'text-success-green' : 'text-red-500'}`}>
+                {outcomeWon ? <Trophy className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                {outcomeWon ? 'WON' : 'LOST'}
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 text-[10px] font-bold font-mono text-amber-500">
+                <Clock className="w-3 h-3" />
+                {formatTimeRemaining(position.marketEndTime)}
+              </div>
+            )}
+          </div>
+
+          <div className="col-span-2 text-right space-y-1">
+            <p className="text-[11px] font-mono text-white font-bold">{formatCurrency(position.amount)}</p>
+            <p className="text-[9px] font-mono text-slate-500">@{ (position.entryPrice * 100).toFixed(1) }%</p>
+          </div>
+
+          <div className="col-span-2 text-right space-y-1">
+            <p className={`text-[11px] font-mono font-bold ${isProfitable ? 'text-success-green' : 'text-red-500'}`}>
+              {(isProfitable ? '+' : '') + formatCurrency(pnl.toString())}
+            </p>
+            <p className={`text-[9px] font-mono ${isProfitable ? 'text-success-green/60' : 'text-red-500/60'}`}>
+              {(isProfitable ? '+' : '') + roi.toFixed(1)}%
+            </p>
+          </div>
+
+          <div className="col-span-2 flex justify-end">
+            {canClaim ? (
+              <button
+                onClick={handleClaim}
+                disabled={claiming || claimMutation.isPending}
+                className="px-4 py-2 bg-success-green text-black text-[10px] font-bold font-mono uppercase tracking-widest rounded-sm hover:bg-success-green/90 transition-all flex items-center gap-2"
               >
-                <Typography variant="h6" fontWeight="bold">
-                  {position.marketQuestion}
-                </Typography>
-              </MuiLink>
-              <OpenInNew fontSize="small" sx={{ color: 'text.secondary', mt: 0.5 }} />
-            </Box>
-
-            <Box display="flex" gap={1} mb={2} flexWrap="wrap">
-              <Chip
-                label={position.side.toUpperCase()}
-                size="small"
-                icon={position.side === 'yes' ? <TrendingUp /> : <TrendingDown />}
-                color={position.side === 'yes' ? 'success' : 'error'}
-              />
-
-              {position.marketStatus === 'resolved' && position.marketOutcome !== undefined && (
-                <Chip
-                  label={position.marketOutcome === 1 ? 'YES WON' : 'NO WON'}
-                  size="small"
-                  color={
-                    (position.side === 'yes' && position.marketOutcome === 1) ||
-                    (position.side === 'no' && position.marketOutcome === 0)
-                      ? 'success'
-                      : 'error'
-                  }
-                  icon={
-                    (position.side === 'yes' && position.marketOutcome === 1) ||
-                    (position.side === 'no' && position.marketOutcome === 0) ? (
-                      <CheckCircle />
-                    ) : (
-                      <Cancel />
-                    )
-                  }
-                />
-              )}
-
-              {!position.isSettled && position.marketStatus === 'open' && (
-                <Chip
-                  label={formatTimeRemaining(position.marketEndTime)}
-                  size="small"
-                  icon={<AccessTime />}
-                  color="default"
-                  variant="outlined"
-                />
-              )}
-            </Box>
-
-            <Typography variant="body2" color="text.secondary">
-              Entered: {formatDate(position.entryTimestamp)}
-            </Typography>
-            {position.settledAt && (
-              <Typography variant="body2" color="text.secondary">
-                Settled: {formatDate(position.settledAt)}
-              </Typography>
+                {claiming ? (
+                  <div className="w-3 h-3 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                ) : (
+                  <Zap className="w-3 h-3" />
+                )}
+                Claim
+              </button>
+            ) : (
+              <div className="p-2 text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">
+                <ExternalLink className="w-4 h-4" />
+              </div>
             )}
-          </Grid>
+          </div>
+        </div>
 
-          {/* Position Details */}
-          <Grid item xs={12} md={6}>
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Amount
-                </Typography>
-                <Typography variant="h6">{formatCurrency(position.amount)}</Typography>
-              </Grid>
+        {/* Mobile View */}
+        <div className="lg:hidden p-4 space-y-4">
+          <div className="flex justify-between items-start">
+            <h4 className="text-xs font-bold text-white pr-4 leading-relaxed">
+              {position.marketQuestion}
+            </h4>
+            <span className={`text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-sm shrink-0 ${
+              position.side === 'yes' ? 'border border-success-green/30 text-success-green' : 'border border-red-500/30 text-red-500'
+            }`}>
+              {position.side}
+            </span>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-2 py-3 border-y border-white/5">
+            <div className="space-y-1">
+              <span className="text-[8px] font-mono text-slate-500 uppercase">Amount</span>
+              <p className="text-[10px] font-mono text-white font-bold">{formatCurrency(position.amount)}</p>
+            </div>
+            <div className="space-y-1">
+              <span className="text-[8px] font-mono text-slate-500 uppercase">P/L</span>
+              <p className={`text-[10px] font-mono font-bold ${isProfitable ? 'text-success-green' : 'text-red-500'}`}>
+                {roi.toFixed(1)}%
+              </p>
+            </div>
+            <div className="space-y-1 text-right">
+              <span className="text-[8px] font-mono text-slate-500 uppercase">Status</span>
+              <p className="text-[10px] font-mono text-white font-bold uppercase">
+                {position.marketStatus === 'resolved' ? (outcomeWon ? 'WON' : 'LOST') : 'OPEN'}
+              </p>
+            </div>
+          </div>
 
-              <Grid item xs={6}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Entry Price
-                </Typography>
-                <Typography variant="h6">{(position.entryPrice * 100).toFixed(1)}%</Typography>
-              </Grid>
-
-              <Grid item xs={6}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Current Price
-                </Typography>
-                <Typography variant="h6">{(position.currentPrice * 100).toFixed(1)}%</Typography>
-              </Grid>
-
-              <Grid item xs={6}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  {isActive ? 'Unrealized P&L' : 'Realized P&L'}
-                </Typography>
-                <Box display="flex" alignItems="center" gap={0.5}>
-                  <Typography
-                    variant="h6"
-                    color={isProfitable ? 'success.main' : 'error.main'}
-                    fontWeight="bold"
-                  >
-                    {isProfitable ? '+' : ''}
-                    {formatCurrency(pnl.toString())}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    ({isProfitable ? '+' : ''}
-                    {roi.toFixed(1)}%)
-                  </Typography>
-                </Box>
-              </Grid>
-
-              {position.isSettled && position.payout && (
-                <Grid item xs={12}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Total Payout
-                  </Typography>
-                  <Typography variant="h5" fontWeight="bold" color="primary.main">
-                    {formatCurrency(position.payout)}
-                  </Typography>
-                </Grid>
-              )}
-            </Grid>
-
-            {/* Claim Button */}
-            {canClaim && (
-              <Box mt={2}>
-                <Button
-                  variant="contained"
-                  color="success"
-                  fullWidth
-                  onClick={handleClaim}
-                  disabled={claiming || claimMutation.isPending}
-                  startIcon={claiming ? undefined : <CheckCircle />}
-                >
-                  {claiming || claimMutation.isPending
-                    ? 'Claiming...'
-                    : `Claim ${formatCurrency(position.payout!)}`}
-                </Button>
-                {claiming && <LinearProgress sx={{ mt: 1 }} />}
-              </Box>
-            )}
-          </Grid>
-        </Grid>
-      </CardContent>
-    </Card>
+          {canClaim && (
+            <button
+              onClick={handleClaim}
+              disabled={claiming || claimMutation.isPending}
+              className="w-full py-2.5 bg-success-green text-black text-[10px] font-bold font-mono uppercase tracking-widest rounded-sm hover:bg-success-green/90 transition-all flex items-center justify-center gap-2"
+            >
+              Claim {formatCurrency(position.payout!)}
+            </button>
+          )}
+        </div>
+      </Link>
+    </div>
   );
 }
 
@@ -289,29 +216,43 @@ interface PositionsListProps {
 export function PositionsList({ positions, isActive, onClaimSuccess }: PositionsListProps) {
   if (positions.length === 0) {
     return (
-      <Box py={8} textAlign="center">
-        <Typography variant="h6" color="text.secondary" gutterBottom>
-          {isActive ? 'No Active Positions' : 'No Settled Positions'}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {isActive
-            ? 'Place a bet on a market to see your positions here'
-            : 'Your settled positions will appear here once markets resolve'}
-        </Typography>
-      </Box>
+      <div className="py-20 flex flex-col items-center justify-center text-center space-y-4">
+        <div className="p-4 bg-white/[0.02] border border-white/5 rounded-full text-slate-600">
+          <Activity className="w-8 h-8 opacity-20" />
+        </div>
+        <div className="space-y-1">
+          <h4 className="text-white font-bold text-xs uppercase tracking-widest">
+            {isActive ? 'Zero Active Units' : 'History Empty'}
+          </h4>
+          <p className="text-slate-500 text-[10px] font-mono max-w-[200px] leading-relaxed">
+            {isActive
+              ? 'Initiate on-chain wagers to begin tracking positions.'
+              : 'Resolved wagers will be archived here upon market settlement.'}
+          </p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Box>
-      {positions.map(position => (
-        <PositionCard
-          key={position.id}
-          position={position}
-          isActive={isActive}
-          onClaimSuccess={onClaimSuccess}
-        />
-      ))}
-    </Box>
+    <div className="flex flex-col min-h-[400px]">
+      <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-3 border-b border-white/5 text-[9px] font-mono text-slate-500 uppercase tracking-widest bg-white/[0.01]">
+        <div className="col-span-4">Market_Asset</div>
+        <div className="col-span-2 text-center">Outcome</div>
+        <div className="col-span-2 text-right">Position_Size</div>
+        <div className="col-span-2 text-right">Performance</div>
+        <div className="col-span-2 text-right">Execution</div>
+      </div>
+      <div>
+        {positions.map(position => (
+          <PositionRow
+            key={position.id}
+            position={position}
+            isActive={isActive}
+            onClaimSuccess={onClaimSuccess}
+          />
+        ))}
+      </div>
+    </div>
   );
 }

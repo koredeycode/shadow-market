@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@theme {
+  /* Colors */
+  --color-obsidian: #050505;
+  --color-slate: #0f172a;
+  --color-electric-blue: #3b82f6;
+  --color-success-green: #10b981;
+  --color-amber-accent: #f59e0b;
+
+  /* Typography */
+  --font-sans: "Inter", "Geist", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* Radius (Shadow style: sharp or very slight) */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+
+  /* Shadows */
+  --shadow-stealth: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+
+  /* Animations */
+  @keyframes shine {
+    from { transform: translateX(-100%) skewX(-15deg); }
+    to { transform: translateX(200%) skewX(-15deg); }
+  }
+  @keyframes pulse-terminal {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  
+  --animate-shine: shine 3s infinite;
+  --animate-terminal-cursor: pulse-terminal 1s infinite;
+}
+
+@layer base {
+  body {
+    @apply bg-obsidian text-slate-200 font-sans antialiased selection:bg-electric-blue/30 selection:text-white;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-white font-semibold tracking-tight;
+  }
+
+  /* Custom 1px border style */
+  .border-stealth {
+    @apply border border-white/10;
+  }
+
+  /* Glassmorphism utility */
+  .glass {
+    @apply backdrop-blur-md bg-black/40;
+  }
+}
+
+@layer utilities {
+  .text-terminal {
+    @apply font-mono tracking-tighter;
+  }
+
+  .glass-shine {
+    @apply relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/5 after:to-transparent after:animate-[shine_3s_infinite];
+  }
+
+  .hover-lift {
+    @apply transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_10px_30px_-15px_rgba(59,130,246,0.3)];
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

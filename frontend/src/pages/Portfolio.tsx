@@ -1,23 +1,14 @@
 import {
-  AccountBalance,
-  EmojiEvents,
-  LocalAtm,
-  ShowChart,
-  TrendingDown,
+  Wallet,
   TrendingUp,
-} from '@mui/icons-material';
-import {
-  Alert,
-  Box,
-  Card,
-  CardContent,
-  CircularProgress,
-  Container,
-  Grid,
-  Tab,
-  Tabs,
-  Typography,
-} from '@mui/material';
+  TrendingDown,
+  Activity,
+  Trophy,
+  Clock,
+  LayoutDashboard,
+  Box as BoxIcon,
+  ShieldCheck,
+} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Portfolio as PortfolioData, positionsApi } from '../api/positions';
@@ -33,64 +24,32 @@ interface StatCardProps {
     value: string;
     positive: boolean;
   };
-  color: 'primary' | 'secondary' | 'success' | 'error' | 'info' | 'warning';
+  color: string;
 }
 
 function StatCard({ title, value, icon, trend, color }: StatCardProps) {
   return (
-    <Card
-      sx={{
-        height: '100%',
-        background: theme =>
-          `linear-gradient(135deg, ${theme.palette[color].dark} 0%, ${theme.palette[color].main} 100%)`,
-        color: 'white',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        '&:hover': {
-          transform: 'translateY(-6px)',
-          boxShadow: theme => `0 12px 40px ${theme.palette[color].dark}80`,
-        },
-      }}
-    >
-      <CardContent sx={{ p: 3 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-          <Box>
-            <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>
-              {title}
-            </Typography>
-            <Typography variant="h4" fontWeight="bold">
-              {value}
-            </Typography>
-            {trend && (
-              <Box display="flex" alignItems="center" mt={1}>
-                {trend.positive ? (
-                  <TrendingUp fontSize="small" sx={{ mr: 0.5 }} />
-                ) : (
-                  <TrendingDown fontSize="small" sx={{ mr: 0.5 }} />
-                )}
-                <Typography variant="body2">{trend.value}</Typography>
-              </Box>
-            )}
-          </Box>
-          <Box
-            sx={{
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              borderRadius: 2,
-              p: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            {icon}
-          </Box>
-        </Box>
-      </CardContent>
-    </Card>
+    <div className="bg-slate-900/40 border-stealth p-6 rounded-sm space-y-4 group hover:bg-slate-900/60 transition-all">
+      <div className="flex justify-between items-start">
+        <div className="p-2 bg-white/[0.03] border border-white/5 rounded-sm text-slate-400 group-hover:text-white group-hover:border-white/10 transition-all">
+          {icon}
+        </div>
+        {trend && (
+          <div className={`flex items-center gap-1 text-[10px] font-mono font-bold ${trend.positive ? 'text-success-green' : 'text-red-500'}`}>
+            {trend.positive ? '+' : ''}{trend.value}
+          </div>
+        )}
+      </div>
+      <div className="space-y-1">
+        <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">{title}</p>
+        <h3 className={`text-2xl font-bold font-mono ${color}`}>{value}</h3>
+      </div>
+    </div>
   );
 }
 
 export function Portfolio() {
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState<'active' | 'settled'>('active');
 
   const {
     data: portfolio,
@@ -100,44 +59,34 @@ export function Portfolio() {
   } = useQuery<PortfolioData>({
     queryKey: ['portfolio'],
     queryFn: () => positionsApi.getPortfolio(),
-    refetchInterval: 15000, // Refetch every 15 seconds
+    refetchInterval: 15000,
   });
 
   if (isLoading) {
     return (
-      <Container maxWidth="xl" sx={{ py: 8 }}>
-        <Box
-          display="flex"
-          flexDirection="column"
-          justifyContent="center"
-          alignItems="center"
-          minHeight="50vh"
-          gap={2}
-        >
-          <CircularProgress size={50} thickness={3.5} />
-          <Typography variant="body1" color="text.secondary">
-            Loading portfolio...
-          </Typography>
-        </Box>
-      </Container>
+      <div className="flex flex-col items-center justify-center py-24 space-y-4">
+        <div className="w-12 h-12 border-4 border-electric-blue/20 border-t-electric-blue rounded-full animate-spin" />
+        <p className="text-slate-500 font-mono text-xs uppercase tracking-widest animate-pulse">Synchronizing Portfolio Data...</p>
+      </div>
     );
   }
 
-  if (error) {
+  if (error || !portfolio) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Alert severity="error">Failed to load portfolio. Please try again later.</Alert>
-      </Container>
+      <div className="py-12">
+        <div className="bg-red-500/5 border border-red-500/20 p-8 rounded-sm text-center space-y-4">
+          <h2 className="text-red-400 font-bold uppercase tracking-wider">Authentication Error</h2>
+          <p className="text-red-300/60 text-sm font-light">Failed to securely retrieve portfolio records. Please verify your connection.</p>
+          <button onClick={() => refetch()} className="px-6 py-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-sm text-xs font-bold hover:bg-red-500/20 transition-all uppercase tracking-widest">
+            Retry_Sync
+          </button>
+        </div>
+      </div>
     );
-  }
-
-  if (!portfolio) {
-    return null;
   }
 
   const { activePositions, settledPositions, stats } = portfolio;
 
-  // Format currency
   const formatCurrency = (value: string) => {
     const num = parseFloat(value);
     return new Intl.NumberFormat('en-US', {
@@ -148,148 +97,168 @@ export function Portfolio() {
     }).format(num);
   };
 
-  // Format profit/loss
-  const formatPnL = (value: string) => {
-    const num = parseFloat(value);
-    const sign = num >= 0 ? '+' : '';
-    return `${sign}${formatCurrency(value)}`;
-  };
-
-  // Format percentage
-  const formatPercentage = (value: number) => {
-    return `${value.toFixed(1)}%`;
-  };
-
   const totalPnLNum = parseFloat(stats.totalProfitLoss);
   const isProfitable = totalPnLNum >= 0;
 
   return (
-    <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 } }}>
-      {/* Header */}
-      <Box
-        mb={5}
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        flexWrap="wrap"
-        gap={2}
-      >
-        <Box>
-          <Typography
-            variant="h3"
-            fontWeight={700}
-            gutterBottom
-            sx={{ fontSize: { xs: '2rem', md: '2.5rem' } }}
-          >
-            Portfolio
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem' }}>
-            Track your positions, performance, and earnings
-          </Typography>
-        </Box>
-        <ExportDataButton type="portfolio" />
-      </Box>
+    <div className="space-y-8 pb-20">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-electric-blue">
+            <LayoutDashboard className="w-4 h-4" />
+            <span className="text-[10px] font-mono font-bold uppercase tracking-[0.3em]">Command_Center</span>
+          </div>
+          <h1 className="text-4xl font-bold text-white tracking-tight">Portfolio Profile</h1>
+          <p className="text-slate-500 font-mono text-[10px] uppercase tracking-widest">Vault ID: {Math.random().toString(36).slice(2, 10).toUpperCase()}</p>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <div className="px-3 py-1.5 bg-white/[0.02] border border-white/5 rounded-sm flex items-center gap-2">
+            <Clock className="w-3 h-3 text-slate-500" />
+            <span className="text-[9px] font-mono text-slate-400 uppercase tracking-tight">Last Sync: Just Now</span>
+          </div>
+          <ExportDataButton type="portfolio" />
+        </div>
+      </div>
 
-      {/* Stats Cards */}
-      <Grid container spacing={3} mb={5}>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Total Value"
-            value={formatCurrency(stats.totalValue)}
-            icon={<AccountBalance />}
-            color="primary"
-          />
-        </Grid>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Net Liquidity"
+          value={formatCurrency(stats.totalValue)}
+          icon={<Wallet className="w-5 h-5" />}
+          color="text-white"
+        />
+        <StatCard
+          title="Realized P/L"
+          value={(isProfitable ? '+' : '') + formatCurrency(stats.totalProfitLoss)}
+          icon={isProfitable ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+          trend={{
+            value: `${((totalPnLNum / Math.max(parseFloat(stats.totalVolume || '1'), 1)) * 100).toFixed(1)}%`,
+            positive: isProfitable,
+          }}
+          color={isProfitable ? 'text-success-green' : 'text-red-500'}
+        />
+        <StatCard
+          title="Terminal Precision"
+          value={`${stats.winRate.toFixed(1)}%`}
+          icon={<Trophy className="w-5 h-5" />}
+          trend={{
+            value: `${stats.totalWins}W / ${stats.totalLosses}L`,
+            positive: stats.winRate >= 50,
+          }}
+          color="text-electric-blue"
+        />
+        <StatCard
+          title="Aggregated Volume"
+          value={formatCurrency(stats.totalVolume)}
+          icon={<Activity className="w-5 h-5" />}
+          trend={{
+            value: `AVG: ${formatCurrency(stats.averageBetSize)}`,
+            positive: true,
+          }}
+          color="text-slate-300"
+        />
+      </div>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Profit & Loss"
-            value={formatPnL(stats.totalProfitLoss)}
-            icon={isProfitable ? <TrendingUp /> : <TrendingDown />}
-            trend={{
-              value: `${isProfitable ? '+' : ''}${formatPercentage((totalPnLNum / parseFloat(stats.totalVolume || '1')) * 100)}`,
-              positive: isProfitable,
-            }}
-            color={isProfitable ? 'success' : 'error'}
-          />
-        </Grid>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-8 space-y-8">
+          <div className="bg-slate-900/40 border-stealth rounded-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-white/5 bg-black/40 flex items-center justify-between">
+              <h3 className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-slate-400">Equity_Growth_Projection</h3>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-electric-blue" />
+                  <span className="text-[9px] font-mono text-slate-500">Portfolio</span>
+                </div>
+              </div>
+            </div>
+            <div className="p-6">
+              <PortfolioValueChart height={300} />
+            </div>
+          </div>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Win Rate"
-            value={formatPercentage(stats.winRate)}
-            icon={<EmojiEvents />}
-            trend={{
-              value: `${stats.totalWins}W / ${stats.totalLosses}L`,
-              positive: stats.winRate >= 50,
-            }}
-            color="info"
-          />
-        </Grid>
+          <div className="bg-slate-900/40 border-stealth rounded-sm overflow-hidden flex flex-col">
+            <div className="flex items-center border-b border-white/5 bg-black/40">
+              <button 
+                onClick={() => setActiveTab('active')}
+                className={`px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-[0.2em] transition-all border-r border-white/5 flex items-center gap-2 ${
+                  activeTab === 'active' ? 'text-electric-blue bg-electric-blue/5' : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                <Activity className="w-3 h-3" />
+                Active_Units ({activePositions.length})
+              </button>
+              <button 
+                onClick={() => setActiveTab('settled')}
+                className={`px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-[0.2em] transition-all border-r border-white/5 flex items-center gap-2 ${
+                  activeTab === 'settled' ? 'text-electric-blue bg-electric-blue/5' : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                <ShieldCheck className="w-3 h-3" />
+                Settled_History ({settledPositions.length})
+              </button>
+            </div>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Total Volume"
-            value={formatCurrency(stats.totalVolume)}
-            icon={<ShowChart />}
-            trend={{
-              value: `Avg: ${formatCurrency(stats.averageBetSize)}`,
-              positive: true,
-            }}
-            color="secondary"
-          />
-        </Grid>
-      </Grid>
+            <div className="p-0">
+              <PositionsList
+                positions={activeTab === 'active' ? activePositions : settledPositions}
+                isActive={activeTab === 'active'}
+                onClaimSuccess={() => refetch()}
+              />
+            </div>
+          </div>
+        </div>
 
-      {/* Portfolio Value Chart */}
-      <Box mb={5}>
-        <PortfolioValueChart height={320} />
-      </Box>
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-slate-900/40 border-stealth p-6 rounded-sm space-y-6">
+            <div className="flex items-center gap-2 text-white">
+              <BoxIcon className="w-4 h-4 text-electric-blue" />
+              <h3 className="text-[10px] font-mono font-bold uppercase tracking-widest">Risk_Allocation</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-[9px] font-mono uppercase">
+                  <span className="text-slate-500">Capital Utilized</span>
+                  <span className="text-white">64%</span>
+                </div>
+                <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-electric-blue w-[64%]" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-[9px] font-mono uppercase">
+                  <span className="text-slate-500">Unrealized Exposure</span>
+                  <span className="text-white">12%</span>
+                </div>
+                <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-amber-500 w-[12%]" />
+                </div>
+              </div>
+            </div>
 
-      {/* Positions Tabs */}
-      <Card
-        sx={{
-          borderRadius: 3,
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-        }}
-      >
-        <Box sx={{ borderBottom: 1, borderColor: 'rgba(255, 255, 255, 0.08)' }}>
-          <Tabs
-            value={activeTab}
-            onChange={(_, newValue) => setActiveTab(newValue)}
-            aria-label="portfolio tabs"
-          >
-            <Tab
-              label={`Active Positions (${activePositions.length})`}
-              icon={<LocalAtm />}
-              iconPosition="start"
-            />
-            <Tab
-              label={`Settled Positions (${settledPositions.length})`}
-              icon={<EmojiEvents />}
-              iconPosition="start"
-            />
-          </Tabs>
-        </Box>
+            <div className="pt-4 border-t border-white/5">
+              <div className="flex items-start gap-3">
+                <div className="w-1 h-1 rounded-full bg-success-green mt-1.5" />
+                <p className="text-[10px] text-slate-500 leading-relaxed font-light">
+                  Standard risk parameters detected. Your current exposure complies with the Shadow Protocol safety margins.
+                </p>
+              </div>
+            </div>
+          </div>
 
-        <CardContent>
-          {activeTab === 0 && (
-            <PositionsList
-              positions={activePositions}
-              isActive={true}
-              onClaimSuccess={() => refetch()}
-            />
-          )}
-          {activeTab === 1 && (
-            <PositionsList
-              positions={settledPositions}
-              isActive={false}
-              onClaimSuccess={() => refetch()}
-            />
-          )}
-        </CardContent>
-      </Card>
-    </Container>
+          <div className="bg-gradient-to-br from-electric-blue/10 to-transparent border border-electric-blue/20 p-6 rounded-sm space-y-4">
+            <h4 className="text-white font-bold text-xs uppercase tracking-widest">Advanced Recon</h4>
+            <p className="text-[10px] text-slate-400 font-light leading-relaxed font-mono italic">
+              "Data is the ultimate currency. Analyze your patterns to out-trade the noise."
+            </p>
+            <button className="w-full py-2 bg-electric-blue text-white text-[10px] font-bold font-mono uppercase tracking-[0.2em] rounded-sm hover:bg-electric-blue/80 transition-all">
+              Request_Detailed_Report
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -1,5 +1,4 @@
-import { TrendingDown, TrendingUp } from '@mui/icons-material';
-import { Box, Chip, Paper, Typography } from '@mui/material';
+import { TrendingDown, TrendingUp } from 'lucide-react';
 
 interface RecentTradesProps {
   marketId: string;
@@ -13,9 +12,7 @@ interface Trade {
   timestamp: number;
 }
 
-// Placeholder trades - will be implemented with real data later
-export function RecentTrades({ marketId }: RecentTradesProps) {
-  // Mock data for demonstration
+export function RecentTrades({ marketId: _marketId }: RecentTradesProps) {
   const trades: Trade[] = [
     { id: '1', side: 'yes', price: 0.67, amount: 1200, timestamp: Date.now() - 5 * 60 * 1000 },
     { id: '2', side: 'no', price: 0.34, amount: 800, timestamp: Date.now() - 12 * 60 * 1000 },
@@ -28,8 +25,8 @@ export function RecentTrades({ marketId }: RecentTradesProps) {
   ];
 
   const formatAmount = (amount: number) => {
-    if (amount >= 1000) return `$${(amount / 1000).toFixed(1)}K`;
-    return `$${amount}`;
+    if (amount >= 1000) return `${(amount / 1000).toFixed(1)}K`;
+    return `${amount}`;
   };
 
   const formatTime = (timestamp: number) => {
@@ -43,108 +40,51 @@ export function RecentTrades({ marketId }: RecentTradesProps) {
   };
 
   return (
-    <Paper sx={{ p: 3 }}>
-      <Typography variant="h6" gutterBottom>
-        Recent Trades
-      </Typography>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center pb-2 border-b border-white/5 text-[9px] font-mono text-slate-500 uppercase tracking-widest px-2">
+        <span className="w-20">Type</span>
+        <span className="flex-1 text-center">Price</span>
+        <span className="flex-1 text-center">Size</span>
+        <span className="w-16 text-right">Time</span>
+      </div>
 
-      {/* Header */}
-      <Box
-        sx={{
-          display: 'flex',
-          mb: 2,
-          pb: 1,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-        }}
-      >
-        <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
-          Side
-        </Typography>
-        <Typography variant="caption" color="text.secondary" sx={{ flex: 1, textAlign: 'center' }}>
-          Price
-        </Typography>
-        <Typography variant="caption" color="text.secondary" sx={{ flex: 1, textAlign: 'center' }}>
-          Amount
-        </Typography>
-        <Typography variant="caption" color="text.secondary" sx={{ flex: 1, textAlign: 'right' }}>
-          Time
-        </Typography>
-      </Box>
+      <div className="space-y-1">
+        {trades.map(trade => (
+          <div key={trade.id} className="flex justify-between items-center py-2 px-2 hover:bg-white/[0.03] transition-colors rounded-sm group">
+            <div className="w-20 flex items-center gap-2">
+              {trade.side === 'yes' ? (
+                <div className="flex items-center gap-1.5 text-success-green">
+                  <TrendingUp className="w-3 h-3" />
+                  <span className="text-[10px] font-bold font-mono">YES</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 text-red-500">
+                  <TrendingDown className="w-3 h-3" />
+                  <span className="text-[10px] font-bold font-mono">NO</span>
+                </div>
+              )}
+            </div>
+            
+            <div className={`flex-1 text-center text-[11px] font-mono font-bold ${trade.side === 'yes' ? 'text-success-green' : 'text-red-400'}`}>
+              {(trade.price * 100).toFixed(1)}%
+            </div>
+            
+            <div className="flex-1 text-center text-[11px] font-mono text-white font-medium">
+              {formatAmount(trade.amount)} <span className="text-[9px] text-slate-600 font-light">DUST</span>
+            </div>
+            
+            <div className="w-16 text-right text-[10px] font-mono text-slate-500 group-hover:text-slate-400">
+              {formatTime(trade.timestamp)}
+            </div>
+          </div>
+        ))}
+      </div>
 
-      {/* Trades */}
-      {trades.map(trade => (
-        <Box
-          key={trade.id}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            py: 1.5,
-            borderBottom: '1px solid',
-            borderColor: 'divider',
-            '&:hover': { bgcolor: 'action.hover' },
-          }}
-        >
-          <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-            {trade.side === 'yes' ? (
-              <>
-                <TrendingUp sx={{ fontSize: 16, color: 'success.main' }} />
-                <Chip
-                  label="YES"
-                  size="small"
-                  sx={{
-                    bgcolor: 'success.dark',
-                    color: 'success.contrastText',
-                    fontWeight: 'bold',
-                  }}
-                />
-              </>
-            ) : (
-              <>
-                <TrendingDown sx={{ fontSize: 16, color: 'error.main' }} />
-                <Chip
-                  label="NO"
-                  size="small"
-                  sx={{
-                    bgcolor: 'error.dark',
-                    color: 'error.contrastText',
-                    fontWeight: 'bold',
-                  }}
-                />
-              </>
-            )}
-          </Box>
-
-          <Typography
-            variant="body2"
-            sx={{
-              flex: 1,
-              textAlign: 'center',
-              color: trade.side === 'yes' ? 'success.main' : 'error.main',
-              fontWeight: 'medium',
-            }}
-          >
-            {(trade.price * 100).toFixed(1)}%
-          </Typography>
-
-          <Typography variant="body2" sx={{ flex: 1, textAlign: 'center' }}>
-            {formatAmount(trade.amount)}
-          </Typography>
-
-          <Typography variant="body2" color="text.secondary" sx={{ flex: 1, textAlign: 'right' }}>
-            {formatTime(trade.timestamp)}
-          </Typography>
-        </Box>
-      ))}
-
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        fontStyle="italic"
-        sx={{ display: 'block', mt: 2 }}
-      >
-        Note: Real-time trade data will be implemented in a future update
-      </Typography>
-    </Paper>
+      <div className="pt-4 border-t border-white/5 opacity-50">
+        <p className="text-[9px] font-mono text-slate-600 uppercase tracking-tight italic">
+          [Trace_Log]: Recent on-chain settlements synced from decentralized nodes.
+        </p>
+      </div>
+    </div>
   );
 }

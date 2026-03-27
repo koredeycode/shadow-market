@@ -17,6 +17,8 @@ export interface WalletState {
   disconnect: () => void;
   updateBalance: (balance: string) => void;
   setConnecting: (isConnecting: boolean) => void;
+  isWalletModalOpen: boolean;
+  setWalletModalOpen: (isOpen: boolean) => void;
 }
 
 export const useWalletStore = create<WalletState>()(
@@ -58,6 +60,10 @@ export const useWalletStore = create<WalletState>()(
 
       setConnecting: isConnecting => {
         set({ isConnecting });
+      },
+      isWalletModalOpen: false,
+      setWalletModalOpen: isOpen => {
+        set({ isWalletModalOpen: isOpen });
       },
     }),
     {

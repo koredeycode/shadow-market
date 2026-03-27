@@ -14,15 +14,12 @@
     "lint": "eslint src --ext ts,tsx"
   },
   "dependencies": {
-    "@emotion/react": "^11.11.3",
-    "@emotion/styled": "^11.11.0",
     "@hookform/resolvers": "^3.3.4",
     "@midnight-ntwrk/dapp-connector-api": "^4.0.1",
-    "@mui/icons-material": "^7.0.0",
-    "@mui/material": "^7.0.0",
     "@tanstack/react-query": "^5.17.9",
     "axios": "^1.6.5",
     "date-fns": "^3.0.0",
+    "lucide-react": "^1.7.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.49.3",
@@ -35,13 +32,17 @@
     "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.2.2",
     "@testing-library/jest-dom": "^6.2.0",
     "@testing-library/react": "^14.1.2",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/semver": "^7.7.1",
     "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.27",
     "eslint": "^9.17.0",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.2",
     "typescript": "^5.7.2",
     "vite": "^6.0.3",
     "vitest": "^2.1.8"

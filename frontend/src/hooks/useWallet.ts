@@ -7,12 +7,12 @@ import { useWalletStore } from '../store/wallet.store';
 // Declare global window types for Lace wallet
 declare global {
   interface Window {
-    midnight?: Record<string, any>;
+    midnight?: { [key: string]: InitialAPI };
   }
 }
 
 const COMPATIBLE_CONNECTOR_API_VERSION = '4.x';
-const NETWORK_ID = import.meta.env.VITE_NETWORK_ID || 'undeployed';
+const NETWORK_ID = (import.meta as any).env?.VITE_NETWORK_ID || 'undeployed';
 
 // Find the first compatible Lace wallet from window.midnight object
 const getFirstCompatibleWallet = (): InitialAPI | undefined => {
@@ -197,5 +197,7 @@ export function useWallet() {
     disconnectWallet,
     refreshBalance,
     signTransaction,
+    isWalletModalOpen: useWalletStore(s => s.isWalletModalOpen),
+    setWalletModalOpen: useWalletStore(s => s.setWalletModalOpen),
   };
 }

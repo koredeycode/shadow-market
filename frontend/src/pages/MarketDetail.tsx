@@ -1,50 +1,20 @@
-import { ArrowBack, TrendingDown, TrendingUp } from '@mui/icons-material';
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Container,
-  Grid,
-  Paper,
-  Tab,
-  Tabs,
-  Typography,
-} from '@mui/material';
+import { ArrowLeft, BarChart3, Clock, Info, Shield, Share2, Zap } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { marketsApi } from '../api/markets';
 import { MarketChart } from '../components/market/MarketChart';
 import { MarketStats } from '../components/market/MarketStats';
 import { OrderBook } from '../components/market/OrderBook';
 import { RecentTrades } from '../components/market/RecentTrades';
-import { CreateP2PWagerModal } from '../components/wager/CreateP2PWagerModal';
 import { P2PWagersList } from '../components/wager/P2PWagersList';
-import { PlaceBetModal } from '../components/wager/PlaceBetModal';
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel({ children, value, index }: TabPanelProps) {
-  return (
-    <div role="tabpanel" hidden={value !== index}>
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </div>
-  );
-}
+import { BettingTerminal } from '../components/wager/BettingTerminal';
 
 export function MarketDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [tabValue, setTabValue] = useState(0);
+  const [activeTab, setActiveTab] = useState<'overview' | 'chart' | 'p2p' | 'orders' | 'trades'>('chart');
   const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d' | '30d' | 'all'>('24h');
-  const [betModalOpen, setBetModalOpen] = useState(false);
-  const [p2pModalOpen, setP2pModalOpen] = useState(false);
 
   const {
     data: market,
@@ -59,329 +29,213 @@ export function MarketDetail() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="xl" sx={{ py: 8, textAlign: 'center' }}>
-        <CircularProgress size={50} thickness={3.5} />
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
-          Loading market details...
-        </Typography>
-      </Container>
+      <div className="flex flex-col items-center justify-center py-24 space-y-4">
+        <div className="w-12 h-12 border-4 border-electric-blue/20 border-t-electric-blue rounded-full animate-spin" />
+        <p className="text-slate-500 font-mono text-xs uppercase tracking-widest animate-pulse">Initializing Market Terminal...</p>
+      </div>
     );
   }
 
   if (error || !market) {
     return (
-      <Container maxWidth="xl" sx={{ py: 8 }}>
-        <Alert
-          severity="error"
-          sx={{
-            borderRadius: 3,
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            bgcolor: 'rgba(239, 68, 68, 0.1)',
-          }}
-        >
-          Failed to load market details. Please try again.
-        </Alert>
-      </Container>
+      <div className="py-12">
+        <div className="bg-red-500/5 border border-red-500/20 p-8 rounded-sm text-center space-y-4">
+          <h2 className="text-red-400 font-bold uppercase tracking-wider">Synchronization Error</h2>
+          <p className="text-red-300/60 text-sm font-light">Failed to establish connection with market data. Please verify the market ID and try again.</p>
+          <Link to="/markets" className="inline-block px-6 py-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-sm text-xs font-bold hover:bg-red-500/20 transition-all">
+            RETURN_TO_MARKETS
+          </Link>
+        </div>
+      </div>
     );
   }
 
-  const statusColor = {
-    OPEN: 'success',
-    RESOLVED: 'default',
-    LOCKED: 'warning',
-    CANCELLED: 'error',
-  }[market.status] as 'success' | 'default' | 'warning' | 'error';
+  const statusColors: Record<MarketStatus, string> = {
+    PENDING: 'border-slate-800 text-slate-500 bg-slate-800/10',
+    OPEN: 'border-success-green/30 text-success-green bg-success-green/10',
+    LOCKED: 'border-amber-500/30 text-amber-500 bg-amber-500/10',
+    RESOLVED: 'border-slate-500/30 text-slate-400 bg-slate-500/10',
+    CANCELLED: 'border-red-500/30 text-red-400 bg-red-500/10',
+  };
+
+  const statusColorClass = statusColors[market.status] || 'border-slate-800 text-slate-500';
 
   return (
-    <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 } }}>
-      <Button
-        startIcon={<ArrowBack />}
-        onClick={() => navigate('/markets')}
-        sx={{
-          mb: 3,
-          fontWeight: 600,
-          '&:hover': {
-            bgcolor: 'rgba(124, 58, 237, 0.08)',
-          },
-        }}
-      >
-        Back to Markets
-      </Button>
-
-      {/* Market Header */}
-      <Paper
-        sx={{
-          p: { xs: 3, md: 4 },
-          mb: 4,
-          background:
-            'linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(26, 26, 26, 0.8) 100%)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          borderRadius: 3,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-          <Chip
-            label={market.category}
-            size="medium"
-            sx={{
-              textTransform: 'capitalize',
-              fontWeight: 600,
-              bgcolor: 'rgba(124, 58, 237, 0.15)',
-              color: 'primary.light',
-              borderRadius: 2,
-            }}
-          />
-          <Chip
-            label={market.status}
-            color={statusColor}
-            size="medium"
-            sx={{ fontWeight: 600, borderRadius: 2 }}
-          />
-        </Box>
-
-        <Typography
-          variant="h3"
-          gutterBottom
-          sx={{
-            fontWeight: 700,
-            fontSize: { xs: '1.75rem', md: '2.25rem' },
-            lineHeight: 1.3,
-            mb: 2,
-          }}
+    <div className="space-y-8 pb-20">
+      <div className="flex items-center justify-between">
+        <button 
+          onClick={() => navigate('/markets')}
+          className="flex items-center gap-2 px-4 py-2 text-slate-500 hover:text-white transition-all font-mono text-[10px] uppercase font-bold tracking-widest group"
         >
-          {market.question}
-        </Typography>
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          Terminal Exit
+        </button>
+        
+        <div className="flex items-center gap-3">
+          <button className="p-2 text-slate-500 hover:text-white transition-colors border border-white/5 bg-white/[0.02] rounded-sm">
+            <Share2 className="w-4 h-4" />
+          </button>
+          <div className="h-6 w-[1px] bg-white/10 mx-1" />
+          <div className={`px-3 py-1 border rounded-sm text-[10px] font-mono font-bold uppercase tracking-widest ${statusColorClass}`}>
+            {market.status}
+          </div>
+        </div>
+      </div>
 
-        {market.description && (
-          <Typography color="text.secondary" sx={{ mb: 4, fontSize: '1.05rem', lineHeight: 1.7 }}>
-            {market.description}
-          </Typography>
-        )}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Main Content */}
+        <div className="lg:col-span-8 space-y-8">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 bg-electric-blue/10 text-electric-blue text-[9px] font-mono font-bold uppercase tracking-widest rounded-full border border-electric-blue/20">
+                {market.category}
+              </span>
+              <span className="text-[10px] text-slate-600 font-mono tracking-widest uppercase">ID: {market.id.slice(0, 8)}</span>
+            </div>
+            
+            <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight">
+              {market.question}
+            </h1>
+            
+            {market.description && (
+              <p className="text-slate-400 font-light leading-relaxed max-w-4xl">
+                {market.description}
+              </p>
+            )}
+          </div>
 
-        {/* Price Display */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} md={6}>
-            <Box
-              sx={{
-                p: 3,
-                borderRadius: 3,
-                background:
-                  'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%)',
-                border: '2px solid rgba(16, 185, 129, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 8px 24px rgba(16, 185, 129, 0.3)',
-                  borderColor: 'rgba(16, 185, 129, 0.5)',
-                },
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    p: 1.5,
-                    borderRadius: 2,
-                    bgcolor: 'rgba(16, 185, 129, 0.2)',
-                  }}
-                >
-                  <TrendingUp sx={{ color: 'success.main', fontSize: 28 }} />
-                </Box>
-                <Typography variant="h5" fontWeight={700} sx={{ color: 'success.light' }}>
-                  YES
-                </Typography>
-              </Box>
-              <Typography variant="h3" fontWeight={800} sx={{ color: 'success.main' }}>
-                {(market.yesPrice * 100).toFixed(1)}%
-              </Typography>
-            </Box>
-          </Grid>
-
-          <Grid item xs={12} md={6}>
-            <Box
-              sx={{
-                p: 3,
-                borderRadius: 3,
-                background:
-                  'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%)',
-                border: '2px solid rgba(239, 68, 68, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 8px 24px rgba(239, 68, 68, 0.3)',
-                  borderColor: 'rgba(239, 68, 68, 0.5)',
-                },
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    p: 1.5,
-                    borderRadius: 2,
-                    bgcolor: 'rgba(239, 68, 68, 0.2)',
-                  }}
-                >
-                  <TrendingDown sx={{ color: 'error.main', fontSize: 28 }} />
-                </Box>
-                <Typography variant="h5" fontWeight={700} sx={{ color: 'error.light' }}>
-                  NO
-                </Typography>
-              </Box>
-              <Typography variant="h3" fontWeight={800} sx={{ color: 'error.main' }}>
-                {(market.noPrice * 100).toFixed(1)}%
-              </Typography>
-            </Box>
-          </Grid>
-        </Grid>
-
-        {/* Action Button */}
-        {market.status === 'OPEN' && (
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <Button
-                variant="contained"
-                fullWidth
-                size="large"
-                onClick={() => setBetModalOpen(true)}
-                sx={{
-                  py: 2,
-                  fontSize: '1.1rem',
-                  fontWeight: 700,
-                }}
+          {/* Activity Section */}
+          <div className="bg-slate-900/40 border-stealth rounded-sm overflow-hidden flex flex-col">
+            <div className="flex items-center border-b border-white/5 bg-black/40">
+              <button 
+                onClick={() => setActiveTab('chart')}
+                className={`px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-[0.2em] transition-all border-r border-white/5 ${
+                  activeTab === 'chart' ? 'text-electric-blue bg-electric-blue/5' : 'text-slate-500 hover:text-slate-300'
+                }`}
               >
-                Place AMM Bet
-              </Button>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Button
-                variant="outlined"
-                fullWidth
-                size="large"
-                onClick={() => setP2pModalOpen(true)}
-                sx={{
-                  py: 2,
-                  fontSize: '1.1rem',
-                  fontWeight: 700,
-                }}
+                Data_Visualizer
+              </button>
+              <button 
+                onClick={() => setActiveTab('orders')}
+                className={`px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-[0.2em] transition-all border-r border-white/5 ${
+                  activeTab === 'orders' ? 'text-electric-blue bg-electric-blue/5' : 'text-slate-500 hover:text-slate-300'
+                }`}
               >
-                Create P2P Wager
-              </Button>
-            </Grid>
-          </Grid>
-        )}
-
-        {market.status === 'RESOLVED' && market.outcome !== null && (
-          <Alert
-            severity="info"
-            sx={{
-              mt: 2,
-              borderRadius: 3,
-              border: '1px solid rgba(6, 182, 212, 0.3)',
-              bgcolor: 'rgba(6, 182, 212, 0.1)',
-              fontSize: '1.05rem',
-            }}
-          >
-            Market resolved: <strong>{market.outcome === 1 ? 'YES' : 'NO'}</strong> wins
-          </Alert>
-        )}
-      </Paper>
-
-      {/* Tabs */}
-      <Paper
-        sx={{
-          mb: 4,
-          borderRadius: 3,
-          overflow: 'hidden',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-        }}
-      >
-        <Tabs
-          value={tabValue}
-          onChange={(_, v) => setTabValue(v)}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{
-            '& .MuiTab-root': {
-              fontWeight: 600,
-              fontSize: '1rem',
-              textTransform: 'none',
-              py: 2.5,
-              minHeight: 'auto',
-            },
-            '& .Mui-selected': {
-              color: 'primary.main',
-            },
-          }}
-        >
-          <Tab label="Overview" />
-          <Tab label="Chart" />
-          <Tab label="P2P Wagers" />
-          <Tab label="Order Book" />
-          <Tab label="Recent Trades" />
-        </Tabs>
-      </Paper>
-
-      {/* Tab Panels */}
-      <TabPanel value={tabValue} index={0}>
-        <MarketStats market={market} />
-      </TabPanel>
-
-      <TabPanel value={tabValue} index={1}>
-        <Paper
-          sx={{
-            p: { xs: 2, md: 3 },
-            borderRadius: 3,
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-          }}
-        >
-          <Box sx={{ display: 'flex', gap: 1.5, mb: 3, flexWrap: 'wrap' }}>
-            {(['1h', '24h', '7d', '30d', 'all'] as const).map(range => (
-              <Button
-                key={range}
-                variant={timeRange === range ? 'contained' : 'outlined'}
-                size="medium"
-                onClick={() => setTimeRange(range)}
-                sx={{
-                  minWidth: 60,
-                  fontWeight: 600,
-                }}
+                Order_Flow
+              </button>
+              <button 
+                onClick={() => setActiveTab('trades')}
+                className={`px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-[0.2em] transition-all border-r border-white/5 ${
+                  activeTab === 'trades' ? 'text-electric-blue bg-electric-blue/5' : 'text-slate-500 hover:text-slate-300'
+                }`}
               >
-                {range.toUpperCase()}
-              </Button>
-            ))}
-          </Box>
-          <MarketChart marketId={market.id} timeRange={timeRange} />
-        </Paper>
-      </TabPanel>
+                Market_History
+              </button>
+              <button 
+                onClick={() => setActiveTab('p2p')}
+                className={`px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-[0.2em] transition-all ${
+                  activeTab === 'p2p' ? 'text-electric-blue bg-electric-blue/5' : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                Direct_Wagers
+              </button>
+            </div>
 
-      <TabPanel value={tabValue} index={2}>
-        <P2PWagersList marketId={market.id} />
-      </TabPanel>
+            <div className="p-6">
+              {activeTab === 'chart' && (
+                <div className="space-y-6">
+                  <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    {(['1h', '24h', '7d', '30d', 'all'] as const).map(range => (
+                      <button
+                        key={range}
+                        onClick={() => setTimeRange(range)}
+                        className={`px-3 py-1.5 rounded-sm text-[10px] font-mono font-bold uppercase transition-all tracking-wider ${
+                          timeRange === range 
+                            ? 'bg-electric-blue text-white shadow-[0_0_10px_rgba(59,130,246,0.2)]' 
+                            : 'bg-white/5 text-slate-500 hover:bg-white/10 hover:text-slate-300'
+                        }`}
+                      >
+                        {range}
+                      </button>
+                    ))}
+                  </div>
+                  <MarketChart marketId={market.id} timeRange={timeRange} />
+                </div>
+              )}
+              {activeTab === 'orders' && <OrderBook marketId={market.id} />}
+              {activeTab === 'trades' && <RecentTrades marketId={market.id} />}
+              {activeTab === 'p2p' && <P2PWagersList marketId={market.id} />}
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+            <div className="space-y-4">
+              <h3 className="text-white font-bold flex items-center gap-2 text-sm uppercase tracking-widest">
+                <Shield className="w-4 h-4 text-electric-blue" />
+                Resolution Data
+              </h3>
+              <div className="bg-white/[0.02] border border-white/5 p-4 rounded-sm space-y-3">
+                <div className="flex justify-between items-center text-[11px] font-mono">
+                  <span className="text-slate-500 uppercase">Provider</span>
+                  <span className="text-white">Shadow_Oracle_v4</span>
+                </div>
+                <div className="flex justify-between items-center text-[11px] font-mono">
+                  <span className="text-slate-500 uppercase">Resolution Source</span>
+                  <span className="text-white underline cursor-pointer hover:text-electric-blue transition-colors truncate max-w-[200px]">{market.resolutionSource}</span>
+                </div>
+                <div className="flex justify-between items-center text-[11px] font-mono">
+                  <span className="text-slate-500 uppercase">Settlement Period</span>
+                  <span className="text-white">Within 24 Hours of Closure</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <h3 className="text-white font-bold flex items-center gap-2 text-sm uppercase tracking-widest">
+                <Clock className="w-4 h-4 text-electric-blue" />
+                Market Timeline
+              </h3>
+              <div className="bg-white/[0.02] border border-white/5 p-4 rounded-sm space-y-3">
+                <div className="flex justify-between items-center text-[11px] font-mono">
+                  <span className="text-slate-500 uppercase">Creation Time</span>
+                  <span className="text-white">{new Date(market.createdAt).toLocaleDateString()}</span>
+                </div>
+                <div className="flex justify-between items-center text-[11px] font-mono">
+                  <span className="text-slate-500 uppercase">Target Expiry</span>
+                  <span className="text-white">{new Date(market.endTime).toLocaleDateString()}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <TabPanel value={tabValue} index={3}>
-        <OrderBook marketId={market.id} />
-      </TabPanel>
+        {/* Sidebar */}
+        <div className="lg:col-span-4 sticky top-24 space-y-6">
+          <div className="space-y-4">
+            <h2 className="text-white font-bold text-xs uppercase tracking-[0.25em] flex items-center gap-2">
+              <Zap className="w-3.5 h-3.5 text-electric-blue" />
+              Execution_Terminal
+            </h2>
+            <BettingTerminal market={market} />
+          </div>
 
-      <TabPanel value={tabValue} index={4}>
-        <RecentTrades marketId={market.id} />
-      </TabPanel>
-
-      {/* Place Bet Modal */}
-      <PlaceBetModal open={betModalOpen} onClose={() => setBetModalOpen(false)} market={market} />
-
-      {/* Create P2P Wager Modal */}
-      <CreateP2PWagerModal
-        open={p2pModalOpen}
-        onClose={() => setP2pModalOpen(false)}
-        market={market}
-      />
-    </Container>
+          <div className="bg-white/[0.02] border border-white/5 p-6 rounded-sm space-y-6">
+            <h3 className="text-white font-bold text-[10px] uppercase tracking-widest flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-electric-blue" />
+              Market Statistics
+            </h3>
+            <MarketStats market={market} />
+          </div>
+          
+          <div className="flex items-start gap-4 p-4 border border-white/5 bg-white/[0.01] rounded-sm">
+            <Info className="w-5 h-5 text-slate-600 shrink-0 mt-0.5" />
+            <p className="text-[10px] text-slate-500 font-light leading-relaxed">
+              All transactions are processed through encrypted ZK-proofs. Your identity remains private while executing on-chain wagers.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

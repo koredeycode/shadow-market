@@ -1,4 +1,3 @@
-import { Box, CircularProgress, Container } from '@mui/material';
 import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
@@ -14,17 +13,15 @@ const Analytics = lazy(() => import('./pages/Analytics'));
 
 // Loading fallback component
 const PageLoader = () => (
-  <Container
-    sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}
-  >
-    <CircularProgress />
-  </Container>
+  <div className="flex justify-center items-center min-h-[60vh]">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-blue"></div>
+  </div>
 );
 
 function App() {
   return (
     <ErrorBoundary>
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+      <div className="min-h-screen bg-obsidian text-slate-200">
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Layout />}>
@@ -37,7 +34,7 @@ function App() {
             </Route>
           </Routes>
         </Suspense>
-      </Box>
+      </div>
     </ErrorBoundary>
   );
 }

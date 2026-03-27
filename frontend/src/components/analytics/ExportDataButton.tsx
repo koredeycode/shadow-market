@@ -1,6 +1,5 @@
-import { Download, KeyboardArrowDown } from '@mui/icons-material';
-import { Button, CircularProgress, Menu, MenuItem } from '@mui/material';
-import { useState } from 'react';
+import { Download, ChevronDown, FileJson, Clock } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { analyticsApi, TimeRange } from '../../api/analytics';
 
@@ -10,17 +9,19 @@ interface ExportDataButtonProps {
 }
 
 export function ExportDataButton({ type, marketId }: ExportDataButtonProps) {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const open = Boolean(anchorEl);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const downloadBlob = (blob: Blob, filename: string) => {
     const url = window.URL.createObjectURL(blob);
@@ -35,7 +36,7 @@ export function ExportDataButton({ type, marketId }: ExportDataButtonProps) {
 
   const handleExport = async (timeRange?: TimeRange) => {
     setExporting(true);
-    handleClose();
+    setIsOpen(false);
 
     try {
       let blob: Blob;
@@ -43,56 +44,66 @@ export function ExportDataButton({ type, marketId }: ExportDataButtonProps) {
 
       if (type === 'portfolio' && timeRange) {
         blob = await analyticsApi.exportPortfolioData(timeRange);
-        filename = `portfolio-${timeRange}-${Date.now()}.csv`;
+        filename = `shadow-portfolio-${timeRange}-${Date.now()}.csv`;
       } else if (type === 'market' && marketId) {
         blob = await analyticsApi.exportMarketData(marketId);
-        filename = `market-${marketId}-${Date.now()}.csv`;
+        filename = `shadow-market-${marketId}-${Date.now()}.csv`;
       } else {
         throw new Error('Invalid export configuration');
       }
 
       downloadBlob(blob, filename);
-      toast.success('Data exported successfully');
+      toast.success('Secure data export complete.');
     } catch (error: any) {
       console.error('Export error:', error);
-      toast.error(error.response?.data?.message || 'Failed to export data');
+      toast.error(error.response?.data?.message || 'Failed to authorize data export');
     } finally {
       setExporting(false);
     }
   };
 
   return (
-    <>
-      <Button
-        variant="outlined"
-        startIcon={exporting ? <CircularProgress size={16} /> : <Download />}
-        endIcon={type === 'portfolio' ? <KeyboardArrowDown /> : undefined}
-        onClick={type === 'portfolio' ? handleClick : () => handleExport()}
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={type === 'portfolio' ? () => setIsOpen(!isOpen) : () => handleExport()}
         disabled={exporting}
+        className="flex items-center gap-2 px-4 py-2 bg-white/[0.03] border border-white/10 rounded-sm text-slate-300 text-[10px] font-mono font-bold uppercase tracking-widest hover:bg-white/[0.06] hover:text-white transition-all disabled:opacity-50"
       >
-        {exporting ? 'Exporting...' : 'Export Data'}
-      </Button>
+        {exporting ? (
+          <div className="w-3 h-3 border-2 border-slate-500 border-t-white rounded-full animate-spin" />
+        ) : (
+          <Download className="w-3 h-3" />
+        )}
+        <span>{exporting ? 'Exporting...' : 'Export_Data'}</span>
+        {type === 'portfolio' && (
+          <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        )}
+      </button>
 
-      {type === 'portfolio' && (
-        <Menu
-          anchorEl={anchorEl}
-          open={open}
-          onClose={handleClose}
-          anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'right',
-          }}
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-          }}
-        >
-          <MenuItem onClick={() => handleExport('24h')}>Last 24 Hours</MenuItem>
-          <MenuItem onClick={() => handleExport('7d')}>Last 7 Days</MenuItem>
-          <MenuItem onClick={() => handleExport('30d')}>Last 30 Days</MenuItem>
-          <MenuItem onClick={() => handleExport('all')}>All Time</MenuItem>
-        </Menu>
+      {isOpen && type === 'portfolio' && (
+        <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-white/10 rounded-sm shadow-2xl z-50 overflow-hidden backdrop-blur-xl">
+          <div className="p-2 border-b border-white/5 bg-white/[0.02]">
+            <p className="text-[8px] font-mono text-slate-500 uppercase tracking-widest px-2">Select Interval</p>
+          </div>
+          <div className="flex flex-col">
+            {[
+              { label: 'Last 24 Hours', value: '24h' as TimeRange },
+              { label: 'Past 7 Days', value: '7d' as TimeRange },
+              { label: 'Past 30 Days', value: '30d' as TimeRange },
+              { label: 'Archive_Full', value: 'all' as TimeRange },
+            ].map(item => (
+              <button
+                key={item.value}
+                onClick={() => handleExport(item.value)}
+                className="flex items-center gap-3 px-4 py-3 text-[10px] font-mono text-slate-400 hover:text-electric-blue hover:bg-electric-blue/5 transition-all text-left"
+              >
+                {item.value === 'all' ? <FileJson className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
-    </>
+    </div>
   );
 }
