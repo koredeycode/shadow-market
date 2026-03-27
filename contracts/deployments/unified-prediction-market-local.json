@@ -1,0 +1,64 @@
+{
+  "contractAddress": "cd9dae0f85be015b6b6c6b4008de30fc0be98d55bbf6b61f0fbda0e359f9aea7",
+  "contractType": "unified-prediction-market",
+  "network": "undeployed",
+  "deployedAt": "2026-03-27T15:40:29.479Z",
+  "walletAddress": {
+    "type": "addr",
+    "network": "undeployed",
+    "data": {
+      "type": "Buffer",
+      "data": [
+        188,
+        97,
+        13,
+        208,
+        124,
+        82,
+        245,
+        144,
+        18,
+        168,
+        140,
+        47,
+        159,
+        28,
+        95,
+        52,
+        203,
+        172,
+        199,
+        91,
+        134,
+        130,
+        2,
+        151,
+        93,
+        111,
+        25,
+        190,
+        175,
+        55,
+        40,
+        75
+      ]
+    }
+  },
+  "features": {
+    "multipleMarkets": true,
+    "poolBetting": true,
+    "p2pWagers": true
+  },
+  "circuits": [
+    "initialize",
+    "createMarket",
+    "placeBet",
+    "createWager",
+    "acceptWager",
+    "cancelWager",
+    "lockMarket",
+    "resolveMarket",
+    "claimPoolWinnings",
+    "claimWagerWinnings"
+  ]
+}

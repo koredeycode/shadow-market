@@ -1,11 +1,10 @@
 import { Buffer } from 'buffer';
 import * as path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import * as Rx from 'rxjs';
 import { WebSocket } from 'ws';
 
 // Midnight SDK imports
-import { CompiledContract } from '@midnight-ntwrk/compact-js';
 import * as ledger from '@midnight-ntwrk/ledger-v7';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
@@ -54,35 +53,8 @@ setNetworkId(CONFIG.networkId);
 
 // Path configuration
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-export const zkConfigPath = path.resolve(__dirname, 'managed', 'simple-market');
-
-// Import witnesses
-import {
-  createSimpleMarketPrivateState,
-  witnesses,
-  type SimpleMarketPrivateState,
-} from './witnesses.js';
-export { createSimpleMarketPrivateState, witnesses, type SimpleMarketPrivateState };
-
-// Load compiled contract
-const contractPath = path.join(zkConfigPath, 'contract', 'index.js');
-let SimpleMarketModule: any;
-try {
-  SimpleMarketModule = await import(pathToFileURL(contractPath).href);
-} catch (error) {
-  console.warn('Contract not yet compiled. Run: pnpm compile:simple');
-  SimpleMarketModule = null;
-}
-
-// @ts-ignore - Type system limitations with CompiledContract generics
-export const compiledContract = SimpleMarketModule
-  ? CompiledContract.make('simple-market', SimpleMarketModule.Contract).pipe(
-      // @ts-ignore
-      CompiledContract.withWitnesses(witnesses),
-      // @ts-ignore
-      CompiledContract.withCompiledFileAssets(zkConfigPath)
-    )
-  : null;
+// Note: zkConfigPath is now passed per-contract in MVP deployment scripts
+export const zkConfigPath = path.resolve(__dirname, '..', 'managed', 'simple-market');
 
 // ─── Wallet Functions ──────────────────────────────────────────────────────────
 
@@ -182,7 +154,11 @@ export function signTransactionIntents(
   }
 }
 
-export async function createProviders(walletCtx: Awaited<ReturnType<typeof createWallet>>) {
+export async function createProviders(
+  walletCtx: Awaited<ReturnType<typeof createWallet>>,
+  customZkConfigPath?: string
+) {
+  const activeZkConfigPath = customZkConfigPath || zkConfigPath;
   const state = await Rx.firstValueFrom(walletCtx.wallet.state().pipe(Rx.filter(s => s.isSynced)));
 
   const walletProvider = {
@@ -210,7 +186,7 @@ export async function createProviders(walletCtx: Awaited<ReturnType<typeof creat
     submitTx: (tx: any) => walletCtx.wallet.submitTransaction(tx) as any,
   };
 
-  const zkConfigProvider = new NodeZkConfigProvider(zkConfigPath);
+  const zkConfigProvider = new NodeZkConfigProvider(activeZkConfigPath);
 
   return {
     walletProvider,
@@ -220,7 +196,7 @@ export async function createProviders(walletCtx: Awaited<ReturnType<typeof creat
     publicDataProvider: indexerPublicDataProvider(CONFIG.indexer, CONFIG.indexerWS),
     privateStateProvider: await levelPrivateStateProvider({
       privateStoragePasswordProvider: async () => 'dev-pw-x9k2m7n4q8',
-      accountId: zkConfigPath,
+      accountId: activeZkConfigPath,
     }),
     proofProvider: httpClientProofProvider(CONFIG.proofServer, zkConfigProvider),
     zkConfigProvider,

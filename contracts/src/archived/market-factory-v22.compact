@@ -1,0 +1,101 @@
+pragma language_version 0.22;
+
+import CompactStandardLibrary;
+
+// Market Factory - Creates and manages prediction markets (Compact 0.22)
+
+// Factory state
+export ledger marketCount: Counter;
+export ledger marketRegistry: Map<Field, Bytes<32>>;  // marketId -> contract address
+export ledger marketQuestions: Map<Field, Opaque<'string'>>;  // marketId -> question
+export ledger marketEndTimes: Map<Field, Field>;      // marketId -> end time
+export ledger marketCategories: Map<Field, Field>;    // marketId -> category
+export ledger marketCreators: Map<Field, Bytes<32>>;  // marketId -> creator address
+export ledger marketStatuses: Map<Field, Field>;      // marketId -> status (0=pending, 1=open, 2=locked, 3=resolved)
+
+// User's created markets (limited to 100 per user)
+export ledger creatorMarkets: Map<Bytes<32>, Vector<100, Field>>;
+
+// Witness functions
+witness userSecretKey(): Bytes<32>;
+witness marketData(): (Opaque<'string'>, Field, Field, Field, Field);  // question, category, endTime, minBet, maxBet
+
+constructor() {
+  marketCount.increment(0);
+}
+
+// Register a new market (frontend deploys actual market contract)
+export circuit registerMarket(
+  contractAddress: Bytes<32>,
+  question: Opaque<'string'>,
+  category: Field,
+  endTime: Field,
+  minBet: Field,
+  maxBet: Field
+): Field {
+  // Validate inputs
+  const currentTime = 0;  // TODO: Get from network
+  // assert(endTime > currentTime, "End time must be in future");
+  assert(minBet > 0, "Min bet must be positive");
+  assert(maxBet > minBet, "Max bet must exceed min bet");
+  
+  // Get next market ID
+  const marketId = marketCount.value;
+  marketCount.increment(1);
+  
+  // Store market data
+  marketRegistry.insert(marketId, disclose(contractAddress));
+  marketQuestions.insert(marketId, disclose(question));
+  marketEndTimes.insert(marketId, disclose(endTime));
+  marketCategories.insert(marketId, disclose(category));
+  marketStatuses.insert(marketId, disclose(0));  // PENDING
+  
+  // Track creator
+  const creatorKey = disclose(persistentHash<Bytes<32>>(userSecretKey()));
+  marketCreators.insert(marketId, creatorKey);
+  
+  // Add to creator's market list
+  let userMarkets = creatorMarkets.get(creatorKey).unwrap_or(emptyVector<100, Field>());
+  userMarkets = userMarkets.push(marketId);
+  creatorMarkets.insert(creatorKey, userMarkets);
+  
+  return marketId;
+}
+
+// Get market contract address
+export circuit getMarketAddress(marketId: Field): Bytes<32> {
+  return marketRegistry.get(marketId).unwrap();
+}
+
+// Get market metadata
+export circuit getMarketInfo(marketId: Field): (Opaque<'string'>, Field, Field) {
+  const question = marketQuestions.get(marketId).unwrap();
+  const endTime = marketEndTimes.get(marketId).unwrap();
+  const status = marketStatuses.get(marketId).unwrap();
+  
+  return (question, endTime, status);
+}
+
+// Update market status
+export circuit updateMarketStatus(marketId: Field, newStatus: Field): [] {
+  assert(newStatus >= 0 && newStatus <= 3, "Invalid status");
+  
+  marketStatuses.insert(marketId, disclose(newStatus));
+}
+
+// Get markets created by user
+export circuit getCreatorMarkets(creator: Bytes<32>): Vector<100, Field> {
+  return creatorMarkets.get(creator).unwrap_or(emptyVector<100, Field>());
+}
+
+// Get total market count
+export circuit getTotalMarkets(): Field {
+  return marketCount.value;
+}
+
+// Get markets by category
+export circuit getMarketsByCategory(category: Field): Vector<100, Field> {
+  // Simplified: would need iteration support for full implementation
+  // Return empty vector for now - frontend can filter
+  return emptyVector<100, Field>();
+}

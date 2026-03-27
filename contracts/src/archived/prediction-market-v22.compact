@@ -1,0 +1,190 @@
+pragma language_version 0.22;
+
+import CompactStandardLibrary;
+
+// Prediction Market with AMM (Compact 0.22)
+
+// Market states
+export enum MarketStatus {
+  PENDING,
+  OPEN,
+  LOCKED,
+  RESOLVED
+}
+
+// Market configuration (set at deployment)
+export ledger marketId: Field;
+export ledger question: Opaque<'string'>;
+export ledger category: Field;
+export ledger endTime: Field;
+export ledger minBet: Field;
+export ledger maxBet: Field;
+
+// Market state
+export ledger status: MarketStatus;
+export ledger totalLiquidity: Field;
+export ledger totalBets: Counter;
+export ledger outcome: Maybe<Field>;  // Resolved outcome: 0=NO, 1=YES
+
+// AMM liquidity pool (constant product: x * y = k)
+export ledger yesShares: Field;
+export ledger noShares: Field;
+export ledger k: Field;  // Constant product
+
+// User positions (private bet amounts via commitments)
+export ledger betCommitments: Map<Bytes<32>, Bytes<32>>;  // userKey -> commitment
+export ledger betTimestamps: Map<Bytes<32>, Field>;       // userKey -> timestamp
+export ledger betRevealed: Map<Bytes<32>, Field>;         // userKey -> revealed status (1=true, 0=false)
+
+// Payout tracking
+export ledger totalPaidOut: Field;
+export ledger usersPaidOut: Map<Bytes<32>, Field>;        // 1 = paid, 0 = not paid
+
+// Witness functions
+witness userSecretKey(): Bytes<32>;
+witness betAmount(): Field;
+witness betSide(): Field;  // 0 = NO, 1 = YES
+witness betNonce(): Bytes<32>;
+
+constructor(
+  _marketId: Field,
+  marketQuestion: Opaque<'string'>,
+  marketCategory: Field,
+  marketEndTime: Field,
+  marketMinBet: Field,
+  marketMaxBet: Field
+) {
+  marketId = _marketId;
+  question = disclose(marketQuestion);
+  category = marketCategory;
+  endTime = marketEndTime;
+  minBet = marketMinBet;
+  maxBet = marketMaxBet;
+  
+  status = MarketStatus.PENDING;
+  totalLiquidity = 0;
+  totalBets.increment(0);
+  outcome = none<Field>();
+  
+  // Initialize AMM with equal liquidity on both sides
+  yesShares = 1000000;  // 1M shares
+  noShares = 1000000;   // 1M shares
+  k = yesShares * noShares;  // Constant product
+  
+  totalPaidOut = 0;
+}
+
+// Open market for betting
+export circuit openMarket(): [] {
+  assert(status == MarketStatus.PENDING, "Market must be pending");
+  
+  status = MarketStatus.OPEN;
+}
+
+// Place a bet with private amount
+export circuit placeBet(): [] {
+  assert(status == MarketStatus.OPEN, "Market not open");
+  
+  const amount = betAmount();
+  const side = betSide();
+  const nonce = betNonce();
+  
+  // Validate bet amount
+  assert(amount >= minBet, "Amount below minimum");
+  assert(amount <= maxBet, "Amount above maximum");
+  assert(side == 0 || side == 1, "Side must be 0 or 1");
+  
+  // Create commitment: hash(amount, side, nonce)
+  const commitmentData = persistentHash<Vector<3, Field>>([amount, side, nonce as Field]);
+  const commitment = commitmentData as Bytes<32>;
+  
+  // Store commitment
+  const userKey = disclose(persistentHash<Bytes<32>>(userSecretKey()));
+  betCommitments.insert(userKey, disclose(commitment));
+  betTimestamps.insert(userKey, disclose(0));  // TODO: Use actual timestamp
+  betRevealed.insert(userKey, disclose(0));  // 0 = not revealed
+  
+  // Update AMM state (simplified constant product)
+  totalLiquidity = totalLiquidity + amount;
+  totalBets.increment(1);
+  
+  // Update share reserves based on side
+  // Simplified AMM: adjust reserves proportionally (avoiding division)
+  // When buying YES (side=1), reduce YES shares
+  // When buying NO (side=0), reduce NO shares
+  const yesAdjust = side * amount;          // amount if YES, 0 if NO
+  const noAdjust = (1 - side) * amount;     // amount if NO, 0 if YES
+  
+  yesShares = yesShares - yesAdjust;
+  noShares = noShares - noAdjust;
+}
+
+// Lock market (no more bets)
+export circuit lockMarket(): [] {
+  assert(status == MarketStatus.OPEN, "Market not open");
+  
+  status = MarketStatus.LOCKED;
+}
+
+// Resolve market with outcome from oracle
+export circuit resolveMarket(finalOutcome: Field): [] {
+  assert(status == MarketStatus.LOCKED, "Market not locked");
+  assert(finalOutcome == 0 || finalOutcome == 1, "Invalid outcome");
+  
+  outcome = some<Field>(finalOutcome);
+  status = MarketStatus.RESOLVED;
+}
+
+// Claim winnings (requires revealing bet)
+export circuit claimWinnings(): [] {
+  assert(status == MarketStatus.RESOLVED, "Market not resolved");
+  
+  const amount = betAmount();
+  const side = betSide();
+  const nonce = betNonce();
+  
+  // Verify commitment
+  const userKey = disclose(persistentHash<Bytes<32>>(userSecretKey()));
+  const storedCommitment = betCommitments.get(userKey).unwrap();
+  
+  const commitmentData = persistentHash<Vector<3, Field>>([amount, side, nonce as Field]);
+  const providedCommitment = commitmentData as Bytes<32>;
+  
+  assert(storedCommitment == providedCommitment, "Invalid commitment proof");
+  
+  // Check not already paid
+  const alreadyPaid = usersPaidOut.get(userKey).unwrap_or(0);
+  assert(alreadyPaid == 0, "Already claimed");
+  
+  // Check if user won
+  const finalOutcome = outcome.unwrap();
+  assert(side == finalOutcome, "You lost this bet");
+  
+  // Calculate payout (simplified: 2x for winners)
+  const payout = amount * 2;
+  
+  // Mark as revealed and paid out
+  betRevealed.insert(userKey, disclose(1));  // 1 = revealed
+  usersPaidOut.insert(userKey, disclose(1));  // 1 = paid
+  totalPaidOut = totalPaidOut + payout;
+  
+  // TODO: Actual token transfer would happen here
+}
+
+// Get current market odds (based on AMM reserves)
+export circuit getCurrentOdds(): (Field, Field) {
+  // Odds for YES = noShares / (yesShares + noShares)
+  // Odds for NO = yesShares / (yesShares + noShares)
+  // Simplified: return share counts
+  return (yesShares, noShares);
+}
+
+// Check if user has bet
+export circuit getUserBet(userAddress: Bytes<32>): Maybe<Bytes<32>> {
+  return betCommitments.get(userAddress);
+}
+
+// Get market status
+export circuit getStatus(): Field {
+  return status as Field;
+}

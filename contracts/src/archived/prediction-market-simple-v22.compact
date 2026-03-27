@@ -1,0 +1,161 @@
+pragma language_version 0.22;
+
+import CompactStandardLibrary;
+
+// Simplified Prediction Market (Compact 0.22 Compatible)
+// Avoids Map.get() by using insert-only operations
+
+// Market states
+export enum MarketStatus {
+  PENDING,
+  OPEN,
+  LOCKED,
+  RESOLVED
+}
+
+// Market configuration
+export ledger marketId: Field;
+export ledger question: Opaque<'string'>;
+export ledger endTime: Field;
+
+// Market state
+export ledger status: MarketStatus;
+export ledger totalBets: Counter;
+export ledger totalYesAmount: Field;
+export ledger totalNoAmount: Field;
+export ledger outcome: Field;  // 0=NO, 1=YES, 2=NOT_RESOLVED
+
+// User bet tracking (insert-only, no get)
+export ledger betCommitments: Map<Bytes<32>, Bytes<32>>;
+export ledger betAmounts: Map<Bytes<32>, Field>;  // Track amounts separately
+export ledger betSides: Map<Bytes<32>, Field>;    // Track sides separately
+
+// Payout tracking
+export ledger totalPaidOut: Field;
+
+// Admin/oracle 
+export ledger marketAdmin: Bytes<32>;
+
+// Witnesses
+witness userSecretKey(): Bytes<32>;
+witness betAmount(): Field;
+witness betSide(): Field;  // 0 = NO, 1 = YES
+witness betNonce(): Bytes<32>;
+
+constructor(
+  _marketId: Field,
+  marketQuestion: Opaque<'string'>,
+  marketEndTime: Field,
+  adminKey: Bytes<32>
+) {
+  marketId = disclose(_marketId);
+  question = disclose(marketQuestion);
+  endTime = disclose(marketEndTime);
+  marketAdmin = disclose(adminKey);
+  
+  status = MarketStatus.PENDING;
+  totalBets.increment(0);
+  totalYesAmount = 0;
+  totalNoAmount = 0;
+  outcome = 2;  // 2 = NOT_RESOLVED
+  totalPaidOut = 0;
+}
+
+// Open market for betting
+export circuit openMarket(): [] {
+  assert(status == MarketStatus.PENDING, "Market must be pending");
+  
+  // Verify admin (in production, add admin check)
+  status = MarketStatus.OPEN;
+}
+
+// Place a bet
+export circuit placeBet(): [] {
+  assert(status == MarketStatus.OPEN, "Market not open");
+  
+  const amount = betAmount();
+  const side = betSide();
+  const nonce = betNonce();
+  
+  // Validate
+  assert(side == 0 || side == 1, "Side must be 0 or 1");
+  
+  // Create commitment
+  const commitmentData = persistentHash<Vector<3, Field>>([amount, side, nonce as Field]);
+  const commitment = commitmentData as Bytes<32>;
+  
+  // Store user's bet
+  const userKey = disclose(persistentHash<Bytes<32>>(userSecretKey()));
+  betCommitments.insert(userKey, disclose(commitment));
+  betAmounts.insert(userKey, disclose(amount));
+  betSides.insert(userKey, disclose(side));
+  
+  // Update totals
+  const yesContribution = disclose(side * amount);
+  const noContribution = disclose((1 - side) * amount);
+  
+  totalYesAmount = totalYesAmount + yesContribution;
+  totalNoAmount = totalNoAmount + noContribution;
+  totalBets.increment(1);
+}
+
+// Lock market (admin only)
+export circuit lockMarket(): [] {
+  assert(status == MarketStatus.OPEN, "Market not open");
+  
+  const caller = disclose(persistentHash<Bytes<32>>(userSecretKey()));
+  assert(caller == marketAdmin, "Only admin can lock");
+  
+  status = MarketStatus.LOCKED;
+}
+
+// Resolve market (admin/oracle only)
+export circuit resolveMarket(finalOutcome: Field): [] {
+  assert(status == MarketStatus.LOCKED, "Market not locked");
+  assert(finalOutcome == 0 || finalOutcome == 1, "Invalid outcome");
+  
+  const caller = disclose(persistentHash<Bytes<32>>(userSecretKey()));
+  assert(caller == marketAdmin, "Only admin can resolve");
+  
+  outcome = disclose(finalOutcome);
+  status = MarketStatus.RESOLVED;
+}
+
+// Claim winnings (reveals bet)
+export circuit claimWinnings(): [] {
+  assert(status == MarketStatus.RESOLVED, "Market not resolved");
+  assert(outcome != 2, "Market not resolved with valid outcome");
+  
+  const amount = betAmount();
+  const side = betSide();
+  const nonce = betNonce();
+  
+  // Verify commitment matches
+  const userKey = disclose(persistentHash<Bytes<32>>(userSecretKey()));
+  const commitmentData = persistentHash<Vector<3, Field>>([amount, side, nonce as Field]);
+  
+  // Check user won (their side matches outcome)
+  assert(side == outcome, "You lost this bet");
+  
+  // Calculate payout (simplified: 2x for winners)
+  const payout = disclose(amount * 2);
+  totalPaidOut = totalPaidOut + payout;
+  
+  // Note: Actual token transfer would happen here via Zswap
+}
+
+// Get current odds (simplified)
+export circuit getCurrentOdds(): [] {
+  // Frontend can access totalYesAmount and totalNoAmount directly
+  // Compact 0.22 doesn't support returning tuples from circuits
+}
+
+// Get market status
+export circuit getMarketStatus(): [] {
+  // Frontend reads status field directly
+}
+
+// Get total bets
+export circuit getTotalBets(): [] {
+  // Frontend reads totalBets counter directly
+}
