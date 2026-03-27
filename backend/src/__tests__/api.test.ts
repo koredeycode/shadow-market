@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { afterAll, describe, expect, it } from 'vitest';
-import { app } from '../app';
-import { closeDb } from '../db/client';
+import { app } from '../app.js';
+import { closeDb } from '../db/client.js';
 
 describe('Markets API', () => {
   afterAll(async () => {

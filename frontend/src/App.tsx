@@ -11,6 +11,10 @@ const CreateMarket = lazy(() => import('./pages/CreateMarket'));
 const Portfolio = lazy(() => import('./pages/Portfolio'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 
+// Admin pages
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
+const AdminMarkets = lazy(() => import('./pages/admin/Markets'));
+
 // Loading fallback component
 const PageLoader = () => (
   <div className="flex justify-center items-center min-h-[60vh]">
@@ -31,6 +35,10 @@ function App() {
               <Route path="markets/create" element={<CreateMarket />} />
               <Route path="portfolio" element={<Portfolio />} />
               <Route path="analytics" element={<Analytics />} />
+
+              {/* Admin Routes */}
+              <Route path="admin" element={<AdminDashboard />} />
+              <Route path="admin/markets" element={<AdminMarkets />} />
             </Route>
           </Routes>
         </Suspense>

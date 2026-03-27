@@ -1,6 +1,6 @@
 import cors from 'cors';
 import helmet from 'helmet';
-import { config } from '../config';
+import { config } from '../config.js';
 
 /**
  * Security middlewares configuration for production

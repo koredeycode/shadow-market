@@ -2,6 +2,8 @@ import http from 'http';
 import { app } from './app.js';
 import { config } from './config.js';
 import { testConnection } from './db/client.js';
+import { runMigrations } from './db/migrations.js';
+import { initializeAdmin } from './services/admin-init.service.js';
 import { initWebSocket } from './websocket.js';
 
 const server = http.createServer(app);
@@ -19,10 +21,22 @@ async function startServer() {
       process.exit(1);
     }
 
+    // Run migrations
+    const migrationsOk = await runMigrations();
+    if (!migrationsOk) {
+      console.error('❌ Failed to run migrations');
+      process.exit(1);
+    }
+
+    // Initialize admin user
+    await initializeAdmin();
+
     server.listen(config.port, () => {
       console.log(`✅ Backend server running on http://${config.host}:${config.port}`);
       console.log(`✅ WebSocket server ready`);
       console.log(`✅ Database connected`);
+      console.log(`✅ Migrations applied`);
+      console.log(`✅ Admin user initialized`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);

@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { authenticate } from '../middleware/auth';
-import { validate } from '../middleware/validate';
-import { MarketService } from '../services/market.service';
-import { asyncHandler } from '../utils/async-handler';
+import { authenticate, type AuthRequest } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import { MarketService } from '../services/market.service.js';
+import { asyncHandler } from '../utils/async-handler.js';
 
 export const marketsRouter = Router();
 const marketService = new MarketService();
@@ -55,7 +55,7 @@ marketsRouter.post(
   '/',
   authenticate,
   validate({ body: createMarketSchema }),
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: AuthRequest, res) => {
     const userId = req.user!.id;
     const market = await marketService.createMarket(userId, req.body);
 
@@ -170,6 +170,66 @@ marketsRouter.get(
     res.json({
       success: true,
       data: stats,
+      timestamp: Date.now(),
+    });
+  })
+);
+
+/**
+ * GET /api/markets/new
+ * Get newly created markets
+ */
+marketsRouter.get(
+  '/new',
+  asyncHandler(async (req, res) => {
+    const limit = parseInt(req.query.limit as string) || 10;
+    const markets = await marketService.getNewMarkets(limit);
+
+    res.json({
+      success: true,
+      data: markets,
+      timestamp: Date.now(),
+    });
+  })
+);
+
+/**
+ * POST /api/markets/:id/upvote
+ * Upvote a market
+ */
+marketsRouter.post(
+  '/:id/upvote',
+  authenticate,
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    const market = await marketService.upvoteMarket(id, userId);
+
+    res.json({
+      success: true,
+      data: market,
+      timestamp: Date.now(),
+    });
+  })
+);
+
+/**
+ * DELETE /api/markets/:id/upvote
+ * Remove upvote from a market
+ */
+marketsRouter.delete(
+  '/:id/upvote',
+  authenticate,
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    const market = await marketService.removeUpvote(id, userId);
+
+    res.json({
+      success: true,
+      data: market,
       timestamp: Date.now(),
     });
   })

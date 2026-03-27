@@ -1,1 +1,1 @@
-export { oraclesRouter } from './placeholder';
+export { oraclesRouter } from './placeholder.js';

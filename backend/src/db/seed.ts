@@ -1,7 +1,17 @@
 import { randomBytes } from 'crypto';
 import 'dotenv/config';
-import { db } from './client';
-import { markets, oracles, users, positions, wagers, pricePoints, oracleReports, liquidityPools, lpPositions } from './schema';
+import { db } from './client.js';
+import {
+  liquidityPools,
+  lpPositions,
+  markets,
+  oracleReports,
+  oracles,
+  positions,
+  pricePoints,
+  users,
+  wagers,
+} from './schema.js';
 
 // Generate random ID
 const generateId = () => randomBytes(16).toString('hex');

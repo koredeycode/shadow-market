@@ -21,6 +21,9 @@ export interface Market {
   totalPositions: number;
   yesPrice: string;
   noPrice: string;
+  upvotes: number;
+  hasUpvoted?: boolean;
+  trendingScore?: number;
   creator?: {
     id: string;
     username?: string;
@@ -98,6 +101,47 @@ export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   error?: string;
+}
+
+// Admin types
+export interface AdminStats {
+  totalMarkets: number;
+  activeMarkets: number;
+  totalVolume: string;
+  totalUsers: number;
+  totalPositions: number;
+  totalWagers: number;
+  platformFees: string;
+  last24hVolume: string;
+  last24hUsers: number;
+}
+
+export interface AdminMarket extends Market {
+  isVerified: boolean;
+  isFeatured: boolean;
+  reportCount: number;
+  moderationNotes?: string;
+}
+
+export interface AdminUser {
+  id: string;
+  address: string;
+  username?: string;
+  email?: string;
+  reputation: number;
+  totalVolume: string;
+  totalPositions: number;
+  winRate: number;
+  createdAt: string;
+  lastActive: string;
+  isBlocked: boolean;
+  kycStatus: 'none' | 'pending' | 'verified' | 'rejected';
+}
+
+export interface TrendingMarket extends Market {
+  trendingScore: number;
+  volumeChange24h: string;
+  upvotesChange24h: number;
   timestamp: number;
 }
 

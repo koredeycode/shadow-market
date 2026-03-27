@@ -40,6 +40,14 @@ export const config = {
   p2pWagerAddress: process.env.P2P_WAGER_ADDRESS || '',
   liquidityPoolAddress: process.env.LIQUIDITY_POOL_ADDRESS || '',
   oracleAddress: process.env.ORACLE_ADDRESS || '',
+  unifiedContractAddress:
+    process.env.UNIFIED_CONTRACT_ADDRESS ||
+    'cd9dae0f85be015b6b6c6b4008de30fc0be98d55bbf6b61f0fbda0e359f9aea7',
+
+  // Admin user (created on startup)
+  adminUsername: process.env.ADMIN_USERNAME || 'admin',
+  adminPassword: process.env.ADMIN_PASSWORD || 'changeme',
+  adminWalletAddress: process.env.ADMIN_WALLET_ADDRESS || '',
 };
 
 // Validate required config

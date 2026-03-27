@@ -1,5 +1,11 @@
 import { api } from '../lib/api';
-import type { ApiResponse, Market, MarketFilters, PaginatedResponse } from '../types';
+import type {
+  ApiResponse,
+  Market,
+  MarketFilters,
+  PaginatedResponse,
+  TrendingMarket,
+} from '../types';
 
 export const marketsApi = {
   getAll: async (filters: MarketFilters = {}): Promise<PaginatedResponse<Market>> => {
@@ -21,9 +27,24 @@ export const marketsApi = {
     return data.data!;
   },
 
-  getTrending: async (limit: number = 10): Promise<Market[]> => {
-    const { data } = await api.get<ApiResponse<Market[]>>(`/markets/trending?limit=${limit}`);
+  getTrending: async (limit: number = 10): Promise<TrendingMarket[]> => {
+    const { data } = await api.get<ApiResponse<TrendingMarket[]>>(
+      `/markets/trending?limit=${limit}`
+    );
     return data.data!;
+  },
+
+  getNew: async (limit: number = 10): Promise<Market[]> => {
+    const { data } = await api.get<ApiResponse<Market[]>>(`/markets/new?limit=${limit}`);
+    return data.data!;
+  },
+
+  upvote: async (marketId: string): Promise<void> => {
+    await api.post(`/markets/${marketId}/upvote`);
+  },
+
+  removeUpvote: async (marketId: string): Promise<void> => {
+    await api.delete(`/markets/${marketId}/upvote`);
   },
 
   search: async (query: string, limit: number = 10): Promise<Market[]> => {

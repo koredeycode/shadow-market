@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { authenticate } from '../middleware/auth';
-import { validate } from '../middleware/validate';
-import { WagerService } from '../services/wager.service';
-import { asyncHandler } from '../utils/async-handler';
+import { authenticate, type AuthRequest } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import { WagerService } from '../services/wager.service.js';
+import { asyncHandler } from '../utils/async-handler.js';
 
 export const wagersRouter = Router();
 const wagerService = new WagerService();
@@ -32,7 +32,7 @@ wagersRouter.post(
   '/',
   authenticate,
   validate({ body: placeBetSchema }),
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: AuthRequest, res) => {
     const userId = req.user!.id;
     const position = await wagerService.placeBet(userId, req.body);
 
@@ -52,7 +52,7 @@ wagersRouter.post(
   '/p2p',
   authenticate,
   validate({ body: createP2PWagerSchema }),
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: AuthRequest, res) => {
     const userId = req.user!.id;
     const wager = await wagerService.createP2PWager(userId, req.body);
 
@@ -71,7 +71,7 @@ wagersRouter.post(
 wagersRouter.post(
   '/p2p/:id/accept',
   authenticate,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: AuthRequest, res) => {
     const userId = req.user!.id;
     const { id } = req.params;
 
@@ -92,7 +92,7 @@ wagersRouter.post(
 wagersRouter.delete(
   '/p2p/:id',
   authenticate,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: AuthRequest, res) => {
     const userId = req.user!.id;
     const { id } = req.params;
 
@@ -113,7 +113,7 @@ wagersRouter.delete(
 wagersRouter.get(
   '/user',
   authenticate,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: AuthRequest, res) => {
     const userId = req.user!.id;
     const wagers = await wagerService.getUserWagers(userId);
 
@@ -132,7 +132,7 @@ wagersRouter.get(
 wagersRouter.get(
   '/positions',
   authenticate,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: AuthRequest, res) => {
     const userId = req.user!.id;
     const positions = await wagerService.getUserPositions(userId);
 
@@ -151,7 +151,7 @@ wagersRouter.get(
 wagersRouter.get(
   '/portfolio',
   authenticate,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: AuthRequest, res) => {
     const userId = req.user!.id;
     const stats = await wagerService.getPortfolioStats(userId);
 
@@ -170,7 +170,7 @@ wagersRouter.get(
 wagersRouter.post(
   '/:id/claim',
   authenticate,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: AuthRequest, res) => {
     const userId = req.user!.id;
     const { id } = req.params;
 

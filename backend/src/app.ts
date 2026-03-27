@@ -2,6 +2,7 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import { config } from './config.js';
+import { adminRouter } from './routes/admin.js';
 import { marketsRouter } from './routes/markets.js';
 import { oraclesRouter } from './routes/oracles.js';
 import { usersRouter } from './routes/users.js';
@@ -22,6 +23,7 @@ app.get('/health', (req, res) => {
 });
 
 // API Routes
+app.use('/api/admin', adminRouter);
 app.use('/api/markets', marketsRouter);
 app.use('/api/oracles', oraclesRouter);
 app.use('/api/users', usersRouter);

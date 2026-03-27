@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { redisClient } from './rate-limit';
+import { redisClient } from './rate-limit.js';
 
 interface CacheOptions {
   ttl: number; // Time to live in seconds

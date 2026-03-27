@@ -1,8 +1,8 @@
 import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
-import { db } from '../db/client';
-import { markets, positions, pricePoints } from '../db/schema';
-import type { CreateMarketRequest, MarketFilters, PaginatedResponse, PricePoint } from '../types';
-import { generateId } from '../utils/crypto';
+import { db } from '../db/client.js';
+import { markets, marketUpvotes, positions, pricePoints } from '../db/schema.js';
+import type { CreateMarketRequest, MarketFilters, PaginatedResponse, PricePoint } from '../types/index.js';
+import { generateId } from '../utils/crypto.js';
 
 export class MarketService {
   /**
@@ -117,7 +117,7 @@ export class MarketService {
   async updateMarketStatus(marketId: string, status: typeof markets.$inferSelect.status) {
     const [updated] = await db
       .update(markets)
-      .set({ status, updatedAt: new Date() })
+      .set({ status })
       .where(eq(markets.id, marketId))
       .returning();
 
@@ -196,15 +196,124 @@ export class MarketService {
   }
 
   /**
-   * Get trending markets (most volume in last 24h)
+   * Get trending markets (based on trending score algorithm)
    */
   async getTrendingMarkets(limit: number = 10) {
+    // Calculate trending score if not recently updated
+    await this.updateTrendingScores();
+
     return await db
       .select()
       .from(markets)
       .where(eq(markets.status, 'OPEN'))
-      .orderBy(desc(markets.totalVolume))
+      .orderBy(desc(markets.trendingScore), desc(markets.upvotes))
       .limit(limit);
+  }
+
+  /**
+   * Get newly created markets
+   */
+  async getNewMarkets(limit: number = 10) {
+    return await db
+      .select()
+      .from(markets)
+      .where(eq(markets.status, 'OPEN'))
+      .orderBy(desc(markets.createdAt))
+      .limit(limit);
+  }
+
+  /**
+   * Upvote a market
+   */
+  async upvoteMarket(marketId: string, userId: string) {
+    // Check if already upvoted
+    const existing = await db
+      .select()
+      .from(marketUpvotes)
+      .where(and(eq(marketUpvotes.marketId, marketId), eq(marketUpvotes.userId, userId)))
+      .limit(1);
+
+    if (existing.length > 0) {
+      throw new Error('Already upvoted');
+    }
+
+    // Insert upvote
+    await db.insert(marketUpvotes).values({
+      marketId,
+      userId,
+    });
+
+    // Increment upvote count
+    const [updated] = await db
+      .update(markets)
+      .set({
+        upvotes: sql`${markets.upvotes} + 1`,
+      })
+      .where(eq(markets.id, marketId))
+      .returning();
+
+    return updated;
+  }
+
+  /**
+   * Remove upvote from a market
+   */
+  async removeUpvote(marketId: string, userId: string) {
+    // Delete upvote
+    const deleted = await db
+      .delete(marketUpvotes)
+      .where(and(eq(marketUpvotes.marketId, marketId), eq(marketUpvotes.userId, userId)))
+      .returning();
+
+    if (deleted.length === 0) {
+      throw new Error('Upvote not found');
+    }
+
+    // Decrement upvote count
+    const [updated] = await db
+      .update(markets)
+      .set({
+        upvotes: sql`GREATEST(${markets.upvotes} - 1, 0)`,
+      })
+      .where(eq(markets.id, marketId))
+      .returning();
+
+    return updated;
+  }
+
+  /**
+   * Update trending scores for all active markets
+   * Algorithm: score = (volumeChange24h * 0.4) + (upvotesChange24h * 0.3) + (recencyScore * 0.3)
+   */
+  async updateTrendingScores() {
+    const now = new Date();
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    // Get all open markets
+    const openMarkets = await db.select().from(markets).where(eq(markets.status, 'OPEN'));
+
+    for (const market of openMarkets) {
+      // Calculate volume change (simplified - track in separate table for production)
+      const volumeChange = parseFloat(market.volumeChange24h);
+
+      // Calculate upvote change (simplified - would need separate tracking table)
+      const upvoteChange = market.upvotes;
+
+      // Calculate recency score (0-100, newer = higher)
+      const ageInHours = (now.getTime() - market.createdAt.getTime()) / (1000 * 60 * 60);
+      const recencyScore = Math.max(0, 100 - ageInHours);
+
+      // Calculate trending score
+      const trendingScore = volumeChange * 0.4 + upvoteChange * 30 + recencyScore * 0.3;
+
+      // Update market
+      await db
+        .update(markets)
+        .set({
+          trendingScore: trendingScore.toFixed(2),
+        })
+        .where(eq(markets.id, market.id));
+    }
   }
 
   /**

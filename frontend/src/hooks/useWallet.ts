@@ -1,13 +1,14 @@
 import { ConnectedAPI, type InitialAPI } from '@midnight-ntwrk/dapp-connector-api';
-import { 
-  ShieldedAddress, 
-  ShieldedCoinPublicKey, 
-  ShieldedEncryptionPublicKey 
+import {
+  ShieldedAddress,
+  ShieldedCoinPublicKey,
+  ShieldedEncryptionPublicKey,
 } from '@midnight-ntwrk/wallet-sdk-address-format';
 import { useCallback, useEffect, useRef } from 'react';
 
 import toast from 'react-hot-toast';
 import semver from 'semver';
+import { useContractStore } from '../store/contract.store';
 import { useWalletStore } from '../store/wallet.store';
 
 // Declare global window types for Lace wallet
@@ -46,6 +47,8 @@ export function useWallet() {
     updateBalance,
     setConnecting,
   } = useWalletStore();
+
+  const { initialize: initializeContract, cleanup: cleanupContract } = useContractStore();
 
   const connectedAPIRef = useRef<ConnectedAPI | null>(null);
 
@@ -88,13 +91,17 @@ export function useWallet() {
 
       // Convert hex public keys to Bech32m formatted address if they are returned as hex
       let walletAddress = shieldedAddresses.shieldedAddress;
-      
+
       // If shieldedAddress is identical to coinPublicKey, it's likely raw hex and needs formatting
       if (walletAddress === shieldedAddresses.shieldedCoinPublicKey) {
         console.log('Formatting hex address to Bech32m...');
         try {
-          const coinPublicKey = ShieldedCoinPublicKey.fromHexString(shieldedAddresses.shieldedCoinPublicKey);
-          const encryptionPublicKey = ShieldedEncryptionPublicKey.fromHexString(shieldedAddresses.shieldedEncryptionPublicKey);
+          const coinPublicKey = ShieldedCoinPublicKey.fromHexString(
+            shieldedAddresses.shieldedCoinPublicKey
+          );
+          const encryptionPublicKey = ShieldedEncryptionPublicKey.fromHexString(
+            shieldedAddresses.shieldedEncryptionPublicKey
+          );
           const fullShieldedAddress = new ShieldedAddress(coinPublicKey, encryptionPublicKey);
           walletAddress = ShieldedAddress.codec.encode(NETWORK_ID, fullShieldedAddress).toString();
           console.log('Formatted address:', walletAddress);
@@ -110,6 +117,17 @@ export function useWallet() {
       connect(connectedAPI, walletAddress, NETWORK_ID);
       updateBalance(walletBalance);
 
+      // Initialize contract connection
+      // Note: SDK v4 doesn't expose getPrivateStateProvider on ConnectedAPI
+      // Private state management is handled internally by the wallet now
+      try {
+        await initializeContract(connectedAPI);
+        console.log('✅ Contract initialized');
+      } catch (error) {
+        console.error('⚠️ Contract initialization failed:', error);
+        // Don't fail wallet connection if contract init fails
+      }
+
       toast.success('Wallet connected successfully!');
     } catch (error) {
       console.error('Failed to connect wallet:', error);
@@ -123,9 +141,10 @@ export function useWallet() {
   // Disconnect wallet
   const disconnectWallet = useCallback(() => {
     connectedAPIRef.current = null;
+    cleanupContract();
     disconnect();
     toast.success('Wallet disconnected');
-  }, [disconnect]);
+  }, [disconnect, cleanupContract]);
 
   // Refresh balance
   const refreshBalance = useCallback(async () => {

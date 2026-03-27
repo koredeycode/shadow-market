@@ -1,11 +1,12 @@
-import { useState, useMemo } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { TrendingUp, TrendingDown, Info, AlertTriangle, Zap } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { AlertTriangle, Info, TrendingDown, TrendingUp, Zap } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
+import { z } from 'zod';
 import { wagersApi } from '../../api/wagers';
+import { useContract } from '../../hooks/useContract';
 import { useWallet } from '../../hooks/useWallet';
 import { Market } from '../../types';
 
@@ -25,6 +26,7 @@ interface BettingTerminalProps {
 
 export function BettingTerminal({ market }: BettingTerminalProps) {
   const { isConnected, formattedBalance, setWalletModalOpen } = useWallet();
+  const { placeBet, isInitialized } = useContract();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -52,11 +54,11 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
     const basePrice = side === 'yes' ? parseFloat(market.yesPrice) : parseFloat(market.noPrice);
     const betAmount = parseFloat(amount);
     const liquidityFactor = parseFloat(market.totalLiquidity) || 1000000;
-    
+
     // Simplified AMM formula for demonstration
-    const priceImpact = (betAmount / liquidityFactor) * 0.05; 
+    const priceImpact = (betAmount / liquidityFactor) * 0.05;
     const estimatedPrice = basePrice + (side === 'yes' ? priceImpact : -priceImpact);
-    
+
     const potentialPayout = betAmount / estimatedPrice;
     const potentialProfit = potentialPayout - betAmount;
     const returnPercentage = (potentialProfit / betAmount) * 100;
@@ -71,14 +73,36 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
   }, [amount, side, market]);
 
   const mutation = useMutation({
-    mutationFn: (data: BetFormData) => 
-      wagersApi.placeBet({
+    mutationFn: async (data: BetFormData) => {
+      // Call smart contract first
+      if (isInitialized) {
+        try {
+          const txId = await placeBet(
+            market.onchainId || market.id,
+            data.side.toUpperCase() as 'YES' | 'NO',
+            parseFloat(data.amount)
+          );
+
+          if (!txId) {
+            throw new Error('Failed to submit transaction to contract');
+          }
+
+          console.log('Contract bet placed, tx:', txId);
+        } catch (contractError) {
+          console.error('Contract transaction failed:', contractError);
+          // Continue with API call even if contract fails for now
+        }
+      }
+
+      // Also update backend database
+      return wagersApi.placeBet({
         marketId: market.id,
         amount: data.amount,
         side: data.side,
         slippage: data.slippage,
-      }),
-    onSuccess: (data) => {
+      });
+    },
+    onSuccess: data => {
       toast.success(`Position Secured: ${data.positionId.slice(0, 8)}...`);
       queryClient.invalidateQueries({ queryKey: ['market', market.id] });
       queryClient.invalidateQueries({ queryKey: ['positions'] });
@@ -105,22 +129,22 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
   return (
     <div className="bg-slate-900/60 border border-white/10 rounded-sm overflow-hidden flex flex-col h-full backdrop-blur-md">
       <div className="p-1 border-b border-white/10 bg-black/40 flex">
-        <button 
+        <button
           onClick={() => setValue('side', 'yes')}
           className={`flex-1 flex items-center justify-center gap-2 py-4 transition-all ${
-            side === 'yes' 
-              ? 'bg-success-green/10 text-success-green border-b-2 border-success-green' 
+            side === 'yes'
+              ? 'bg-success-green/10 text-success-green border-b-2 border-success-green'
               : 'text-slate-500 hover:text-slate-300'
           }`}
         >
           <TrendingUp className="w-4 h-4" />
           <span className="font-bold text-sm tracking-wider uppercase">Position: Yes</span>
         </button>
-        <button 
+        <button
           onClick={() => setValue('side', 'no')}
           className={`flex-1 flex items-center justify-center gap-2 py-4 transition-all ${
-            side === 'no' 
-              ? 'bg-red-500/10 text-red-500 border-b-2 border-red-500' 
+            side === 'no'
+              ? 'bg-red-500/10 text-red-500 border-b-2 border-red-500'
               : 'text-slate-500 hover:text-slate-300'
           }`}
         >
@@ -132,11 +156,16 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
       <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
         <div className="space-y-2">
           <div className="flex justify-between items-end">
-            <label className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Input Amount</label>
-            <span className="text-[10px] font-mono text-slate-400">Balance: <span className="text-white">{isConnected ? formattedBalance : '--'}</span> DUST</span>
+            <label className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">
+              Input Amount
+            </label>
+            <span className="text-[10px] font-mono text-slate-400">
+              Balance: <span className="text-white">{isConnected ? formattedBalance : '--'}</span>{' '}
+              DUST
+            </span>
           </div>
           <div className="relative group">
-            <input 
+            <input
               {...control.register('amount')}
               type="number"
               step="any"
@@ -148,12 +177,14 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
             </div>
           </div>
           {errors.amount && (
-            <p className="text-red-400 text-[10px] font-mono uppercase mt-1">{errors.amount.message}</p>
+            <p className="text-red-400 text-[10px] font-mono uppercase mt-1">
+              {errors.amount.message}
+            </p>
           )}
-          
+
           <div className="flex gap-2 pt-2">
             {[10, 50, 100, 500].map(qty => (
-              <button 
+              <button
                 key={qty}
                 type="button"
                 onClick={() => setValue('amount', qty.toString())}
@@ -174,12 +205,18 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
               {estimate ? `${(estimate.estimatedPrice * 100).toFixed(2)}%` : '--'}
             </span>
           </div>
-          
+
           <div className="flex items-center justify-between text-[11px] font-mono">
             <span className="text-slate-500 flex items-center gap-1.5 uppercase tracking-tight">
               Market Impact <Info className="w-3 h-3 text-slate-600" />
             </span>
-            <span className={estimate?.priceImpact && estimate.priceImpact > 3 ? 'text-amber-500 font-bold' : 'text-success-green font-bold'}>
+            <span
+              className={
+                estimate?.priceImpact && estimate.priceImpact > 3
+                  ? 'text-amber-500 font-bold'
+                  : 'text-success-green font-bold'
+              }
+            >
               {estimate ? `${estimate.priceImpact.toFixed(2)}%` : '0.00%'}
             </span>
           </div>
@@ -204,20 +241,21 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
           <div className="flex gap-3 bg-amber-500/10 border border-amber-500/20 p-3 rounded-sm items-start">
             <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
             <p className="text-[10px] text-amber-200/80 font-mono leading-tight uppercase">
-              WARNING: High price impact detected. Consider reducing stake size for better execution.
+              WARNING: High price impact detected. Consider reducing stake size for better
+              execution.
             </p>
           </div>
         )}
 
-        <button 
-          type={isConnected ? "submit" : "button"}
+        <button
+          type={isConnected ? 'submit' : 'button'}
           onClick={!isConnected ? () => setWalletModalOpen(true) : undefined}
           disabled={isSubmitting || (isConnected && (!amount || parseFloat(amount) <= 0))}
           className={`w-full py-4 rounded-sm font-bold text-sm tracking-[0.2em] relative group overflow-hidden transition-all ${
-            !isConnected 
+            !isConnected
               ? 'bg-electric-blue text-white shadow-[0_0_20px_rgba(59,130,246,0.3)]'
-              : side === 'yes' 
-                ? 'bg-success-green text-black hover:bg-success-green/90 shadow-[0_0_20px_rgba(16,185,129,0.2)]' 
+              : side === 'yes'
+                ? 'bg-success-green text-black hover:bg-success-green/90 shadow-[0_0_20px_rgba(16,185,129,0.2)]'
                 : 'bg-red-500 text-white hover:bg-red-500/90 shadow-[0_0_20px_rgba(239,68,68,0.2)]'
           } disabled:opacity-50 disabled:shadow-none disabled:bg-slate-800 disabled:text-slate-500`}
         >
@@ -231,7 +269,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
           ) : (
             `PLACE_${side.toUpperCase()}_WAGER`
           )}
-          
+
           <div className="absolute inset-0 bg-white opacity-0 group-active:opacity-20 transition-opacity" />
         </button>
       </form>

@@ -1,9 +1,9 @@
 import { eq } from 'drizzle-orm';
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { config } from '../config';
-import { db } from '../db/client';
-import { users } from '../db/schema';
+import { config } from '../config.js';
+import { db } from '../db/client.js';
+import { users } from '../db/schema.js';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -52,7 +52,11 @@ export async function authenticate(req: AuthRequest, res: Response, next: NextFu
         });
       }
 
-      req.user = user;
+      req.user = {
+        id: user.id,
+        address: user.address,
+        username: user.username ?? undefined,
+      };
       next();
     } catch (err) {
       return res.status(401).json({
@@ -92,7 +96,11 @@ export async function optionalAuth(req: AuthRequest, res: Response, next: NextFu
     });
 
     if (user) {
-      req.user = user;
+      req.user = {
+        id: user.id,
+        address: user.address,
+        username: user.username ?? undefined,
+      };
     }
   } catch (err) {
     // Ignore invalid tokens for optional auth

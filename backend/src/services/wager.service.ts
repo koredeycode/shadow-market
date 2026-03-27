@@ -1,14 +1,14 @@
 import { and, desc, eq, or, sql } from 'drizzle-orm';
-import { config } from '../config';
-import { db } from '../db/client';
-import { markets, positions, users, wagers } from '../db/schema';
+import { config } from '../config.js';
+import { db } from '../db/client.js';
+import { markets, positions, users, wagers } from '../db/schema.js';
 import type {
   CreateP2PWagerRequest,
   DecryptedPosition,
   PlaceBetRequest,
   PortfolioStats,
-} from '../types';
-import { decrypt, encrypt, generateId } from '../utils/crypto';
+} from '../types/index.js';
+import { decrypt, encrypt, generateId } from '../utils/crypto.js';
 
 export class WagerService {
   /**

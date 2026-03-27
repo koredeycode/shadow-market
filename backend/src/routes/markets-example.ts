@@ -1,10 +1,11 @@
 import { and, desc, eq } from 'drizzle-orm';
-import express from 'express';
-import { db } from '../db/client';
-import { markets } from '../db/schema';
-import { cacheConfigs } from '../middleware/cache';
-import { AppError, asyncHandler } from '../middleware/error-handler';
-import { rateLimits } from '../middleware/rate-limit';
+import express, { Request, Response } from 'express';
+import { db } from '../db/client.js';
+import { markets } from '../db/schema.js';
+import { type AuthRequest } from '../middleware/auth.js';
+import { cacheConfigs } from '../middleware/cache.js';
+import { AppError, asyncHandler } from '../middleware/error-handler.js';
+import { rateLimits } from '../middleware/rate-limit.js';
 
 export const marketsRouter = express.Router();
 
@@ -18,7 +19,7 @@ marketsRouter.get(
   '/',
   rateLimits.api,
   cacheConfigs.medium,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const { status, category, sortBy, limit = 50 } = req.query;
 
     let query = db.select().from(markets);
@@ -63,7 +64,7 @@ marketsRouter.get(
   '/:id',
   rateLimits.api,
   cacheConfigs.short,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const market = await db.query.markets.findFirst({
       where: eq(markets.id, req.params.id),
       with: {
@@ -95,7 +96,7 @@ marketsRouter.get(
 marketsRouter.post(
   '/',
   rateLimits.write,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     // Validation would happen here via validate middleware
     const { question, description, category, endTime, minBet, maxBet } = req.body;
 

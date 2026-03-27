@@ -1,8 +1,7 @@
 import { eq } from 'drizzle-orm';
-import { io } from '../app';
-import { broadcastMarketUpdate, notifyPositionUpdate } from '../websocket';
-import { db } from './client';
-import { markets, positions } from './schema';
+import { broadcastToMarket, broadcastToUser } from '../websocket.js';
+import { db } from './client.js';
+import { markets, positions } from './schema.js';
 
 /**
  * Background job to sync market data from blockchain
@@ -20,7 +19,7 @@ export async function syncMarketPrices() {
       // For now, simulate price updates
 
       // Broadcast update to subscribed clients
-      broadcastMarketUpdate(io, market.id, {
+      broadcastToMarket(market.id, 'market:update', {
         yesPrice: market.yesPrice,
         noPrice: market.noPrice,
         totalVolume: market.totalVolume,
@@ -51,7 +50,7 @@ export async function updatePositionValues() {
         // In production, decrypt and calculate actual values
 
         // Notify user of position update
-        notifyPositionUpdate(io, position.userId, {
+        broadcastToUser(position.userId, 'position:update', {
           marketId: position.marketId,
           value: '0', // Calculate from market price
           profitLoss: '0', // Calculate P&L

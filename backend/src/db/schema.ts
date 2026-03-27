@@ -27,6 +27,8 @@ export const reportStatusEnum = pgEnum('report_status', ['PENDING', 'DISPUTED', 
 
 export const oracleStatusEnum = pgEnum('oracle_status', ['ACTIVE', 'SUSPENDED', 'REMOVED']);
 
+export const kycStatusEnum = pgEnum('kyc_status', ['NONE', 'PENDING', 'APPROVED', 'REJECTED']);
+
 // Users table
 export const users = pgTable(
   'users',
@@ -41,6 +43,11 @@ export const users = pgTable(
 
     // Wallet data (encrypted)
     encryptedSeed: text('encrypted_seed'),
+
+    // Admin & moderation
+    isAdmin: boolean('is_admin').default(false).notNull(),
+    isBlocked: boolean('is_blocked').default(false).notNull(),
+    kycStatus: kycStatusEnum('kyc_status').default('NONE').notNull(),
 
     // Stats
     totalVolume: decimal('total_volume', { precision: 20, scale: 0 }).default('0').notNull(),
@@ -93,6 +100,18 @@ export const markets = pgTable(
     totalPositions: integer('total_positions').default(0).notNull(),
     yesPrice: decimal('yes_price', { precision: 18, scale: 17 }).default('0.5').notNull(),
     noPrice: decimal('no_price', { precision: 18, scale: 17 }).default('0.5').notNull(),
+
+    // Trending & engagement
+    upvotes: integer('upvotes').default(0).notNull(),
+    trendingScore: decimal('trending_score', { precision: 10, scale: 2 }).default('0').notNull(),
+    volumeChange24h: decimal('volume_change_24h', { precision: 20, scale: 0 })
+      .default('0')
+      .notNull(),
+
+    // Admin & moderation
+    isFeatured: boolean('is_featured').default(false).notNull(),
+    isVerified: boolean('is_verified').default(false).notNull(),
+    reportCount: integer('report_count').default(0).notNull(),
 
     // Foreign keys
     creatorId: text('creator_id')
@@ -309,6 +328,51 @@ export const lpPositions = pgTable(
   })
 );
 
+// Market upvotes
+export const marketUpvotes = pgTable(
+  'market_upvotes',
+  {
+    marketId: text('market_id')
+      .references(() => markets.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    pk: index('market_upvotes_pk').on(table.marketId, table.userId),
+    marketIdx: index('market_upvotes_market_idx').on(table.marketId),
+    userIdx: index('market_upvotes_user_idx').on(table.userId),
+  })
+);
+
+// Admin activity log
+export const adminActivityLog = pgTable(
+  'admin_activity_log',
+  {
+    id: text('id').primaryKey(),
+
+    adminId: text('admin_id')
+      .references(() => users.id)
+      .notNull(),
+
+    action: varchar('action', { length: 100 }).notNull(),
+    targetType: varchar('target_type', { length: 50 }).notNull(),
+    targetId: text('target_id').notNull(),
+    details: json('details'),
+    ipAddress: varchar('ip_address', { length: 50 }),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    adminIdx: index('admin_activity_log_admin_idx').on(table.adminId),
+    targetIdx: index('admin_activity_log_target_idx').on(table.targetType, table.targetId),
+    createdAtIdx: index('admin_activity_log_created_at_idx').on(table.createdAt),
+  })
+);
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   createdMarkets: many(markets),
@@ -328,6 +392,7 @@ export const marketsRelations = relations(markets, ({ one, many }) => ({
   wagers: many(wagers),
   reports: many(oracleReports),
   liquidityPool: one(liquidityPools),
+  upvotedBy: many(marketUpvotes),
 }));
 
 export const positionsRelations = relations(positions, ({ one }) => ({
@@ -396,5 +461,23 @@ export const lpPositionsRelations = relations(lpPositions, ({ one }) => ({
   pool: one(liquidityPools, {
     fields: [lpPositions.poolId],
     references: [liquidityPools.id],
+  }),
+}));
+
+export const marketUpvotesRelations = relations(marketUpvotes, ({ one }) => ({
+  market: one(markets, {
+    fields: [marketUpvotes.marketId],
+    references: [markets.id],
+  }),
+  user: one(users, {
+    fields: [marketUpvotes.userId],
+    references: [users.id],
+  }),
+}));
+
+export const adminActivityLogRelations = relations(adminActivityLog, ({ one }) => ({
+  admin: one(users, {
+    fields: [adminActivityLog.adminId],
+    references: [users.id],
   }),
 }));
