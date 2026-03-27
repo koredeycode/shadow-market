@@ -2,9 +2,11 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
+import wasm from 'vite-plugin-wasm';
+import topLevelAwait from 'vite-plugin-top-level-await';
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), wasm(), topLevelAwait()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -25,12 +27,6 @@ export default defineConfig({
         manualChunks: {
           // Vendor splitting for better caching
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'mui-vendor': [
-            '@mui/material',
-            '@mui/icons-material',
-            '@emotion/react',
-            '@emotion/styled',
-          ],
           'charts-vendor': ['recharts'],
           'query-vendor': ['@tanstack/react-query'],
         },
@@ -38,16 +34,10 @@ export default defineConfig({
     },
     // Optimize chunk size warnings
     chunkSizeWarningLimit: 1000,
-    // Enable minification
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true, // Remove console.logs in production
-        drop_debugger: true,
-      },
-    },
+    // Enable minification (default is esbuild)
+    minify: 'esbuild',
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', '@mui/material', '@tanstack/react-query'],
+    include: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
   },
 });

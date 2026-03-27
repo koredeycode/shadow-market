@@ -5,137 +5,28 @@ import {
   ChevronRight,
   BarChart3,
   Globe,
-  Lock
+  Lock,
+  Loader2,
+  AlertTriangle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { MarketIntelligenceCard } from '../components/market/MarketIntelligenceCard';
 import { CategoryBar } from '../components/market/CategoryBar';
-
-// Mock featured markets for the overhaul demonstration
-const featuredMarkets = [
-  {
-    id: '1',
-    question: "Will Bitcoin hit $100k by end of Q2 2026?",
-    description: "Prediction on BTC price action based on current market trends and institutional adoption.",
-    category: "Crypto",
-    totalVolume: "12400000",
-    totalLiquidity: "4500000",
-    yesPrice: "0.64",
-    noPrice: "0.36",
-    status: 'OPEN',
-    tags: [],
-    createdAt: new Date().toISOString(),
-    endTime: new Date().toISOString(),
-    minBet: '1',
-    maxBet: '1000',
-    totalPositions: 1250,
-    onchainId: '1',
-    contractAddress: '0x1',
-    resolutionSource: 'CoinBase Oracle',
-  },
-  {
-    id: '2',
-    question: "US Presidential Election 2028: Will the Republican candidate win?",
-    description: "Predict the outcome of the next US Presidential Election based on current political climate.",
-    category: "Politics",
-    totalVolume: "89000000",
-    totalLiquidity: "21000000",
-    yesPrice: "0.52",
-    noPrice: "0.48",
-    status: 'OPEN',
-    tags: [],
-    createdAt: new Date().toISOString(),
-    endTime: new Date().toISOString(),
-    minBet: '1',
-    maxBet: '1000',
-    totalPositions: 15400,
-    onchainId: '2',
-    contractAddress: '0x2',
-    resolutionSource: 'Associated Press',
-  },
-  {
-    id: '3',
-    question: "Will SpaceX land humans on Mars before 2030?",
-    description: "Speculate on SpaceX's ambitious timeline for Mars colonization.",
-    category: "Tech",
-    totalVolume: "2500000",
-    totalLiquidity: "1100000",
-    yesPrice: "0.31",
-    noPrice: "0.69",
-    status: 'OPEN',
-    tags: [],
-    createdAt: new Date().toISOString(),
-    endTime: new Date().toISOString(),
-    minBet: '1',
-    maxBet: '1000',
-    totalPositions: 850,
-    onchainId: '3',
-    contractAddress: '0x3',
-    resolutionSource: 'Starbase Telemetry',
-  },
-  {
-    id: '4',
-    question: "Will Crude Oil (CL) hit $100 per barrel by end of March?",
-    description: "Predict the price movement of NYMEX Crude Oil Futures.",
-    category: "Finance",
-    totalVolume: "65000000",
-    totalLiquidity: "12000000",
-    yesPrice: "0.33",
-    noPrice: "0.67",
-    status: 'OPEN',
-    tags: [],
-    createdAt: new Date().toISOString(),
-    endTime: new Date().toISOString(),
-    minBet: '1',
-    maxBet: '1000',
-    totalPositions: 4200,
-    onchainId: '4',
-    contractAddress: '0x4',
-    resolutionSource: 'NYMEX Data',
-  },
-  {
-    id: '5',
-    question: "Will OpenAI release GPT-5 before June 2026?",
-    description: "Speculate on the release window of the next frontier model from OpenAI.",
-    category: "Tech",
-    totalVolume: "12500000",
-    totalLiquidity: "3200000",
-    yesPrice: "0.45",
-    noPrice: "0.55",
-    status: 'OPEN',
-    tags: [],
-    createdAt: new Date().toISOString(),
-    endTime: new Date().toISOString(),
-    minBet: '1',
-    maxBet: '1000',
-    totalPositions: 2100,
-    onchainId: '5',
-    contractAddress: '0x5',
-    resolutionSource: 'Dev Day Event',
-  },
-  {
-    id: '6',
-    question: "Will the Lakers win the NBA Championship 2026?",
-    description: "Predict the winner of the 2026 NBA Finals.",
-    category: "Sports",
-    totalVolume: "5400000",
-    totalLiquidity: "1200000",
-    yesPrice: "0.15",
-    noPrice: "0.85",
-    status: 'OPEN',
-    tags: [],
-    createdAt: new Date().toISOString(),
-    endTime: new Date().toISOString(),
-    minBet: '1',
-    maxBet: '1000',
-    totalPositions: 3400,
-    onchainId: '6',
-    contractAddress: '0x6',
-    resolutionSource: 'NBA Official',
-  }
-] as any[];
+import { marketsApi } from '../api/markets';
 
 export function Home() {
+  const { 
+    data: markets, 
+    isLoading, 
+    isError 
+  } = useQuery({
+    queryKey: ['featured-markets'],
+    queryFn: () => marketsApi.getAll({ limit: 6, status: 'OPEN' }),
+  });
+
+  const featuredMarkets = markets?.items || [];
+
   return (
     <div className="space-y-12 pb-20">
       <div className="-mx-4 md:-mx-8">
@@ -147,7 +38,7 @@ export function Home() {
         <div className="absolute -top-24 -left-20 w-96 h-96 bg-electric-blue/10 blur-[120px] rounded-full" />
         <div className="absolute top-0 right-0 w-64 h-64 bg-amber-accent/5 blur-[80px] rounded-full" />
         
-        <div className="relative z-10 text-center space-y-8 max-w-4xl mx-auto">
+        <div className="relative z-10 text-center space-y-8 max-w-4xl mx-auto px-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-electric-blue animate-pulse">
             <Zap className="w-3 h-3" />
             V2.0 LIVE ON MIDNIGHT TESTNET
@@ -201,24 +92,45 @@ export function Home() {
       {/* Featured Markets Section */}
       <section className="space-y-10">
         <div className="flex items-end justify-between border-b border-white/5 pb-6">
-          <div className="space-y-1">
+          <div className="space-y-1 text-left px-4">
             <h2 className="text-2xl font-bold text-white">Featured Intelligence</h2>
             <p className="text-slate-500 text-sm">High-volume markets trending across the network.</p>
           </div>
-          <Link to="/markets" className="text-electric-blue text-sm font-bold hover:underline flex items-center gap-1">
+          <Link to="/markets" className="text-electric-blue text-sm font-bold hover:underline flex items-center gap-1 pr-4">
             VIEW ALL MARKETS <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featuredMarkets.map(market => (
-            <MarketIntelligenceCard key={market.id} market={market} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <Loader2 className="w-10 h-10 text-electric-blue animate-spin" />
+            <span className="text-xs font-mono text-slate-500 uppercase tracking-[0.3em]">Synching with Network...</span>
+          </div>
+        ) : isError ? (
+          <div className="p-12 border border-dashed border-red-500/20 bg-red-500/5 rounded-sm flex flex-col items-center gap-4">
+            <AlertTriangle className="w-8 h-8 text-red-500" />
+            <p className="text-sm font-mono text-red-400 uppercase tracking-widest text-center">
+              Failed to Establish Peer-to-Peer Connection.<br />
+              <span className="text-[10px] opacity-60">Retrying in 5s...</span>
+            </p>
+          </div>
+        ) : featuredMarkets.length === 0 ? (
+          <div className="p-12 border border-dashed border-white/5 bg-white/2 rounded-sm flex flex-col items-center gap-4 text-center">
+            <p className="text-sm font-mono text-slate-500 uppercase tracking-widest">
+              No active protocols detected.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-4">
+            {featuredMarkets.map(market => (
+              <MarketIntelligenceCard key={market.id} market={market} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Technology Section / Terminal Look */}
-      <section className="relative overflow-hidden border-stealth bg-slate-900/20 p-12 rounded-sm group">
+      <section className="relative overflow-hidden border border-white/5 bg-slate-900/20 p-12 rounded-sm group mx-4">
         <div className="absolute top-0 right-0 p-4 font-mono text-[10px] text-slate-700 opacity-20 select-none hidden md:block">
           CPU_STATE: 0x4F2A<br />
           ZK_PROOF_STATUS: VERIFIED<br />

@@ -1,15 +1,5 @@
-import {
-  Alert,
-  Box,
-  Card,
-  CardContent,
-  CircularProgress,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-} from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Bar,
   CartesianGrid,
@@ -21,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { Loader2, AlertCircle, Info, BarChart3 } from 'lucide-react';
 import { analyticsApi, MarketVolumePoint, TimeRange } from '../../api/analytics';
 
 interface MarketVolumeChartProps {
@@ -34,22 +25,17 @@ export function MarketVolumeChart({ showLegend = true, height = 400 }: MarketVol
   const { data, isLoading, error } = useQuery<MarketVolumePoint[]>({
     queryKey: ['market-volume-chart', timeRange],
     queryFn: () => analyticsApi.getMarketVolumeHistory(timeRange),
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 30000,
   });
 
   const formatCurrency = (value: number) => {
-    if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(1)}M`;
-    }
-    if (value >= 1000) {
-      return `$${(value / 1000).toFixed(1)}K`;
-    }
+    if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `$${(value / 1000).toFixed(1)}K`;
     return `$${value}`;
   };
 
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
-
     if (timeRange === '1h' || timeRange === '24h') {
       return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     } else if (timeRange === '7d') {
@@ -59,41 +45,30 @@ export function MarketVolumeChart({ showLegend = true, height = 400 }: MarketVol
     }
   };
 
-  const handleTimeRangeChange = (_: React.MouseEvent<HTMLElement>, newRange: TimeRange | null) => {
-    if (newRange) {
-      setTimeRange(newRange);
-    }
-  };
-
   if (isLoading) {
     return (
-      <Card>
-        <CardContent>
-          <Box display="flex" justifyContent="center" alignItems="center" height={height}>
-            <CircularProgress />
-          </Box>
-        </CardContent>
-      </Card>
+      <div className="bg-slate-900/40 border border-white/10 rounded-sm p-6 flex flex-col items-center justify-center" style={{ height }}>
+        <Loader2 className="w-8 h-8 text-electric-blue animate-spin" />
+        <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mt-4">Analyzing Data Stream...</p>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Card>
-        <CardContent>
-          <Alert severity="error">Failed to load market volume chart</Alert>
-        </CardContent>
-      </Card>
+      <div className="bg-red-500/5 border border-red-500/20 rounded-sm p-6 flex flex-col items-center justify-center gap-4" style={{ height }}>
+        <AlertCircle className="w-8 h-8 text-red-500" />
+        <p className="text-xs font-mono text-red-400 uppercase tracking-widest text-center">Execution Error: Chart Data Inaccessible.</p>
+      </div>
     );
   }
 
   if (!data || data.length === 0) {
     return (
-      <Card>
-        <CardContent>
-          <Alert severity="info">No market volume data available</Alert>
-        </CardContent>
-      </Card>
+      <div className="bg-white/2 border border-white/5 rounded-sm p-6 flex flex-col items-center justify-center gap-4" style={{ height }}>
+        <Info className="w-8 h-8 text-slate-500" />
+        <p className="text-xs font-mono text-slate-500 uppercase tracking-widest">No Activity Records Detected.</p>
+      </div>
     );
   }
 
@@ -105,61 +80,97 @@ export function MarketVolumeChart({ showLegend = true, height = 400 }: MarketVol
     'Active Users': point.uniqueUsers,
   }));
 
+  const ranges: TimeRange[] = ['1h', '24h', '7d', '30d', 'all'];
+
   return (
-    <Card>
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6" fontWeight="bold">
-            Market Volume & Activity
-          </Typography>
+    <div className="bg-slate-900/40 border border-white/10 rounded-sm p-6 space-y-6 backdrop-blur-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-3">
+          <BarChart3 className="w-5 h-5 text-electric-blue" />
+          <h3 className="text-sm font-bold text-white tracking-[0.2em] uppercase">Market Activity Analytics</h3>
+        </div>
 
-          <ToggleButtonGroup
-            value={timeRange}
-            exclusive
-            onChange={handleTimeRangeChange}
-            size="small"
-          >
-            <ToggleButton value="1h">1H</ToggleButton>
-            <ToggleButton value="24h">24H</ToggleButton>
-            <ToggleButton value="7d">7D</ToggleButton>
-            <ToggleButton value="30d">30D</ToggleButton>
-            <ToggleButton value="all">ALL</ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
+        <div className="flex bg-black/40 border border-white/5 p-1 rounded-sm overflow-hidden">
+          {ranges.map((range) => (
+            <button
+              key={range}
+              onClick={() => setTimeRange(range)}
+              className={`px-3 py-1 text-[10px] font-mono font-bold uppercase transition-all ${
+                timeRange === range 
+                  ? 'bg-electric-blue text-white rounded-sm shadow-[0_0_10px_rgba(59,130,246,0.5)]' 
+                  : 'text-slate-500 hover:text-white'
+              }`}
+            >
+              {range}
+            </button>
+          ))}
+        </div>
+      </div>
 
-        <ResponsiveContainer width="100%" height={height}>
-          <ComposedChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+      <div style={{ height }} className="w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff0a" vertical={false} />
 
-            <XAxis dataKey="formattedTime" stroke="#888" style={{ fontSize: '12px' }} />
+            <XAxis 
+              dataKey="formattedTime" 
+              stroke="#ffffff1a" 
+              tick={{ fill: '#475569', fontSize: 10, fontWeight: 700 }}
+              axisLine={false}
+              tickLine={false}
+              dy={10}
+            />
 
             <YAxis
               yAxisId="left"
-              stroke="#888"
-              style={{ fontSize: '12px' }}
+              stroke="#ffffff1a"
+              tick={{ fill: '#475569', fontSize: 10, fontWeight: 700 }}
+              axisLine={false}
+              tickLine={false}
               tickFormatter={value => formatCurrency(value)}
             />
 
-            <YAxis yAxisId="right" orientation="right" stroke="#888" style={{ fontSize: '12px' }} />
+            <YAxis 
+              yAxisId="right" 
+              orientation="right" 
+              stroke="#ffffff1a"
+              tick={{ fill: '#475569', fontSize: 10, fontWeight: 700 }}
+              axisLine={false}
+              tickLine={false}
+            />
 
             <Tooltip
+              cursor={{ fill: '#ffffff05' }}
               contentStyle={{
-                backgroundColor: '#1a1a1a',
-                border: '1px solid #333',
-                borderRadius: '8px',
+                backgroundColor: '#0f172a',
+                border: '1px solid #ffffff1a',
+                borderRadius: '2px',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
               }}
-              labelStyle={{ color: '#fff' }}
+              itemStyle={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}
+              labelStyle={{ color: '#64748b', fontSize: '10px', marginBottom: '8px', fontWeight: 700 }}
               formatter={(value: number, name: string) => {
-                if (name === 'Volume') {
-                  return [formatCurrency(value), name];
-                }
+                if (name === 'Volume') return [formatCurrency(value), name];
                 return [value, name];
               }}
             />
 
-            {showLegend && <Legend />}
+            {showLegend && (
+              <Legend 
+                verticalAlign="top" 
+                align="right" 
+                iconType="rect"
+                wrapperStyle={{ paddingBottom: '20px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }}
+              />
+            )}
 
-            <Bar yAxisId="left" dataKey="Volume" fill="#7c3aed" radius={[8, 8, 0, 0]} />
+            <Bar 
+              yAxisId="left" 
+              dataKey="Volume" 
+              fill="#3b82f6" 
+              fillOpacity={0.8}
+              radius={[2, 2, 0, 0]} 
+            />
 
             <Line
               yAxisId="right"
@@ -167,7 +178,8 @@ export function MarketVolumeChart({ showLegend = true, height = 400 }: MarketVol
               dataKey="Trades"
               stroke="#06b6d4"
               strokeWidth={2}
-              dot={{ r: 4 }}
+              dot={false}
+              activeDot={{ r: 4, stroke: '#06b6d4', strokeWidth: 2, fill: '#0f172a' }}
             />
 
             <Line
@@ -176,11 +188,12 @@ export function MarketVolumeChart({ showLegend = true, height = 400 }: MarketVol
               dataKey="Active Users"
               stroke="#10b981"
               strokeWidth={2}
-              dot={{ r: 4 }}
+              dot={false}
+              activeDot={{ r: 4, stroke: '#10b981', strokeWidth: 2, fill: '#0f172a' }}
             />
           </ComposedChart>
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

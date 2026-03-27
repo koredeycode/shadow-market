@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto';
 import 'dotenv/config';
 import { db } from './client';
-import { markets, oracles, users } from './schema';
+import { markets, oracles, users, positions, wagers, pricePoints, oracleReports, liquidityPools, lpPositions } from './schema';
 
 // Generate random ID
 const generateId = () => randomBytes(16).toString('hex');
@@ -13,6 +13,12 @@ async function seed() {
     // Clear existing data
     console.log('🧹 Clearing existing data...');
     // Delete in order to satisfy FK constraints
+    await db.delete(lpPositions);
+    await db.delete(liquidityPools);
+    await db.delete(oracleReports);
+    await db.delete(pricePoints);
+    await db.delete(wagers);
+    await db.delete(positions);
     await db.delete(markets);
     await db.delete(oracles);
     await db.delete(users);

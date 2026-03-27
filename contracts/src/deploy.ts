@@ -1,18 +1,18 @@
-import { createInterface } from 'node:readline/promises';
-import { stdin, stdout } from 'node:process';
+import { Buffer } from 'buffer';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { stdin, stdout } from 'node:process';
+import { createInterface } from 'node:readline/promises';
 import * as Rx from 'rxjs';
-import { Buffer } from 'buffer';
 
 // Midnight.js imports
+import { unshieldedToken } from '@midnight-ntwrk/ledger-v7';
 import { deployContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { toHex } from '@midnight-ntwrk/midnight-js-utils';
-import { unshieldedToken } from '@midnight-ntwrk/ledger-v7';
 import { generateRandomSeed } from '@midnight-ntwrk/wallet-sdk-hd';
 
 // Shared utilities
-import { createWallet, createProviders, compiledContract, zkConfigPath, CONFIG } from './utils.js';
+import { compiledContract, CONFIG, createProviders, createWallet, zkConfigPath } from './utils.js';
 
 // ─── Main Deploy Script ────────────────────────────────────────────────────────
 
@@ -56,7 +56,10 @@ async function main() {
 
     console.log('  Syncing with network...');
     const state = await Rx.firstValueFrom(
-      walletCtx.wallet.state().pipe(Rx.throttleTime(5000), Rx.filter((s) => s.isSynced))
+      walletCtx.wallet.state().pipe(
+        Rx.throttleTime(5000),
+        Rx.filter(s => s.isSynced)
+      )
     );
 
     const address = walletCtx.unshieldedKeystore.getBech32Address();
@@ -68,22 +71,22 @@ async function main() {
     // 2. Fund wallet if needed
     if (balance === 0n) {
       console.log('─── Step 2: Fund Your Wallet ───────────────────────────────────\n');
-      
+
       if (CONFIG.networkId === 'preprod') {
         console.log('  Visit: https://faucet.preprod.midnight.network/');
       } else {
         console.log('  For local network, use midnight-local-dev to fund wallet');
       }
-      
+
       console.log(`  Address: ${address}\n`);
       console.log('  Waiting for funds...');
 
       await Rx.firstValueFrom(
         walletCtx.wallet.state().pipe(
           Rx.throttleTime(10000),
-          Rx.filter((s) => s.isSynced),
-          Rx.map((s) => s.unshielded.balances[unshieldedToken().raw] ?? 0n),
-          Rx.filter((b) => b > 0n)
+          Rx.filter(s => s.isSynced),
+          Rx.map(s => s.unshielded.balances[unshieldedToken().raw] ?? 0n),
+          Rx.filter(b => b > 0n)
         )
       );
       console.log('  ✅ Funds received!\n');
@@ -91,7 +94,9 @@ async function main() {
 
     // 3. Register for DUST
     console.log('─── Step 3: DUST Token Setup ───────────────────────────────────\n');
-    const dustState = await Rx.firstValueFrom(walletCtx.wallet.state().pipe(Rx.filter((s) => s.isSynced)));
+    const dustState = await Rx.firstValueFrom(
+      walletCtx.wallet.state().pipe(Rx.filter(s => s.isSynced))
+    );
 
     if (dustState.dust.walletBalance(new Date()) === 0n) {
       const nightUtxos = dustState.unshielded.availableCoins.filter(
@@ -103,7 +108,7 @@ async function main() {
         const recipe = await walletCtx.wallet.registerNightUtxosForDustGeneration(
           nightUtxos,
           walletCtx.unshieldedKeystore.getPublicKey(),
-          (payload) => walletCtx.unshieldedKeystore.signData(payload)
+          payload => walletCtx.unshieldedKeystore.signData(payload)
         );
         await walletCtx.wallet.submitTransaction(await walletCtx.wallet.finalizeRecipe(recipe));
       }
@@ -112,8 +117,8 @@ async function main() {
       await Rx.firstValueFrom(
         walletCtx.wallet.state().pipe(
           Rx.throttleTime(5000),
-          Rx.filter((s) => s.isSynced),
-          Rx.filter((s) => s.dust.walletBalance(new Date()) > 0n)
+          Rx.filter(s => s.isSynced),
+          Rx.filter(s => s.dust.walletBalance(new Date()) > 0n)
         )
       );
     }
@@ -121,15 +126,15 @@ async function main() {
 
     // 4. Deploy contract
     console.log('─── Step 4: Deploy Contract ────────────────────────────────────\n');
-    
+
     // Get market question from user
     const question = await rl.question('  Enter market question: ');
-    
+
     console.log('\n  Setting up providers...');
     const providers = await createProviders(walletCtx);
 
     console.log('  Deploying contract (this may take 30-90 seconds)...\n');
-    
+
     // Deploy with market question as constructor argument
     const deployed = await deployContract(providers, {
       compiledContract,
@@ -165,7 +170,7 @@ async function main() {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const deploymentFile = path.join(deploymentsDir, `deployment-${timestamp}.json`);
     fs.writeFileSync(deploymentFile, JSON.stringify(deploymentInfo, null, 2));
-    
+
     // Also save as latest
     const latestFile = path.join(deploymentsDir, 'latest.json');
     fs.writeFileSync(latestFile, JSON.stringify(deploymentInfo, null, 2));
@@ -178,7 +183,6 @@ async function main() {
     console.log('  1. Update backend .env with CONTRACT_ADDRESS');
     console.log('  2. Test contract interaction with the API');
     console.log('  3. Deploy additional markets as needed\n');
-    
   } catch (error) {
     console.error('\n❌ Deployment failed:', error);
     throw error;
@@ -187,7 +191,7 @@ async function main() {
   }
 }
 
-main().catch((error) => {
+main().catch(error => {
   console.error(error);
   process.exit(1);
 });

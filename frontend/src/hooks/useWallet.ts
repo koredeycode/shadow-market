@@ -1,5 +1,11 @@
 import { ConnectedAPI, type InitialAPI } from '@midnight-ntwrk/dapp-connector-api';
+import { 
+  ShieldedAddress, 
+  ShieldedCoinPublicKey, 
+  ShieldedEncryptionPublicKey 
+} from '@midnight-ntwrk/wallet-sdk-address-format';
 import { useCallback, useEffect, useRef } from 'react';
+
 import toast from 'react-hot-toast';
 import semver from 'semver';
 import { useWalletStore } from '../store/wallet.store';
@@ -80,8 +86,23 @@ export function useWallet() {
       const shieldedAddresses = await connectedAPI.getShieldedAddresses();
       console.log('Shielded addresses:', shieldedAddresses);
 
-      // Use shielded coin public key as the wallet address
-      const walletAddress = shieldedAddresses.shieldedCoinPublicKey;
+      // Convert hex public keys to Bech32m formatted address if they are returned as hex
+      let walletAddress = shieldedAddresses.shieldedAddress;
+      
+      // If shieldedAddress is identical to coinPublicKey, it's likely raw hex and needs formatting
+      if (walletAddress === shieldedAddresses.shieldedCoinPublicKey) {
+        console.log('Formatting hex address to Bech32m...');
+        try {
+          const coinPublicKey = ShieldedCoinPublicKey.fromHexString(shieldedAddresses.shieldedCoinPublicKey);
+          const encryptionPublicKey = ShieldedEncryptionPublicKey.fromHexString(shieldedAddresses.shieldedEncryptionPublicKey);
+          const fullShieldedAddress = new ShieldedAddress(coinPublicKey, encryptionPublicKey);
+          walletAddress = ShieldedAddress.codec.encode(NETWORK_ID, fullShieldedAddress).toString();
+          console.log('Formatted address:', walletAddress);
+        } catch (e) {
+          console.error('Failed to format shielded address:', e);
+          // Fallback to what we have if formatting fails
+        }
+      }
 
       // Get balance (placeholder - might need different method)
       const walletBalance = '0'; // TODO: Implement balance fetching

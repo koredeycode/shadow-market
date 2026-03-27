@@ -1,4 +1,10 @@
 import '@midnight-ntwrk/dapp-connector-api';
+import { Buffer } from 'buffer';
+
+if (typeof window !== 'undefined') {
+  (window as any).Buffer = Buffer;
+}
+
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import ReactDOM from 'react-dom/client';

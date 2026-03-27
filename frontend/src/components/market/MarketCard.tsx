@@ -1,17 +1,7 @@
-import type { Market } from '@/types';
-import { AccessTime, ShowChart, TrendingDown, TrendingUp } from '@mui/icons-material';
-import {
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Chip,
-  LinearProgress,
-  Typography,
-} from '@mui/material';
+import { Link } from 'react-router-dom';
+import { Clock, BarChart3, TrendingUp, TrendingDown, ChevronRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { Link as RouterLink } from 'react-router-dom';
+import { Market } from '../../types';
 
 interface MarketCardProps {
   market: Market;
@@ -23,161 +13,80 @@ export function MarketCard({ market }: MarketCardProps) {
   const volume = formatVolume(market.totalVolume);
   const timeLeft = formatDistanceToNow(new Date(market.endTime), { addSuffix: true });
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'OPEN': return 'bg-success-green/10 text-success-green border-success-green/20';
+      case 'RESOLVED': return 'bg-slate-500/10 text-slate-400 border-white/10';
+      default: return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+    }
+  };
+
   return (
-    <Card
-      sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        '&:hover': {
-          transform: 'translateY(-6px)',
-          boxShadow: '0 12px 40px rgba(124, 58, 237, 0.2)',
-          borderColor: 'rgba(124, 58, 237, 0.3)',
-        },
-      }}
-    >
-      <CardContent sx={{ flex: 1, p: 3 }}>
+    <div className="group relative bg-slate-900/40 border border-white/10 rounded-sm overflow-hidden transition-all duration-300 hover:border-electric-blue/30 hover:shadow-[0_0_30px_rgba(59,130,246,0.1)] hover:-translate-y-1 flex flex-col h-full backdrop-blur-sm">
+      {/* Gloss Effect */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+      
+      <div className="p-5 flex-1 flex flex-col">
         {/* Category & Status */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2.5 }}>
-          <Chip
-            label={market.category}
-            size="small"
-            sx={{
-              textTransform: 'capitalize',
-              fontWeight: 600,
-              bgcolor: 'rgba(124, 58, 237, 0.15)',
-              color: 'primary.light',
-              borderRadius: 2,
-            }}
-          />
-          <Chip
-            label={market.status}
-            size="small"
-            sx={{
-              fontWeight: 600,
-              borderRadius: 2,
-            }}
-            color={
-              market.status === 'OPEN'
-                ? 'success'
-                : market.status === 'RESOLVED'
-                  ? 'default'
-                  : 'warning'
-            }
-          />
-        </Box>
+        <div className="flex justify-between items-center mb-4">
+          <span className="px-2 py-0.5 bg-electric-blue/10 text-electric-blue border border-electric-blue/20 rounded-sm text-[10px] font-bold uppercase tracking-[0.2em]">
+            {market.category}
+          </span>
+          <span className={`px-2 py-0.5 border rounded-sm text-[10px] font-bold uppercase tracking-widest ${getStatusColor(market.status)}`}>
+            {market.status}
+          </span>
+        </div>
 
         {/* Question */}
-        <Typography
-          variant="h6"
-          sx={{
-            mb: 3,
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            minHeight: '3.6em',
-            fontWeight: 600,
-            lineHeight: 1.4,
-            fontSize: '1.1rem',
-          }}
-        >
+        <h3 className="text-lg font-bold text-white leading-snug mb-6 line-clamp-2 min-h-[3.5rem] group-hover:text-electric-blue transition-colors">
           {market.question}
-        </Typography>
+        </h3>
 
-        {/* Price indicators */}
-        <Box sx={{ mb: 2.5 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.5,
-                  px: 1.5,
-                  py: 0.5,
-                  bgcolor: 'rgba(16, 185, 129, 0.15)',
-                  borderRadius: 2,
-                }}
-              >
-                <TrendingUp fontSize="small" sx={{ color: 'success.main' }} />
-                <Typography variant="body2" fontWeight={700} sx={{ color: 'success.main' }}>
-                  YES {yesPercent.toFixed(0)}%
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.5,
-                  px: 1.5,
-                  py: 0.5,
-                  bgcolor: 'rgba(239, 68, 68, 0.15)',
-                  borderRadius: 2,
-                }}
-              >
-                <Typography variant="body2" fontWeight={700} sx={{ color: 'error.main' }}>
-                  NO {noPercent.toFixed(0)}%
-                </Typography>
-                <TrendingDown fontSize="small" sx={{ color: 'error.main' }} />
-              </Box>
-            </Box>
-          </Box>
-          <LinearProgress
-            variant="determinate"
-            value={yesPercent}
-            sx={{
-              height: 10,
-              borderRadius: 2,
-              bgcolor: 'rgba(239, 68, 68, 0.2)',
-              '& .MuiLinearProgress-bar': {
-                bgcolor: 'success.main',
-                borderRadius: 2,
-              },
-            }}
-          />
-        </Box>
+        {/* Price Indicators */}
+        <div className="space-y-4 mb-6">
+          <div className="flex justify-between text-[11px] font-mono font-bold uppercase tracking-widest">
+            <div className="flex items-center gap-1.5 text-success-green">
+              <TrendingUp className="w-3.5 h-3.5" />
+              <span>YES {yesPercent.toFixed(0)}%</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-red-500">
+              <span>NO {noPercent.toFixed(0)}%</span>
+              <TrendingDown className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          
+          <div className="h-1.5 w-full bg-red-500/20 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-success-green transition-all duration-500 ease-out shadow-[0_0_10px_rgba(16,185,129,0.3)]"
+              style={{ width: `${yesPercent}%` }}
+            />
+          </div>
+        </div>
 
-        {/* Stats */}
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 3,
-            pt: 2.5,
-            borderTop: 1,
-            borderColor: 'rgba(255, 255, 255, 0.08)',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <ShowChart fontSize="small" sx={{ color: 'secondary.main' }} />
-            <Typography variant="body2" fontWeight={600} sx={{ color: 'text.secondary' }}>
-              {volume}
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <AccessTime fontSize="small" sx={{ color: 'warning.main' }} />
-            <Typography variant="body2" fontWeight={600} sx={{ color: 'text.secondary' }}>
-              {timeLeft}
-            </Typography>
-          </Box>
-        </Box>
-      </CardContent>
+        {/* Metrics */}
+        <div className="mt-auto pt-5 border-t border-white/5 flex items-center gap-6">
+          <div className="flex items-center gap-2 text-slate-500">
+            <BarChart3 className="w-4 h-4" />
+            <span className="text-[11px] font-mono font-bold uppercase tracking-tight">{volume}</span>
+          </div>
+          <div className="flex items-center gap-2 text-slate-500">
+            <Clock className="w-4 h-4" />
+            <span className="text-[11px] font-mono font-bold uppercase tracking-tight italic">{timeLeft}</span>
+          </div>
+        </div>
+      </div>
 
-      <CardActions sx={{ p: 3, pt: 0 }}>
-        <Button
-          component={RouterLink}
+      {/* Action Footer */}
+      <div className="p-4 bg-black/20 border-t border-white/5">
+        <Link 
           to={`/markets/${market.id}`}
-          variant="contained"
-          fullWidth
-          sx={{ py: 1.25, fontWeight: 600 }}
+          className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 text-white font-bold text-xs uppercase tracking-[0.2em] transition-all hover:bg-electric-blue hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] group/btn"
         >
-          Trade Now
-        </Button>
-      </CardActions>
-    </Card>
+          ANALYZE_MARKET
+          <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+        </Link>
+      </div>
+    </div>
   );
 }
 

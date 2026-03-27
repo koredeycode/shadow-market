@@ -1,14 +1,14 @@
-import { createInterface } from 'node:readline/promises';
-import { stdin, stdout } from 'node:process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { stdin, stdout } from 'node:process';
+import { createInterface } from 'node:readline/promises';
 import * as Rx from 'rxjs';
 
 // Midnight.js imports
 import { findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 
 // Shared utilities
-import { createWallet, createProviders, compiledContract, CONFIG } from './utils.js';
+import { compiledContract, createProviders, createWallet } from './utils.js';
 
 // ─── Main Interact Script ──────────────────────────────────────────────────────
 
@@ -45,7 +45,7 @@ async function main() {
     const walletCtx = await createWallet(seed.trim());
 
     console.log('Syncing with network...');
-    await Rx.firstValueFrom(walletCtx.wallet.state().pipe(Rx.filter((s) => s.isSynced)));
+    await Rx.firstValueFrom(walletCtx.wallet.state().pipe(Rx.filter(s => s.isSynced)));
 
     console.log('Setting up providers...');
     const providers = await createProviders(walletCtx);
@@ -131,7 +131,7 @@ async function main() {
   }
 }
 
-main().catch((error) => {
+main().catch(error => {
   console.error(error);
   process.exit(1);
 });

@@ -3,17 +3,20 @@
 ## 🚀 Deploy Your First Market
 
 ### 1. Compile the Contract
+
 ```bash
 cd contracts
 pnpm compile
 ```
 
 ### 2. Deploy to Preprod Testnet
+
 ```bash
 pnpm deploy
 ```
 
 Follow the prompts:
+
 - Choose "Create new wallet" (option 1)
 - **SAVE THE SEED** shown on screen
 - Visit https://faucet.preprod.midnight.network/ with the wallet address
@@ -23,11 +26,13 @@ Follow the prompts:
 - Wait 30-90 seconds for deployment
 
 ### 3. Check Deployment
+
 ```bash
 cat deployments/latest.json
 ```
 
 You'll see:
+
 ```json
 {
   "contractAddress": "0x...",
@@ -40,6 +45,7 @@ You'll see:
 ```
 
 ### 4. Update Backend
+
 ```bash
 cd ../backend
 echo "CONTRACT_ADDRESS=<address-from-latest.json>" >> .env
@@ -47,6 +53,7 @@ echo "MIDNIGHT_NETWORK=preprod" >> .env
 ```
 
 ### 5. Test Interaction (Optional)
+
 ```bash
 cd ../contracts
 pnpm interact
@@ -84,11 +91,13 @@ Each deployment creates a new contract address stored in timestamped files.
 ## 🌐 Network Options
 
 **Preprod (Testnet)** - Default, recommended for testing:
+
 ```bash
 pnpm deploy
 ```
 
 **Local Development** - Requires running midnight-local-dev:
+
 ```bash
 pnpm deploy:local
 ```
@@ -96,12 +105,14 @@ pnpm deploy:local
 ## 📊 Current Contract Capabilities
 
 The stub contract supports:
+
 - ✅ Market creation with question
 - ✅ State management (OPEN → CLOSED → RESOLVED)
 - ✅ Bet commitment storage
 - ✅ Basic circuits (placeBet, closeMarket, resolveMarket)
 
 Not yet implemented (requires Compact 0.29+):
+
 - ❌ Privacy features (true ZK proofs)
 - ❌ AMM pricing calculations
 - ❌ Payout distribution
@@ -119,12 +130,14 @@ After deployment, integrate with:
 ## 🛠️ Troubleshooting
 
 **"Contract not compiled"**
+
 ```bash
 pnpm compile
 ```
 
 **"Proof server not running"**
 Start on port 6300:
+
 ```bash
 # Terminal 1
 cd /path/to/midnight-local-dev

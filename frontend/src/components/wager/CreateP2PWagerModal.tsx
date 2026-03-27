@@ -1,28 +1,10 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Close, Info, Timer, TrendingDown, TrendingUp } from '@mui/icons-material';
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  Grid,
-  IconButton,
-  InputAdornment,
-  TextField,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-} from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import toast from 'react-hot-toast';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { X, Info, Clock, TrendingUp, TrendingDown, Zap, Loader2, AlertCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { wagersApi } from '../../api/wagers';
 import { useWallet } from '../../hooks/useWallet';
 import { Market } from '../../types';
@@ -56,7 +38,6 @@ export function CreateP2PWagerModal({ open, onClose, market }: CreateP2PWagerMod
     control,
     handleSubmit,
     watch,
-    formState: { errors },
     reset,
   } = useForm<P2PWagerFormData>({
     resolver: zodResolver(p2pWagerSchema),
@@ -70,28 +51,17 @@ export function CreateP2PWagerModal({ open, onClose, market }: CreateP2PWagerMod
   });
 
   const amount = watch('amount');
-  const side = watch('side');
   const oddsNumerator = watch('oddsNumerator');
   const oddsDenominator = watch('oddsDenominator');
-  const durationHours = watch('durationHours');
 
-  // Calculate potential payout for opponent
   const calculatePayoutInfo = () => {
     if (!amount || isNaN(parseFloat(amount))) return null;
 
     const betAmount = parseFloat(amount);
     const odds = oddsNumerator / oddsDenominator;
-
-    // Your potential win
     const yourPotentialWin = betAmount * odds;
-
-    // Opponent's stake (what they need to put up)
     const opponentStake = yourPotentialWin;
-
-    // Opponent's potential win (your stake)
     const opponentPotentialWin = betAmount;
-
-    // Total pool
     const totalPool = betAmount + opponentStake;
 
     return {
@@ -107,24 +77,16 @@ export function CreateP2PWagerModal({ open, onClose, market }: CreateP2PWagerMod
 
   const payoutInfo = calculatePayoutInfo();
 
-  // Validate amount
   const validateAmount = () => {
     if (!amount) return null;
-
     const betAmount = parseFloat(amount);
     const minBet = parseFloat(market.minBet);
     const maxBet = parseFloat(market.maxBet);
     const userBalance = parseFloat(balance || '0');
 
-    if (betAmount < minBet) {
-      return `Minimum bet is ${minBet}`;
-    }
-    if (betAmount > maxBet) {
-      return `Maximum bet is ${maxBet}`;
-    }
-    if (betAmount > userBalance) {
-      return `Insufficient balance. You have ${formattedBalance}`;
-    }
+    if (betAmount < minBet) return `Minimum bet is ${minBet}`;
+    if (betAmount > maxBet) return `Maximum bet is ${maxBet}`;
+    if (betAmount > userBalance) return `Insufficient balance. You have ${formattedBalance}`;
     return null;
   };
 
@@ -132,21 +94,16 @@ export function CreateP2PWagerModal({ open, onClose, market }: CreateP2PWagerMod
 
   const mutation = useMutation({
     mutationFn: async (data: P2PWagerFormData) => {
-      if (!isConnected) {
-        throw new Error('Wallet not connected');
-      }
-
-      const response = await wagersApi.createP2PWager({
+      if (!isConnected) throw new Error('Wallet not connected');
+      return await wagersApi.createP2PWager({
         marketId: market.id,
         amount: data.amount,
         side: data.side,
         odds: [data.oddsNumerator, data.oddsDenominator],
-        duration: data.durationHours * 3600, // Convert to seconds
+        duration: data.durationHours * 3600,
       });
-
-      return response;
     },
-    onSuccess: data => {
+    onSuccess: () => {
       toast.success('P2P wager created! Waiting for someone to accept...');
       queryClient.invalidateQueries({ queryKey: ['market', market.id] });
       queryClient.invalidateQueries({ queryKey: ['p2p-wagers', market.id] });
@@ -159,11 +116,7 @@ export function CreateP2PWagerModal({ open, onClose, market }: CreateP2PWagerMod
   });
 
   const onSubmit = async (data: P2PWagerFormData) => {
-    if (amountError) {
-      toast.error(amountError);
-      return;
-    }
-
+    if (amountError) return;
     setIsSubmitting(true);
     try {
       await mutation.mutateAsync(data);
@@ -172,309 +125,233 @@ export function CreateP2PWagerModal({ open, onClose, market }: CreateP2PWagerMod
     }
   };
 
-  const handleClose = () => {
-    if (!isSubmitting) {
-      reset();
-      onClose();
-    }
-  };
+  if (!open) return null;
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Typography variant="h6">Create P2P Wager</Typography>
-          <IconButton onClick={handleClose} size="small" disabled={isSubmitting}>
-            <Close />
-          </IconButton>
-        </Box>
-      </DialogTitle>
+    <div className="fixed inset-0 z-[200] grid place-items-center w-screen h-screen bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+      <div 
+        className="relative w-full max-w-xl bg-slate-900 border border-white/10 rounded-sm shadow-2xl overflow-hidden animate-in zoom-in duration-300 my-8"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-white/5 bg-black/20">
+          <div className="flex items-center gap-3">
+            <Zap className="w-5 h-5 text-electric-blue" />
+            <div>
+              <h2 className="text-sm font-bold text-white tracking-[0.2em] uppercase">Create P2P Protocol</h2>
+              <p className="text-[10px] text-slate-500 font-mono tracking-tight uppercase">Peer-to-Peer Betting Interface</p>
+            </div>
+          </div>
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-white/5 rounded-full transition-colors group"
+          >
+            <X className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" />
+          </button>
+        </div>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <DialogContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-8">
           {/* Market Info */}
-          <Box sx={{ mb: 3, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              Market
-            </Typography>
-            <Typography variant="body1" fontWeight="medium">
-              {market.question}
-            </Typography>
-          </Box>
+          <div className="p-4 bg-white/[0.02] border border-white/5 rounded-sm">
+            <span className="text-[10px] text-slate-500 font-mono uppercase tracking-[0.2em] mb-2 block">Active Market</span>
+            <p className="text-white font-bold leading-snug">{market.question}</p>
+          </div>
 
-          {/* Connect Wallet */}
           {!isConnected ? (
-            <Alert severity="warning" sx={{ mb: 3 }}>
-              <Typography variant="body2" gutterBottom>
-                Please connect your wallet to create a P2P wager
-              </Typography>
-              <Button onClick={connectWallet} variant="contained" size="small" sx={{ mt: 1 }}>
+            <div className="p-6 border border-dashed border-amber-500/30 bg-amber-500/5 rounded-sm text-center space-y-4">
+              <AlertCircle className="w-6 h-6 text-amber-500 mx-auto" />
+              <p className="text-sm text-amber-200/80 font-mono uppercase tracking-tight">Identity Verification Required</p>
+              <button 
+                type="button"
+                onClick={connectWallet}
+                className="w-full py-3 bg-electric-blue text-white font-bold text-xs uppercase tracking-[0.2em] rounded-sm hover:brightness-110 transition-all"
+              >
                 Connect Wallet
-              </Button>
-            </Alert>
+              </button>
+            </div>
           ) : (
-            <>
-              {/* P2P Explanation */}
-              <Alert severity="info" sx={{ mb: 3 }}>
-                <Typography variant="body2">
-                  P2P wagers let you bet directly against another user with custom odds. No fees!
-                </Typography>
-              </Alert>
+            <div className="space-y-6">
+              {/* P2P Tip */}
+              <div className="flex gap-3 p-3 bg-electric-blue/5 border border-electric-blue/20 rounded-sm italic">
+                <Info className="w-4 h-4 text-electric-blue shrink-0" />
+                <p className="text-[11px] text-slate-400">
+                  You are creating a direct-match contract. Another user must accept these terms to initialize the wager. Zero house fees apply.
+                </p>
+              </div>
 
               {/* Side Selection */}
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Your Side
-                </Typography>
+              <div className="space-y-3">
+                <label className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Select Position</label>
                 <Controller
                   name="side"
                   control={control}
                   render={({ field }) => (
-                    <ToggleButtonGroup {...field} exclusive fullWidth sx={{ mt: 1 }}>
-                      <ToggleButton
-                        value="yes"
-                        sx={{
-                          '&.Mui-selected': {
-                            bgcolor: 'success.dark',
-                            color: 'success.contrastText',
-                            '&:hover': { bgcolor: 'success.main' },
-                          },
-                        }}
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => field.onChange('yes')}
+                        className={`py-3 flex items-center justify-center gap-2 rounded-sm font-bold text-xs tracking-widest border transition-all ${
+                          field.value === 'yes' 
+                            ? 'bg-success-green/20 text-success-green border-success-green/40 shadow-[0_0_15px_rgba(16,185,129,0.1)]' 
+                            : 'bg-white/5 text-slate-500 border-white/5 hover:border-white/10'
+                        }`}
                       >
-                        <TrendingUp sx={{ mr: 1 }} />
-                        YES
-                      </ToggleButton>
-                      <ToggleButton
-                        value="no"
-                        sx={{
-                          '&.Mui-selected': {
-                            bgcolor: 'error.dark',
-                            color: 'error.contrastText',
-                            '&:hover': { bgcolor: 'error.main' },
-                          },
-                        }}
+                        <TrendingUp className="w-4 h-4" /> YES
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => field.onChange('no')}
+                        className={`py-3 flex items-center justify-center gap-2 rounded-sm font-bold text-xs tracking-widest border transition-all ${
+                          field.value === 'no' 
+                            ? 'bg-red-500/20 text-red-500 border-red-500/40 shadow-[0_0_15px_rgba(239,68,68,0.1)]' 
+                            : 'bg-white/5 text-slate-500 border-white/5 hover:border-white/10'
+                        }`}
                       >
-                        <TrendingDown sx={{ mr: 1 }} />
-                        NO
-                      </ToggleButton>
-                    </ToggleButtonGroup>
+                        <TrendingDown className="w-4 h-4" /> NO
+                      </button>
+                    </div>
                   )}
                 />
-              </Box>
+              </div>
 
               {/* Amount Input */}
-              <Box sx={{ mb: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Your Stake
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Balance: {formattedBalance}
-                  </Typography>
-                </Box>
-                <Controller
-                  name="amount"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      fullWidth
-                      type="number"
-                      placeholder="0.00"
-                      error={!!errors.amount || !!amountError}
-                      helperText={errors.amount?.message || amountError}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <Typography variant="body2" color="text.secondary">
-                              DUST
-                            </Typography>
-                          </InputAdornment>
-                        ),
-                      }}
-                      inputProps={{
-                        min: 0,
-                        step: 'any',
-                      }}
-                    />
-                  )}
-                />
-              </Box>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <label className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Stake Amount</label>
+                  <span className="text-[10px] text-slate-600 font-mono italic font-bold">Balance: {formattedBalance}</span>
+                </div>
+                <div className="relative">
+                  <Controller
+                    name="amount"
+                    control={control}
+                    render={({ field }) => (
+                      <input 
+                        {...field}
+                        type="number"
+                        placeholder="0.00"
+                        className={`w-full bg-black/40 border p-4 rounded-sm text-xl font-mono text-white focus:outline-none focus:ring-1 focus:ring-electric-blue/50 transition-all ${
+                          amountError ? 'border-red-500/50' : 'border-white/10 focus:border-electric-blue/30'
+                        }`}
+                      />
+                    )}
+                  />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+                    <span className="text-xs text-slate-600 font-bold tracking-widest uppercase">DUST</span>
+                  </div>
+                </div>
+                {amountError && <p className="text-[10px] text-red-500 font-mono uppercase translate-y-1">{amountError}</p>}
+              </div>
 
               {/* Custom Odds */}
-              <Box sx={{ mb: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Custom Odds
-                  </Typography>
-                  <Info
-                    fontSize="small"
-                    color="disabled"
-                    titleAccess="Example: 3:1 means you win 3x your stake if you win"
-                  />
-                </Box>
-                <Grid container spacing={2} alignItems="center">
-                  <Grid item xs={5}>
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Defined Odds</label>
+                  <div className="group relative">
+                    <Info className="w-3 h-3 text-slate-600 cursor-help" />
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 border border-white/10 rounded-sm text-[9px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 font-mono">
+                      Example: 3:1 means you win 3x your stake. Use high multiples for improbable outcomes.
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 space-y-1">
                     <Controller
                       name="oddsNumerator"
                       control={control}
                       render={({ field }) => (
-                        <TextField
+                        <input 
                           {...field}
-                          fullWidth
                           type="number"
-                          label="Win Multiple"
-                          error={!!errors.oddsNumerator}
-                          helperText={errors.oddsNumerator?.message}
-                          inputProps={{
-                            min: 1,
-                            max: 100,
-                            step: 0.1,
-                          }}
+                          className="w-full bg-black/20 border border-white/5 p-3 rounded-sm text-center font-mono text-electric-blue font-bold focus:outline-none focus:border-electric-blue/30"
                           onChange={e => field.onChange(parseFloat(e.target.value) || 1)}
                         />
                       )}
                     />
-                  </Grid>
-                  <Grid item xs={2} sx={{ textAlign: 'center' }}>
-                    <Typography variant="h5" color="text.secondary">
-                      :
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={5}>
+                    <p className="text-[8px] text-slate-600 font-bold text-center uppercase tracking-widest">Multiplier</p>
+                  </div>
+                  <span className="text-xl text-slate-700 font-mono">:</span>
+                  <div className="flex-1 space-y-1">
                     <Controller
                       name="oddsDenominator"
                       control={control}
                       render={({ field }) => (
-                        <TextField
+                        <input 
                           {...field}
-                          fullWidth
                           type="number"
-                          label="Stake Multiple"
-                          error={!!errors.oddsDenominator}
-                          helperText={errors.oddsDenominator?.message}
-                          inputProps={{
-                            min: 1,
-                            max: 100,
-                            step: 0.1,
-                          }}
+                          className="w-full bg-black/20 border border-white/5 p-3 rounded-sm text-center font-mono text-white font-bold focus:outline-none focus:border-white/20"
                           onChange={e => field.onChange(parseFloat(e.target.value) || 1)}
                         />
                       )}
                     />
-                  </Grid>
-                </Grid>
-              </Box>
+                    <p className="text-[8px] text-slate-600 font-bold text-center uppercase tracking-widest">Base</p>
+                  </div>
+                </div>
+              </div>
 
               {/* Duration */}
-              <Box sx={{ mb: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <Timer fontSize="small" />
-                  <Typography variant="body2" color="text.secondary">
-                    Wager Expiration (Hours)
-                  </Typography>
-                </Box>
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-3.5 h-3.5 text-slate-600" />
+                  <label className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Protocol Expiration (Hours)</label>
+                </div>
                 <Controller
                   name="durationHours"
                   control={control}
                   render={({ field }) => (
-                    <TextField
+                    <input 
                       {...field}
-                      fullWidth
                       type="number"
-                      error={!!errors.durationHours}
-                      helperText={
-                        errors.durationHours?.message ||
-                        'How long before wager expires if not accepted'
-                      }
-                      inputProps={{
-                        min: 1,
-                        max: 168,
-                        step: 1,
-                      }}
+                      className="w-full bg-black/20 border border-white/5 p-3 rounded-sm text-sm font-mono text-slate-400 focus:outline-none focus:border-white/20"
                       onChange={e => field.onChange(parseInt(e.target.value) || 24)}
                     />
                   )}
                 />
-              </Box>
+              </div>
 
-              {/* Payout Info */}
+              {/* Payout Table */}
               {payoutInfo && (
-                <>
-                  <Divider sx={{ my: 2 }} />
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="body2" fontWeight="medium" gutterBottom>
-                      Wager Details
-                    </Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Odds
-                      </Typography>
-                      <Typography variant="caption" fontWeight="bold">
-                        {payoutInfo.oddsDisplay}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Your Stake
-                      </Typography>
-                      <Typography variant="caption">
-                        {payoutInfo.yourStake.toFixed(2)} DUST
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Your Potential Win
-                      </Typography>
-                      <Typography variant="caption" color="success.main" fontWeight="medium">
-                        {payoutInfo.yourPotentialWin.toFixed(2)} DUST
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Opponent Needs
-                      </Typography>
-                      <Typography variant="caption">
-                        {payoutInfo.opponentStake.toFixed(2)} DUST
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Total Pool
-                      </Typography>
-                      <Typography variant="caption" fontWeight="medium">
-                        {payoutInfo.totalPool.toFixed(2)} DUST
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Implied Probability
-                      </Typography>
-                      <Typography variant="caption">
-                        {payoutInfo.impliedProbability.toFixed(1)}%
-                      </Typography>
-                    </Box>
-                  </Box>
-                </>
+                <div className="pt-6 border-t border-white/5 space-y-3">
+                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] mb-2 block">Projected Settlement</span>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-[9px] text-slate-600 uppercase font-mono">Your Potential Payout</p>
+                      <p className="text-lg font-mono text-success-green font-bold">+{payoutInfo.yourPotentialWin.toFixed(2)} DUST</p>
+                    </div>
+                    <div className="space-y-1 text-right">
+                      <p className="text-[9px] text-slate-600 uppercase font-mono">Opponent Requirement</p>
+                      <p className="text-lg font-mono text-white font-bold">{payoutInfo.opponentStake.toFixed(2)} DUST</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center py-2 px-3 bg-white/[0.03] rounded-sm text-[10px] font-mono tracking-tight uppercase">
+                    <span className="text-slate-500">Total Contract Value</span>
+                    <span className="text-slate-300 font-bold underline decoration-electric-blue/40">{payoutInfo.totalPool.toFixed(2)} DUST</span>
+                  </div>
+                </div>
               )}
-            </>
+            </div>
           )}
-        </DialogContent>
 
-        <DialogActions>
-          <Button onClick={handleClose} disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={!isConnected || isSubmitting || !!amountError || !amount}
-            startIcon={isSubmitting && <CircularProgress size={16} />}
-          >
-            {isSubmitting ? 'Creating...' : 'Create Wager'}
-          </Button>
-        </DialogActions>
-      </form>
-    </Dialog>
+          {/* Footer Actions */}
+          <div className="flex gap-4 pt-4">
+            <button 
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="flex-1 py-4 bg-white/5 border border-white/5 text-slate-500 font-bold text-[11px] uppercase tracking-[0.2em] rounded-sm hover:bg-white/10 hover:text-white transition-all transition-colors"
+            >
+              Terminate
+            </button>
+            <button 
+              type="submit"
+              disabled={!isConnected || isSubmitting || !!amountError || !amount}
+              className="flex-[2] py-4 bg-electric-blue text-white font-bold text-[11px] uppercase tracking-[0.2em] rounded-sm hover:brightness-110 transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] disabled:opacity-50 disabled:bg-slate-800 disabled:shadow-none flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+              {isSubmitting ? 'INITIALIZING...' : 'BROADCAST_WAGER'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }

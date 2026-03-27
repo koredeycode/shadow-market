@@ -9,6 +9,7 @@ import { OrderBook } from '../components/market/OrderBook';
 import { RecentTrades } from '../components/market/RecentTrades';
 import { P2PWagersList } from '../components/wager/P2PWagersList';
 import { BettingTerminal } from '../components/wager/BettingTerminal';
+import { MarketStatus } from '@/types';
 
 export function MarketDetail() {
   const { id } = useParams<{ id: string }>();
