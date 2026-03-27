@@ -36,8 +36,10 @@ You'll see:
 ```json
 {
   "contractAddress": "0x...",
-  "question": "Your market question",
-  "seed": "your-wallet-seed",
+  "question": "Will Bitcoin reach $100k in 2026?",
+  "endTime": 1743033600,
+  "endTimeISO": "2026-04-03T00:00:00.000Z",
+  "seed": "your-64-char-seed",
   "network": "preprod",
   "deployedAt": "2026-03-27T...",
   "walletAddress": "bech32..."

@@ -1,47 +1,60 @@
-// Witness function implementations
-// These provide private inputs to the ZK circuits
+import { type WitnessContext } from '@midnight-ntwrk/compact-runtime';
+import type { Ledger } from './managed/simple-market/contract/index.js';
 
 /**
- * Get the local secret key for the current user
- * Used for proving ownership of positions
+ * Private state for simple-market contract
  */
-export function localSecretKey(): Uint8Array {
-  // In production, this would derive from user's wallet
-  // For now, return a test key
-  return new Uint8Array(32).fill(0);
-}
+export type SimpleMarketPrivateState = {
+  readonly userSecret: Uint8Array;
+};
 
 /**
- * Generate a unique nonce for commitment
+ * Creates an initial private state with a random user secret
  */
-export function userNonce(): Uint8Array {
-  const nonce = new Uint8Array(32);
-  crypto.getRandomValues(nonce);
-  return nonce;
-}
+export const createSimpleMarketPrivateState = (
+  userSecret?: Uint8Array
+): SimpleMarketPrivateState => ({
+  userSecret: userSecret || crypto.getRandomValues(new Uint8Array(32)),
+});
 
 /**
- * Get the position amount (private)
- * This is never revealed on-chain, only used in ZK proofs
+ * Witness function implementations for simple-market contract
+ * These provide private inputs to the ZK circuits
  */
-export function positionAmount(): bigint {
-  // This would come from user input in the UI
-  return 0n;
-}
+export const witnesses = {
+  /**
+   * Returns the user's secret key for bet commitments
+   */
+  userSecretKey: ({
+    privateState,
+  }: WitnessContext<Ledger, SimpleMarketPrivateState>): [SimpleMarketPrivateState, Uint8Array] => {
+    return [privateState, privateState.userSecret];
+  },
 
-/**
- * Get the position side (YES or NO)
- * Private until position is claimed
- */
-export function positionSide(): boolean {
-  // This would come from user selection
-  return true; // YES
-}
+  /**
+   * Returns the bet amount (will be provided by UI)
+   */
+  betAmount: ({
+    privateState,
+  }: WitnessContext<Ledger, SimpleMarketPrivateState>): [SimpleMarketPrivateState, bigint] => {
+    return [privateState, 0n];
+  },
 
-/**
- * Market creation fee
- * Small fee to prevent spam
- */
-export function creationFee(): bigint {
-  return 1000n; // 1000 base units
-}
+  /**
+   * Returns the bet side: 1 for YES, 0 for NO
+   */
+  betSide: ({
+    privateState,
+  }: WitnessContext<Ledger, SimpleMarketPrivateState>): [SimpleMarketPrivateState, bigint] => {
+    return [privateState, 0n];
+  },
+
+  /**
+   * Returns a unique nonce for the bet
+   */
+  betNonce: ({
+    privateState,
+  }: WitnessContext<Ledger, SimpleMarketPrivateState>): [SimpleMarketPrivateState, bigint] => {
+    return [privateState, 0n];
+  },
+};

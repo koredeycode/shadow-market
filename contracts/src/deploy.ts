@@ -6,24 +6,31 @@ import { createInterface } from 'node:readline/promises';
 import * as Rx from 'rxjs';
 
 // Midnight.js imports
-import { unshieldedToken } from '@midnight-ntwrk/ledger-v7';
+import { nativeToken } from '@midnight-ntwrk/ledger-v7';
 import { deployContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { toHex } from '@midnight-ntwrk/midnight-js-utils';
 import { generateRandomSeed } from '@midnight-ntwrk/wallet-sdk-hd';
 
 // Shared utilities
-import { compiledContract, CONFIG, createProviders, createWallet, zkConfigPath } from './utils.js';
+import {
+  compiledContract,
+  CONFIG,
+  createProviders,
+  createSimpleMarketPrivateState,
+  createWallet,
+  zkConfigPath,
+} from './utils.js';
 
 // ─── Main Deploy Script ────────────────────────────────────────────────────────
 
 async function main() {
   console.log('\n╔══════════════════════════════════════════════════════════════╗');
-  console.log('║        Deploy ShadowMarket Contract to Midnight              ║');
+  console.log('║     Deploy SimpleMarket Contract to Midnight Network        ║');
   console.log('╚══════════════════════════════════════════════════════════════╝\n');
 
   // Check if contract is compiled
   if (!fs.existsSync(path.join(zkConfigPath, 'contract', 'index.js'))) {
-    console.error('\n❌ Contract not compiled! Run: pnpm compile\n');
+    console.error('\n❌ Contract not compiled! Run: pnpm compile:simple\n');
     process.exit(1);
   }
 
@@ -63,7 +70,7 @@ async function main() {
     );
 
     const address = walletCtx.unshieldedKeystore.getBech32Address();
-    const balance = state.unshielded.balances[unshieldedToken().raw] ?? 0n;
+    const balance = state.unshielded.balances[nativeToken().raw] ?? 0n;
 
     console.log(`\n  ✅ Wallet Address: ${address}`);
     console.log(`  Balance: ${balance.toLocaleString()} tNight\n`);
@@ -85,7 +92,7 @@ async function main() {
         walletCtx.wallet.state().pipe(
           Rx.throttleTime(10000),
           Rx.filter(s => s.isSynced),
-          Rx.map(s => s.unshielded.balances[unshieldedToken().raw] ?? 0n),
+          Rx.map(s => s.unshielded.balances[nativeToken().raw] ?? 0n),
           Rx.filter(b => b > 0n)
         )
       );
@@ -98,7 +105,7 @@ async function main() {
       walletCtx.wallet.state().pipe(Rx.filter(s => s.isSynced))
     );
 
-    if (dustState.dust.walletBalance(new Date()) === 0n) {
+    if ((dustState.dust?.balance(new Date()) ?? 0n) === 0n) {
       const nightUtxos = dustState.unshielded.availableCoins.filter(
         (c: any) => !c.meta?.registeredForDustGeneration
       );
@@ -118,39 +125,47 @@ async function main() {
         walletCtx.wallet.state().pipe(
           Rx.throttleTime(5000),
           Rx.filter(s => s.isSynced),
-          Rx.filter(s => s.dust.walletBalance(new Date()) > 0n)
+          Rx.filter(s => (s.dust?.balance(new Date()) ?? 0n) > 0n)
         )
       );
     }
     console.log('  ✅ DUST tokens ready!\n');
 
-    // 4. Deploy contract
-    console.log('─── Step 4: Deploy Contract ────────────────────────────────────\n');
+    // 4. Create providers
+    console.log('  Creating providers...');
+    const providers = await createProviders(walletCtx);
+
+    // 5. Deploy contract
+    console.log('─── Step 5: Deploy Contract ────────────────────────────────────\n');
 
     // Get market question from user
     const question = await rl.question('  Enter market question: ');
+    const endTimeStr = await rl.question(
+      '  Enter market end time (Unix timestamp or days from now): '
+    );
+    const endTime = endTimeStr.includes('.')
+      ? BigInt(Math.floor(parseFloat(endTimeStr)))
+      : endTimeStr.length <= 3
+        ? BigInt(Math.floor(Date.now() / 1000) + parseInt(endTimeStr) * 24 * 60 * 60)
+        : BigInt(endTimeStr);
 
-    console.log('\n  Setting up providers...');
-    const providers = await createProviders(walletCtx);
-
-    console.log('  Deploying contract (this may take 30-90 seconds)...\n');
-
-    // Deploy with market question as constructor argument
-    const deployed = await deployContract(providers, {
-      compiledContract,
-      privateStateId: `market-${Date.now()}`,
-      initialPrivateState: {},
-      constructorArguments: {
-        marketQuestion: question,
-      },
-    });
+    // Deploy with constructor arguments
+    const deployed = await deployContract(
+      providers as any,
+      {
+        compiledContract: compiledContract as any,
+        privateStateId: `market-${Date.now()}`,
+        initialPrivateState: createSimpleMarketPrivateState(),
+        args: [question, endTime],
+      } as any
+    );
 
     const contractAddress = deployed.deployTxData.public.contractAddress;
     console.log('  ✅ Contract deployed successfully!\n');
     console.log(`  Contract Address: ${contractAddress}`);
     console.log(`  Market Question: ${question}\n`);
 
-    // 5. Save deployment info
+    // 6. Save deployment info
     const deploymentInfo = {
       contractAddress,
       question,

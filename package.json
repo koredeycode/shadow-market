@@ -66,5 +66,15 @@
     "blockchain",
     "dapp",
     "p2p-wager"
-  ]
+  ],
+  "pnpm": {
+    "overrides": {
+      "@midnight-ntwrk/ledger-v7": "7.0.2",
+      "@midnight-ntwrk/ledger-v8": "npm:@midnight-ntwrk/ledger-v7@7.0.2",
+      "@midnight-ntwrk/wallet-sdk-shielded": "2.0.0",
+      "@midnight-ntwrk/wallet-sdk-dust-wallet": "2.0.0",
+      "@midnight-ntwrk/wallet-sdk-facade": "2.0.0",
+      "@midnight-ntwrk/wallet-sdk-unshielded-wallet": "2.0.0"
+    }
+  }
 }

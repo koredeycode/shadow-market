@@ -17,10 +17,10 @@ import { WalletFacade } from '@midnight-ntwrk/wallet-sdk-facade';
 import { HDWallet, Roles } from '@midnight-ntwrk/wallet-sdk-hd';
 import { ShieldedWallet } from '@midnight-ntwrk/wallet-sdk-shielded';
 import {
-    createKeystore,
-    InMemoryTransactionHistoryStorage,
-    PublicKey,
-    UnshieldedWallet,
+  createKeystore,
+  InMemoryTransactionHistoryStorage,
+  PublicKey,
+  UnshieldedWallet,
 } from '@midnight-ntwrk/wallet-sdk-unshielded-wallet';
 
 // Enable WebSocket for GraphQL subscriptions
@@ -54,21 +54,32 @@ setNetworkId(CONFIG.networkId);
 
 // Path configuration
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-export const zkConfigPath = path.resolve(__dirname, 'managed', 'market-stub');
+export const zkConfigPath = path.resolve(__dirname, 'managed', 'simple-market');
+
+// Import witnesses
+import {
+  createSimpleMarketPrivateState,
+  witnesses,
+  type SimpleMarketPrivateState,
+} from './witnesses.js';
+export { createSimpleMarketPrivateState, witnesses, type SimpleMarketPrivateState };
 
 // Load compiled contract
 const contractPath = path.join(zkConfigPath, 'contract', 'index.js');
-let MarketStubModule: any;
+let SimpleMarketModule: any;
 try {
-  MarketStubModule = await import(pathToFileURL(contractPath).href);
+  SimpleMarketModule = await import(pathToFileURL(contractPath).href);
 } catch (error) {
-  console.warn('Contract not yet compiled. Run: pnpm compile');
-  MarketStubModule = null;
+  console.warn('Contract not yet compiled. Run: pnpm compile:simple');
+  SimpleMarketModule = null;
 }
 
-export const compiledContract = MarketStubModule
-  ? CompiledContract.make('market-stub', MarketStubModule.Contract).pipe(
-      CompiledContract.withVacantWitnesses,
+// @ts-ignore - Type system limitations with CompiledContract generics
+export const compiledContract = SimpleMarketModule
+  ? CompiledContract.make('simple-market', SimpleMarketModule.Contract).pipe(
+      // @ts-ignore
+      CompiledContract.withWitnesses(witnesses),
+      // @ts-ignore
       CompiledContract.withCompiledFileAssets(zkConfigPath)
     )
   : null;
@@ -99,7 +110,7 @@ export async function createWallet(seed: string) {
   const dustSecretKey = ledger.DustSecretKey.fromSeed(keys[Roles.Dust]);
   const unshieldedKeystore = createKeystore(keys[Roles.NightExternal], networkId);
 
-  const walletConfig = {
+  const configuration = {
     networkId,
     indexerClientConnection: {
       indexerHttpUrl: CONFIG.indexer,
@@ -107,27 +118,27 @@ export async function createWallet(seed: string) {
     },
     provingServerUrl: new URL(CONFIG.proofServer),
     relayURL: new URL(CONFIG.node.replace(/^http/, 'ws')),
-  };
-
-  // Initialize wallet components
-  const shieldedWallet = ShieldedWallet(walletConfig).startWithSecretKeys(shieldedSecretKeys);
-
-  const unshieldedWallet = UnshieldedWallet({
-    networkId,
-    indexerClientConnection: walletConfig.indexerClientConnection,
-    txHistoryStorage: new InMemoryTransactionHistoryStorage(),
-  }).startWithPublicKey(PublicKey.fromKeyStore(unshieldedKeystore));
-
-  const dustWallet = DustWallet({
-    ...walletConfig,
     costParameters: {
       additionalFeeOverhead: 300_000_000_000_000n,
       feeBlocksMargin: 5,
     },
-  }).startWithSecretKey(dustSecretKey, ledger.LedgerParameters.initialParameters().dust);
+    txHistoryStorage: new InMemoryTransactionHistoryStorage(),
+  };
 
-  const wallet = new WalletFacade(shieldedWallet, unshieldedWallet, dustWallet);
-  await wallet.start(shieldedSecretKeys, dustSecretKey);
+  // Initialize wallet using WalletFacade.init
+  const wallet = await WalletFacade.init({
+    configuration,
+    shielded: cfg => ShieldedWallet(cfg).startWithSecretKeys(shieldedSecretKeys as any),
+    unshielded: cfg =>
+      UnshieldedWallet(cfg).startWithPublicKey(PublicKey.fromKeyStore(unshieldedKeystore)),
+    dust: cfg =>
+      DustWallet(cfg).startWithSecretKey(
+        dustSecretKey as any,
+        ledger.LedgerParameters.initialParameters().dust
+      ),
+  });
+
+  await wallet.start(shieldedSecretKeys as any, dustSecretKey as any);
 
   return { wallet, shieldedSecretKeys, dustSecretKey, unshieldedKeystore };
 }
@@ -172,7 +183,7 @@ export function signTransactionIntents(
 }
 
 export async function createProviders(walletCtx: Awaited<ReturnType<typeof createWallet>>) {
-  const state = await Rx.firstValueFrom(walletCtx.wallet.state().pipe(Rx.filter((s) => s.isSynced)));
+  const state = await Rx.firstValueFrom(walletCtx.wallet.state().pipe(Rx.filter(s => s.isSynced)));
 
   const walletProvider = {
     getCoinPublicKey: () => state.shielded.coinPublicKey.toHexString(),
@@ -203,9 +214,13 @@ export async function createProviders(walletCtx: Awaited<ReturnType<typeof creat
 
   return {
     walletProvider,
+    midnightProvider: {
+      submitTx: (tx: any) => walletCtx.wallet.submitTransaction(tx) as any,
+    },
     publicDataProvider: indexerPublicDataProvider(CONFIG.indexer, CONFIG.indexerWS),
     privateStateProvider: await levelPrivateStateProvider({
-      dbPath: './.midnight/private-state',
+      privateStoragePasswordProvider: async () => 'dev-pw-x9k2m7n4q8',
+      accountId: zkConfigPath,
     }),
     proofProvider: httpClientProofProvider(CONFIG.proofServer, zkConfigProvider),
     zkConfigProvider,

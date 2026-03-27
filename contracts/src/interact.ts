@@ -52,8 +52,8 @@ async function main() {
 
     // Find deployed contract
     console.log('Connecting to deployed contract...');
-    const contract = await findDeployedContract(providers, {
-      compiledContract,
+    const contract = await findDeployedContract(providers as any, {
+      compiledContract: compiledContract as any,
       contractAddress: deployment.contractAddress,
       privateStateId: `market-${deployment.contractAddress}`,
     });
