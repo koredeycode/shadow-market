@@ -305,6 +305,9 @@ importers:
       '@midnight-ntwrk/wallet-sdk-address-format':
         specifier: ^3.1.0
         version: 3.1.0
+      '@shadow-market/api':
+        specifier: workspace:*
+        version: link:../api
       '@tanstack/react-query':
         specifier: ^5.17.9
         version: 5.95.2(react@19.2.4)

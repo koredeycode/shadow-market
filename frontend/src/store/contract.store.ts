@@ -21,8 +21,16 @@ export const useContractStore = create<ContractState>(set => ({
     set({ isInitializing: true, error: null });
 
     try {
-      // New API uses wallet only, gets private state internally
-      const success = await contractManager.initialize(wallet);
+      // Configure the contract connection
+      const config = {
+        indexerUri: import.meta.env.VITE_INDEXER_URL || 'http://localhost:8088/api/v1/graphql',
+        indexerWsUri: import.meta.env.VITE_INDEXER_WS || 'ws://localhost:8088/api/v1/graphql/ws',
+        proverServerUri: import.meta.env.VITE_PROOF_SERVER_URL || 'http://localhost:8089',
+        networkId: import.meta.env.VITE_NETWORK_ID || 'undeployed',
+      };
+
+      // New API uses wallet and config
+      const success = await contractManager.initialize(wallet, config);
 
       if (success) {
         set({ isInitialized: true, isInitializing: false });

@@ -31,19 +31,25 @@ export function useContract() {
 
   // Create a new market
   const createMarket = useCallback(
-    async (marketId: string, question: string, resolverAddress: string, endTime: Date) => {
+    async (_marketId: string, question: string, resolverAddress: string, endTime: Date) => {
       if (!isInitialized) {
         toast.error('Contract not initialized. Please reconnect your wallet.');
         return null;
       }
 
       try {
-        const questionHash = new TextEncoder().encode(question);
         const onchainEndTime = BigInt(Math.floor(endTime.getTime() / 1000));
+        const initialLiquidity = 100n; // Default initial liquidity
+        const oracleAddress = resolverAddress;
 
         toast.loading('Creating market...');
 
-        await contractManager.createMarket(marketId, questionHash, resolverAddress, onchainEndTime);
+        await contractManager.createMarket(
+          question,
+          onchainEndTime,
+          initialLiquidity,
+          oracleAddress
+        );
 
         toast.dismiss();
         toast.success('Market created successfully!');
@@ -58,106 +64,26 @@ export function useContract() {
     [isInitialized]
   );
 
-  // Create a P2P wager
-  const createWager = useCallback(
-    async (
-      wagerId: string,
-      question: string,
-      makerStake: number,
-      takerStake: number,
-      makerPrediction: boolean,
-      expiryTime: Date
-    ) => {
-      if (!isInitialized) {
-        toast.error('Contract not initialized. Please reconnect your wallet.');
-        return null;
-      }
+  // P2P Wager methods - Not yet implemented in simplified API
+  // TODO: Add back when P2P betting is implemented
+  const createWager = useCallback(async (..._args: any[]) => {
+    toast.error('P2P wagers not yet implemented');
+    return null;
+  }, []);
 
-      try {
-        const questionHash = new TextEncoder().encode(question);
-        const onchainMakerStake = BigInt(makerStake);
-        const onchainTakerStake = BigInt(takerStake);
-        const onchainExpiryTime = BigInt(Math.floor(expiryTime.getTime() / 1000));
+  const acceptWager = useCallback(async (_wagerId: string) => {
+    toast.error('P2P wagers not yet implemented');
+    return null;
+  }, []);
 
-        toast.loading('Creating wager...');
+  const cancelWager = useCallback(async (_wagerId: string) => {
+    toast.error('P2P wagers not yet implemented');
+    return null;
+  }, []);
 
-        await contractManager.createWager(
-          wagerId,
-          questionHash,
-          onchainMakerStake,
-          onchainTakerStake,
-          makerPrediction,
-          onchainExpiryTime
-        );
-
-        toast.dismiss();
-        toast.success('Wager created successfully!');
-        return true;
-      } catch (error: any) {
-        toast.dismiss();
-        toast.error(error.message || 'Failed to create wager');
-        console.error('Create wager error:', error);
-        return null;
-      }
-    },
-    [isInitialized]
-  );
-
-  // Accept a P2P wager
-  const acceptWager = useCallback(
-    async (wagerId: string) => {
-      if (!isInitialized) {
-        toast.error('Contract not initialized. Please reconnect your wallet.');
-        return null;
-      }
-
-      try {
-        toast.loading('Accepting wager...');
-
-        await contractManager.acceptWager(wagerId);
-
-        toast.dismiss();
-        toast.success('Wager accepted!');
-        return true;
-      } catch (error: any) {
-        toast.dismiss();
-        toast.error(error.message || 'Failed to accept wager');
-        console.error('Accept wager error:', error);
-        return null;
-      }
-    },
-    [isInitialized]
-  );
-
-  // Cancel a P2P wager
-  const cancelWager = useCallback(
-    async (wagerId: string) => {
-      if (!isInitialized) {
-        toast.error('Contract not initialized. Please reconnect your wallet.');
-        return null;
-      }
-
-      try {
-        toast.loading('Cancelling wager...');
-
-        await contractManager.cancelWager(wagerId);
-
-        toast.dismiss();
-        toast.success('Wager cancelled');
-        return true;
-      } catch (error: any) {
-        toast.dismiss();
-        toast.error(error.message || 'Failed to cancel wager');
-        console.error('Cancel wager error:', error);
-        return null;
-      }
-    },
-    [isInitialized]
-  );
-
-  // Claim pool winnings
+  // Claim pool winnings - maps to claimWinnings
   const claimPoolWinnings = useCallback(
-    async (marketId: string) => {
+    async (betId: string) => {
       if (!isInitialized) {
         toast.error('Contract not initialized. Please reconnect your wallet.');
         return null;
@@ -166,7 +92,7 @@ export function useContract() {
       try {
         toast.loading('Claiming winnings...');
 
-        await contractManager.claimPoolWinnings(marketId);
+        await contractManager.claimWinnings(betId);
 
         toast.dismiss();
         toast.success('Winnings claimed!');
@@ -181,45 +107,21 @@ export function useContract() {
     [isInitialized]
   );
 
-  // Claim wager winnings
-  const claimWagerWinnings = useCallback(
-    async (wagerId: string) => {
-      if (!isInitialized) {
-        toast.error('Contract not initialized. Please reconnect your wallet.');
-        return null;
-      }
+  // Claim wager winnings - not yet implemented
+  const claimWagerWinnings = useCallback(async (_wagerId: string) => {
+    toast.error('P2P wagers not yet implemented');
+    return null;
+  }, []);
 
-      try {
-        toast.loading('Claiming winnings...');
-
-        await contractManager.claimWagerWinnings(wagerId);
-
-        toast.dismiss();
-        toast.success('Winnings claimed!');
-        return true;
-      } catch (error: any) {
-        toast.dismiss();
-        toast.error(error.message || 'Failed to claim winnings');
-        console.error('Claim wager winnings error:', error);
-        return null;
-      }
-    },
-    [isInitialized]
-  );
-
-  // Get contract state
+  // Get contract state - use subscription instead
   const getContractState = useCallback(async () => {
     if (!isInitialized) {
       return null;
     }
 
-    try {
-      const state = await contractManager.getState();
-      return state;
-    } catch (error: any) {
-      console.error('Get contract state error:', error);
-      return null;
-    }
+    // Contract state is available through subscribeToState
+    // This method is kept for backward compatibility
+    return { message: 'Use subscribeToState for reactive updates' };
   }, [isInitialized]);
 
   return {

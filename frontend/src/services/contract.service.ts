@@ -1,66 +1,48 @@
 /**
- * Frontend Contract Service
- * Uses the API wrapper for clean contract interactions
- * Following BBoard pattern of Context → Manager → API → Contract
+ * Contract Service - Manages connection to the Shadow Market smart contract
  *
- * NOTE: This uses stub implementation until contracts are compiled
+ * This service provides a singleton interface for interacting with the
+ * Midnight smart contract through the UnifiedMarketAPI from @shadow-market/api
  */
 
 import type { ConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
-// Provider imports will be needed when contract is compiled:
-// import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
-// import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
-import {
-  UnifiedMarketAPI,
-  type DeployedUnifiedMarketAPI,
-  type DeployedUnifiedMarketConfig,
-} from '../../../api/src/index';
-
-// Configuration from environment
-const UNIFIED_CONTRACT_ADDRESS =
-  import.meta.env.VITE_UNIFIED_CONTRACT_ADDRESS ||
-  'cd9dae0f85be015b6b6c6b4008de30fc0be98d55bbf6b61f0fbda0e359f9aea7';
-const INDEXER_URL = import.meta.env.VITE_INDEXER_URL || 'http://localhost:8088/api/v1/graphql';
-const INDEXER_WS = import.meta.env.VITE_INDEXER_WS || 'ws://localhost:8088/api/v1/graphql/ws';
-const PROOF_SERVER_URL = import.meta.env.VITE_PROOF_SERVER_URL || 'http://localhost:8089';
-const NETWORK_ID = import.meta.env.VITE_NETWORK_ID || 'undeployed';
+import { UnifiedMarketAPI } from '@shadow-market/api';
+import { Subscription } from 'rxjs';
 
 /**
- * Contract manager for the frontend
- * Handles initialization and provides access to contract methods
+ * Contract configuration
+ */
+export interface ContractConfig {
+  indexerUri: string;
+  indexerWsUri: string;
+  proverServerUri: string;
+  zkConfigPath?: string;
+  networkId: string;
+}
+
+/**
+ * Contract Manager - Singleton service for contract interactions
  */
 class ContractManager {
-  private api: DeployedUnifiedMarketAPI | null = null;
-  private wallet: ConnectedAPI | null = null;
+  private api: UnifiedMarketAPI | null = null;
+  private stateSubscription: Subscription | null = null;
 
   /**
-   * Initialize contract with wallet connection
+   * Initialize the contract connection
    */
-  async initialize(connectedWallet: ConnectedAPI): Promise<boolean> {
+  async initialize(wallet: ConnectedAPI, config: ContractConfig): Promise<boolean> {
+    console.log('🔌 Initializing contract connection...');
+
     try {
-      this.wallet = connectedWallet;
+      // Connect to the contract using the new .connect() pattern
+      this.api = await UnifiedMarketAPI.connect(wallet, config);
 
-      // Note: SDK v4 doesn't expose getPrivateStateProvider directly
-      // Private state is managed internally by the wallet
+      // Subscribe to state changes
+      this.stateSubscription = this.api.state$.subscribe((state: any) => {
+        console.log('📊 Contract state updated:', state);
+      });
 
-      // Create indexer providers (unused in stub mode, but kept for future)
-      // const publicDataProvider = indexerPublicDataProvider(INDEXER_URL, INDEXER_WS);
-      // const proofProvider = httpClientProofProvider(PROOF_SERVER_URL);
-
-      // Configure API
-      const config: DeployedUnifiedMarketConfig = {
-        contractAddress: UNIFIED_CONTRACT_ADDRESS,
-        networkId: NETWORK_ID,
-        indexerUrl: INDEXER_URL,
-        indexerWs: INDEXER_WS,
-        proofServerUrl: PROOF_SERVER_URL,
-        nodeUrl: 'http://localhost:8090',
-      };
-
-      // Initialize API
-      this.api = new UnifiedMarketAPI(config);
-
-      console.log('✅ Unified Market contract initialized (stub mode):', UNIFIED_CONTRACT_ADDRESS);
+      console.log('✅ Contract initialized successfully');
       return true;
     } catch (error) {
       console.error('❌ Failed to initialize contract:', error);
@@ -69,23 +51,16 @@ class ContractManager {
   }
 
   /**
-   * Check if contract is initialized
-   */
-  isInitialized(): boolean {
-    return this.api !== null && this.wallet !== null;
-  }
-
-  /**
-   * Place a bet on a pool market
+   * Place a bet on a prediction market
    */
   async placeBet(marketId: string, betAmount: bigint, betOutcome: boolean): Promise<void> {
-    if (!this.api || !this.wallet) {
+    if (!this.api) {
       throw new Error('Contract not initialized');
     }
 
     try {
-      await this.api.placeBet(marketId, betAmount, betOutcome, this.wallet);
-      console.log(`✅ Bet placed on market ${marketId}`);
+      await this.api.placeBet(marketId, betAmount, betOutcome);
+      console.log(`✅ Bet placed: ${betAmount} on ${betOutcome ? 'YES' : 'NO'}`);
     } catch (error) {
       console.error('❌ Failed to place bet:', error);
       throw error;
@@ -93,21 +68,72 @@ class ContractManager {
   }
 
   /**
-   * Create a new pool market
+   * Claim winnings from a resolved market
    */
-  async createMarket(
-    marketId: string,
-    questionHash: Uint8Array,
-    resolverAddress: string,
-    endTime: bigint
-  ): Promise<void> {
-    if (!this.api || !this.wallet) {
+  async claimWinnings(betId: string): Promise<void> {
+    if (!this.api) {
       throw new Error('Contract not initialized');
     }
 
     try {
-      await this.api.createMarket(marketId, questionHash, resolverAddress, endTime, this.wallet);
-      console.log(`✅ Market created: ${marketId}`);
+      await this.api.claimWinnings(betId);
+      console.log(`✅ Winnings claimed from bet: ${betId}`);
+    } catch (error) {
+      console.error('❌ Failed to claim winnings:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Add liquidity to an AMM pool
+   */
+  async addLiquidity(marketId: string, amount: bigint): Promise<void> {
+    if (!this.api) {
+      throw new Error('Contract not initialized');
+    }
+
+    try {
+      await this.api.addLiquidity(marketId, amount);
+      console.log(`✅ Liquidity added: ${amount}`);
+    } catch (error) {
+      console.error('❌ Failed to add liquidity:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Remove liquidity from an AMM pool
+   */
+  async removeLiquidity(marketId: string, lpTokenAmount: bigint): Promise<void> {
+    if (!this.api) {
+      throw new Error('Contract not initialized');
+    }
+
+    try {
+      await this.api.removeLiquidity(marketId, lpTokenAmount);
+      console.log(`✅ Liquidity removed: ${lpTokenAmount} LP tokens`);
+    } catch (error) {
+      console.error('❌ Failed to remove liquidity:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new prediction market
+   */
+  async createMarket(
+    question: string,
+    resolutionTime: bigint,
+    initialLiquidity: bigint,
+    oracleAddress: string
+  ): Promise<void> {
+    if (!this.api) {
+      throw new Error('Contract not initialized');
+    }
+
+    try {
+      await this.api.createMarket(question, resolutionTime, initialLiquidity, oracleAddress);
+      console.log(`✅ Market created: ${question}`);
     } catch (error) {
       console.error('❌ Failed to create market:', error);
       throw error;
@@ -115,33 +141,16 @@ class ContractManager {
   }
 
   /**
-   * Lock a market (admin only)
-   */
-  async lockMarket(marketId: string): Promise<void> {
-    if (!this.api || !this.wallet) {
-      throw new Error('Contract not initialized');
-    }
-
-    try {
-      await this.api.lockMarket(marketId, this.wallet);
-      console.log(`✅ Market locked: ${marketId}`);
-    } catch (error) {
-      console.error('❌ Failed to lock market:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Resolve a market (admin/resolver only)
+   * Resolve a market with an outcome
    */
   async resolveMarket(marketId: string, outcome: boolean): Promise<void> {
-    if (!this.api || !this.wallet) {
+    if (!this.api) {
       throw new Error('Contract not initialized');
     }
 
     try {
-      await this.api.resolveMarket(marketId, outcome, this.wallet);
-      console.log(`✅ Market resolved: ${marketId}, outcome: ${outcome}`);
+      await this.api.resolveMarket(marketId, outcome);
+      console.log(`✅ Market resolved: ${marketId}, outcome: ${outcome ? 'YES' : 'NO'}`);
     } catch (error) {
       console.error('❌ Failed to resolve market:', error);
       throw error;
@@ -149,144 +158,75 @@ class ContractManager {
   }
 
   /**
-   * Claim pool winnings
+   * Cancel an unresolved market
    */
-  async claimPoolWinnings(marketId: string): Promise<void> {
-    if (!this.api || !this.wallet) {
-      throw new Error('Contract not initialized');
-    }
-
-    try {
-      await this.api.claimPoolWinnings(marketId, this.wallet);
-      console.log(`✅ Pool winnings claimed for market ${marketId}`);
-    } catch (error) {
-      console.error('❌ Failed to claim pool winnings:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Create a P2P wager
-   */
-  async createWager(
-    wagerId: string,
-    questionHash: Uint8Array,
-    makerStake: bigint,
-    takerStake: bigint,
-    makerPrediction: boolean,
-    expiryTime: bigint
-  ): Promise<void> {
-    if (!this.api || !this.wallet) {
-      throw new Error('Contract not initialized');
-    }
-
-    try {
-      await this.api.createWager(
-        wagerId,
-        questionHash,
-        makerStake,
-        takerStake,
-        makerPrediction,
-        expiryTime,
-        this.wallet
-      );
-      console.log(`✅ Wager created: ${wagerId}`);
-    } catch (error) {
-      console.error('❌ Failed to create wager:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Accept a P2P wager
-   */
-  async acceptWager(wagerId: string): Promise<void> {
-    if (!this.api || !this.wallet) {
-      throw new Error('Contract not initialized');
-    }
-
-    try {
-      await this.api.acceptWager(wagerId, this.wallet);
-      console.log(`✅ Wager accepted: ${wagerId}`);
-    } catch (error) {
-      console.error('❌ Failed to accept wager:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Resolve a P2P wager
-   */
-  async resolveWager(wagerId: string, outcome: boolean): Promise<void> {
-    if (!this.api || !this.wallet) {
-      throw new Error('Contract not initialized');
-    }
-
-    try {
-      await this.api.resolveWager(wagerId, outcome, this.wallet);
-      console.log(`✅ Wager resolved: ${wagerId}, outcome: ${outcome}`);
-    } catch (error) {
-      console.error('❌ Failed to resolve wager:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Cancel a P2P wager
-   */
-  async cancelWager(wagerId: string): Promise<void> {
-    if (!this.api || !this.wallet) {
-      throw new Error('Contract not initialized');
-    }
-
-    try {
-      await this.api.cancelWager(wagerId, this.wallet);
-      console.log(`✅ Wager cancelled: ${wagerId}`);
-    } catch (error) {
-      console.error('❌ Failed to cancel wager:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Claim wager winnings
-   */
-  async claimWagerWinnings(wagerId: string): Promise<void> {
-    if (!this.api || !this.wallet) {
-      throw new Error('Contract not initialized');
-    }
-
-    try {
-      await this.api.claimWagerWinnings(wagerId, this.wallet);
-      console.log(`✅ Wager winnings claimed: ${wagerId}`);
-    } catch (error) {
-      console.error('❌ Failed to claim wager winnings:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get current contract state
-   */
-  async getState(): Promise<any> {
+  async cancelMarket(marketId: string): Promise<void> {
     if (!this.api) {
       throw new Error('Contract not initialized');
     }
 
     try {
-      return await this.api.state();
+      await this.api.cancelMarket(marketId);
+      console.log(`✅ Market cancelled: ${marketId}`);
     } catch (error) {
-      console.error('❌ Failed to get contract state:', error);
+      console.error('❌ Failed to cancel market:', error);
       throw error;
     }
+  }
+
+  /**
+   * Withdraw funds from a cancelled market
+   */
+  async withdrawFromCancelled(marketId: string): Promise<void> {
+    if (!this.api) {
+      throw new Error('Contract not initialized');
+    }
+
+    try {
+      await this.api.withdrawFromCancelled(marketId);
+      console.log(`✅ Funds withdrawn from cancelled market: ${marketId}`);
+    } catch (error) {
+      console.error('❌ Failed to withdraw funds:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get the deployed contract address
+   */
+  getContractAddress(): string | undefined {
+    return this.api?.deployedContractAddress;
+  }
+
+  /**
+   * Subscribe to contract state updates
+   */
+  subscribeToState(callback: (state: any) => void): Subscription | null {
+    if (!this.api) {
+      console.warn('⚠️ Cannot subscribe to state: contract not initialized');
+      return null;
+    }
+
+    return this.api.state$.subscribe(callback);
+  }
+
+  /**
+   * Check if contract is initialized
+   */
+  isInitialized(): boolean {
+    return this.api !== null;
   }
 
   /**
    * Cleanup and disconnect
    */
   cleanup(): void {
+    if (this.stateSubscription) {
+      this.stateSubscription.unsubscribe();
+      this.stateSubscription = null;
+    }
+
     this.api = null;
-    this.wallet = null;
     console.log('🧹 Contract manager cleaned up');
   }
 }
