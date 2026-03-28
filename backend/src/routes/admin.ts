@@ -5,11 +5,52 @@ import { isAdmin } from '../middleware/is-admin.js';
 import { validate } from '../middleware/validate.js';
 import { AdminService } from '../services/admin.service.js';
 import { asyncHandler } from '../utils/async-handler.js';
+import { verifyAdminPassword } from '../services/admin-init.service.js';
+import { db } from '../db/client.js';
+import { users } from '../db/schema.js';
+import { eq } from 'drizzle-orm';
 
 export const adminRouter = Router();
 const adminService = new AdminService();
 
-// All admin routes require authentication and admin role
+// Admin authentication/elevation route
+// This must be placed BEFORE the isAdmin middleware
+const loginSchema = z.object({
+  username: z.string(),
+  password: z.string(),
+});
+
+adminRouter.post(
+  '/auth',
+  authenticate,
+  validate({ body: loginSchema }),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { username, password } = req.body;
+    
+    // 1. Verify credentials
+    const isValid = await verifyAdminPassword(username, password);
+    if (!isValid) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid admin credentials',
+      });
+    }
+
+    // 2. Promote current user to admin
+    await db
+      .update(users)
+      .set({ isAdmin: true })
+      .where(eq(users.id, req.user!.id));
+
+    res.json({
+      success: true,
+      message: 'Admin status granted successfully',
+      timestamp: Date.now(),
+    });
+  })
+);
+
+// All other admin routes require authentication and admin role
 adminRouter.use(authenticate, isAdmin);
 
 /**

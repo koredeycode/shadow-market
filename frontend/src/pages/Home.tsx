@@ -38,7 +38,7 @@ export function Home() {
   });
 
   const allFeaturedMarkets = featuredMarkets?.items || [];
-  
+
   // Carousel logic
   const [currentIndex, setCurrentIndex] = useState(0);
   const featuredForCarousel = allFeaturedMarkets.slice(0, 5);
@@ -46,7 +46,7 @@ export function Home() {
   useEffect(() => {
     if (featuredForCarousel.length <= 1) return;
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % featuredForCarousel.length);
+      setCurrentIndex(prev => (prev + 1) % featuredForCarousel.length);
     }, 5000);
     return () => clearInterval(interval);
   }, [featuredForCarousel.length]);
@@ -86,7 +86,7 @@ export function Home() {
           {currentFeatured && (
             <div className="relative group overflow-hidden rounded-sm border border-white/10 bg-slate-900/40 hover:border-electric-blue/30 transition-all duration-500 flex-1 min-h-[400px] flex flex-col">
               {/* Crossfade Layer */}
-              <div 
+              <div
                 key={currentFeatured.id}
                 className="absolute inset-0 animate-in fade-in duration-1000 flex flex-col"
               >
@@ -101,7 +101,7 @@ export function Home() {
                     LIVE
                   </span>
                 </div>
-                
+
                 <div className="p-4 space-y-5 relative z-10 flex-1 flex flex-col justify-center">
                   <div className="space-y-3">
                     <h1 className="text-3xl font-bold text-white leading-tight tracking-tight group-hover:text-electric-blue transition-colors duration-300">
@@ -112,7 +112,9 @@ export function Home() {
                   <div className="flex flex-wrap items-center gap-6 text-xs font-mono text-slate-400">
                     <div className="flex items-center gap-2">
                       <BarChart3 className="w-4 h-4 text-electric-blue" />
-                      <span>${(parseFloat(currentFeatured.totalVolume)/1000).toFixed(1)}K Vol</span>
+                      <span>
+                        ${(parseFloat(currentFeatured.totalVolume) / 1000).toFixed(1)}K Vol
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4 text-slate-500" />
@@ -125,20 +127,24 @@ export function Home() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                    <Link 
+                    <Link
                       to={`/markets/${currentFeatured.id}`}
                       className="flex flex-col items-center justify-center p-6 bg-success-green/5 border border-success-green/20 rounded-sm group/btn hover:bg-success-green/10 transition-all"
                     >
-                      <span className="text-[9px] font-mono text-success-green uppercase mb-2 tracking-widest">Yes Price</span>
+                      <span className="text-[9px] font-mono text-success-green uppercase mb-2 tracking-widest">
+                        Yes Price
+                      </span>
                       <span className="text-4xl font-mono font-bold text-success-green">
                         {Math.round(parseFloat(currentFeatured.yesPrice))}%
                       </span>
                     </Link>
-                    <Link 
+                    <Link
                       to={`/markets/${currentFeatured.id}`}
                       className="flex flex-col items-center justify-center p-6 bg-red-500/5 border border-red-500/20 rounded-sm group/btn hover:bg-red-500/10 transition-all"
                     >
-                      <span className="text-[9px] font-mono text-red-400 uppercase mb-2 tracking-widest">No Price</span>
+                      <span className="text-[9px] font-mono text-red-400 uppercase mb-2 tracking-widest">
+                        No Price
+                      </span>
                       <span className="text-4xl font-mono font-bold text-red-500">
                         {Math.round(parseFloat(currentFeatured.noPrice))}%
                       </span>
@@ -192,8 +198,8 @@ export function Home() {
             </div>
             <div className="flex-1">
               {trendingMarkets?.map((market, idx) => (
-                <Link 
-                  key={market.id} 
+                <Link
+                  key={market.id}
                   to={`/markets/${market.id}`}
                   className={`flex items-center gap-4 p-4 hover:bg-white/5 transition-colors group ${
                     idx !== trendingMarkets.length - 1 ? 'border-b border-white/[0.02]' : ''
@@ -205,9 +211,13 @@ export function Home() {
                       {market.question}
                     </p>
                     <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500 uppercase mt-1">
-                      <span className="text-electric-blue">${(parseFloat(market.totalVolume)/1000).toFixed(1)}K Vol</span>
+                      <span className="text-electric-blue">
+                        ${(parseFloat(market.totalVolume) / 1000).toFixed(1)}K Vol
+                      </span>
                       <span className="text-slate-800">|</span>
-                      <span className="text-success-green">{Math.round(parseFloat(market.yesPrice))}% YES</span>
+                      <span className="text-success-green">
+                        {Math.round(parseFloat(market.yesPrice))}% YES
+                      </span>
                     </div>
                   </div>
                   <ChevronRight className="w-4 h-4 text-slate-800 group-hover:text-electric-blue transition-colors" />
@@ -223,12 +233,14 @@ export function Home() {
                 <Zap className="w-4 h-4 text-amber-accent" />
                 Fresh Intel
               </h3>
-              <span className="text-[10px] font-mono text-electric-blue animate-pulse">NEW DATA</span>
+              <span className="text-[10px] font-mono text-electric-blue animate-pulse">
+                NEW DATA
+              </span>
             </div>
             <div className="px-2 pt-2 space-y-1">
               {newMarkets?.slice(0, 3).map(market => (
-                <Link 
-                  key={market.id} 
+                <Link
+                  key={market.id}
                   to={`/markets/${market.id}`}
                   className="block p-3 border border-transparent hover:border-white/5 hover:bg-white/[0.01] rounded-sm transition-all"
                 >
@@ -236,16 +248,19 @@ export function Home() {
                     {market.question}
                   </p>
                   <div className="flex items-center justify-between text-[9px] font-mono uppercase tracking-widest text-slate-600">
-                    <span className="flex items-center gap-1">
-                      {market.category}
+                    <span className="flex items-center gap-1">{market.category}</span>
+                    <span className="text-electric-blue/60 group-hover:text-electric-blue transition-colors">
+                      Details
                     </span>
-                    <span className="text-electric-blue/60 group-hover:text-electric-blue transition-colors">Details</span>
                   </div>
                 </Link>
               ))}
             </div>
             <div className="p-2">
-              <Link to="/markets" className="block text-center py-2.5 text-[10px] font-mono font-bold text-electric-blue hover:underline uppercase tracking-[0.25em] bg-electric-blue/5 border border-electric-blue/10 rounded-sm">
+              <Link
+                to="/markets"
+                className="block text-center py-2.5 text-[10px] font-mono font-bold text-electric-blue hover:underline uppercase tracking-[0.25em] bg-electric-blue/5 border border-electric-blue/10 rounded-sm"
+              >
                 Explore Terminal
               </Link>
             </div>
@@ -260,11 +275,14 @@ export function Home() {
             <div className="w-1 h-6 bg-electric-blue" />
             Market Intelligence
           </h2>
-          <Link to="/markets" className="text-xs font-bold text-slate-500 hover:text-white transition-colors uppercase tracking-widest flex items-center gap-1">
+          <Link
+            to="/markets"
+            className="text-xs font-bold text-slate-500 hover:text-white transition-colors uppercase tracking-widest flex items-center gap-1"
+          >
             Browse All <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {allFeaturedMarkets.slice(5).map(market => (
             <MarketIntelligenceCard key={market.id} market={market} />

@@ -1,11 +1,4 @@
-import { 
-  BarChart3, 
-  Wallet, 
-  Users, 
-  Clock, 
-  CheckCircle2, 
-  Database 
-} from 'lucide-react';
+import { BarChart3, Wallet, Users, Clock, CheckCircle2, Database } from 'lucide-react';
 import { Market } from '../../types';
 
 interface MarketStatsProps {
@@ -85,9 +78,7 @@ export function MarketStats({ market }: MarketStatsProps) {
             <span className="opacity-50">{stat.icon}</span>
             <span className="text-[9px] font-mono uppercase tracking-widest">{stat.label}</span>
           </div>
-          <div className={`text-xs font-mono font-bold ${stat.textColor}`}>
-            {stat.value}
-          </div>
+          <div className={`text-xs font-mono font-bold ${stat.textColor}`}>{stat.value}</div>
         </div>
       ))}
     </div>

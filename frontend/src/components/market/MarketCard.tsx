@@ -15,9 +15,12 @@ export function MarketCard({ market }: MarketCardProps) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'OPEN': return 'bg-success-green/10 text-success-green border-success-green/20';
-      case 'RESOLVED': return 'bg-slate-500/10 text-slate-400 border-white/10';
-      default: return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+      case 'OPEN':
+        return 'bg-success-green/10 text-success-green border-success-green/20';
+      case 'RESOLVED':
+        return 'bg-slate-500/10 text-slate-400 border-white/10';
+      default:
+        return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
     }
   };
 
@@ -25,14 +28,16 @@ export function MarketCard({ market }: MarketCardProps) {
     <div className="group relative bg-slate-900/40 border border-white/10 rounded-sm overflow-hidden transition-all duration-300 hover:border-electric-blue/30 hover:shadow-[0_0_30px_rgba(59,130,246,0.1)] hover:-translate-y-1 flex flex-col h-full backdrop-blur-sm">
       {/* Gloss Effect */}
       <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-      
+
       <div className="p-5 flex-1 flex flex-col">
         {/* Category & Status */}
         <div className="flex justify-between items-center mb-4">
           <span className="px-2 py-0.5 bg-electric-blue/10 text-electric-blue border border-electric-blue/20 rounded-sm text-[10px] font-bold uppercase tracking-[0.2em]">
             {market.category}
           </span>
-          <span className={`px-2 py-0.5 border rounded-sm text-[10px] font-bold uppercase tracking-widest ${getStatusColor(market.status)}`}>
+          <span
+            className={`px-2 py-0.5 border rounded-sm text-[10px] font-bold uppercase tracking-widest ${getStatusColor(market.status)}`}
+          >
             {market.status}
           </span>
         </div>
@@ -54,9 +59,9 @@ export function MarketCard({ market }: MarketCardProps) {
               <TrendingDown className="w-3.5 h-3.5" />
             </div>
           </div>
-          
+
           <div className="h-1.5 w-full bg-red-500/20 rounded-full overflow-hidden">
-            <div 
+            <div
               className="h-full bg-success-green transition-all duration-500 ease-out shadow-[0_0_10px_rgba(16,185,129,0.3)]"
               style={{ width: `${yesPercent}%` }}
             />
@@ -67,18 +72,22 @@ export function MarketCard({ market }: MarketCardProps) {
         <div className="mt-auto pt-5 border-t border-white/5 flex items-center gap-6">
           <div className="flex items-center gap-2 text-slate-500">
             <BarChart3 className="w-4 h-4" />
-            <span className="text-[11px] font-mono font-bold uppercase tracking-tight">{volume}</span>
+            <span className="text-[11px] font-mono font-bold uppercase tracking-tight">
+              {volume}
+            </span>
           </div>
           <div className="flex items-center gap-2 text-slate-500">
             <Clock className="w-4 h-4" />
-            <span className="text-[11px] font-mono font-bold uppercase tracking-tight italic">{timeLeft}</span>
+            <span className="text-[11px] font-mono font-bold uppercase tracking-tight italic">
+              {timeLeft}
+            </span>
           </div>
         </div>
       </div>
 
       {/* Action Footer */}
       <div className="p-4 bg-black/20 border-t border-white/5">
-        <Link 
+        <Link
           to={`/markets/${market.id}`}
           className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 text-white font-bold text-xs uppercase tracking-[0.2em] transition-all hover:bg-electric-blue hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] group/btn"
         >

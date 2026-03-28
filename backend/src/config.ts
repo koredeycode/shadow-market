@@ -30,19 +30,14 @@ export const config = {
   // Midnight Network
   networkId: process.env.NETWORK_ID || 'undeployed',
   nodeUrl: process.env.NODE_URL || 'http://localhost:9944',
-  indexerUrl: process.env.INDEXER_URL || 'http://localhost:8088/api/v3/graphql',
-  indexerWs: process.env.INDEXER_WS || 'ws://localhost:8088/api/v3/graphql/ws',
+  indexerUrl: process.env.INDEXER_URL || 'http://localhost:8088/api/v3',
+  indexerWs: process.env.INDEXER_WS || 'ws://localhost:8088/api/v3',
   proofServerUrl: process.env.PROOF_SERVER_URL || 'http://localhost:6300',
 
   // Contract addresses
-  marketFactoryAddress: process.env.MARKET_FACTORY_ADDRESS || '',
-  predictionMarketAddress: process.env.PREDICTION_MARKET_ADDRESS || '',
-  p2pWagerAddress: process.env.P2P_WAGER_ADDRESS || '',
-  liquidityPoolAddress: process.env.LIQUIDITY_POOL_ADDRESS || '',
-  oracleAddress: process.env.ORACLE_ADDRESS || '',
   unifiedContractAddress:
     process.env.UNIFIED_CONTRACT_ADDRESS ||
-    'cd9dae0f85be015b6b6c6b4008de30fc0be98d55bbf6b61f0fbda0e359f9aea7',
+    'b0c23e45c990ae21a13848f824587434f6b6d2fc3f52cb930451c0238bcc61e5',
 
   // Admin user (created on startup)
   adminUsername: process.env.ADMIN_USERNAME || 'admin',

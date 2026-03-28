@@ -17,11 +17,11 @@ import {
 const generateId = () => randomBytes(16).toString('hex');
 
 async function seed() {
-  console.log('🌱 Seeding database...');
+  console.log('Seeding database...');
 
   try {
     // Clear existing data
-    console.log('🧹 Clearing existing data...');
+    console.log('Clearing existing data...');
     // Delete in order to satisfy FK constraints
     await db.delete(lpPositions);
     await db.delete(liquidityPools);
@@ -32,7 +32,7 @@ async function seed() {
     await db.delete(markets);
     await db.delete(oracles);
     await db.delete(users);
-    console.log('✅ Database cleared');
+    console.log('Database cleared');
 
     // Create test users
     const [alice, bob, carol] = await db
@@ -62,7 +62,7 @@ async function seed() {
       ])
       .returning();
 
-    console.log('✅ Created test users');
+    console.log('Created test users');
 
     // Create test oracles
     await db.insert(oracles).values([
@@ -86,7 +86,7 @@ async function seed() {
       },
     ]);
 
-    console.log('✅ Created test oracles');
+    console.log('Created test oracles');
 
     const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     const nextYear = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
@@ -476,11 +476,11 @@ async function seed() {
 
     await db.insert(markets).values(seedMarkets as any);
 
-    console.log('✅ Created test markets');
+    console.log('Created test markets');
 
-    console.log('🎉 Database seeding completed!');
+    console.log('Database seeding completed!');
   } catch (error) {
-    console.error('❌ Seeding failed:', error);
+    console.error('Seeding failed:', error);
     throw error;
   } finally {
     process.exit(0);

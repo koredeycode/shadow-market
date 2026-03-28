@@ -40,9 +40,9 @@ upgrade-insecure-requests;
 
 ### React Built-in Protection
 
-- ✅ JSX auto-escaping
-- ✅ No `dangerouslySetInnerHTML` usage
-- ✅ User input sanitized before rendering
+- JSX auto-escaping
+- No `dangerouslySetInnerHTML` usage
+- User input sanitized before rendering
 
 ### Input Sanitization
 
@@ -63,9 +63,9 @@ All user inputs are validated with Zod schemas before submission:
 
 ### Strategy: Token-Based (JWT)
 
-- ✅ JWT in Authorization header (not cookies)
-- ✅ No cookie-based authentication
-- ✅ SameSite policy not needed (no auth cookies)
+- JWT in Authorization header (not cookies)
+- No cookie-based authentication
+- SameSite policy not needed (no auth cookies)
 
 ### API Calls
 
@@ -84,17 +84,17 @@ axios.create({
 
 ### Token Storage
 
-- ✅ JWT stored in memory (React state)
-- ✅ Refresh token in httpOnly cookie (backend-managed)
-- ❌ Never in localStorage (XSS risk)
-- ❌ Never in sessionStorage (XSS risk)
+- JWT stored in memory (React state)
+- Refresh token in httpOnly cookie (backend-managed)
+- � Never in localStorage (XSS risk)
+- � Never in sessionStorage (XSS risk)
 
 ### Wallet Integration
 
-- ✅ Private keys never stored
-- ✅ Lace wallet manages keys
-- ✅ Transaction review before signing
-- ✅ User must explicitly approve
+- Private keys never stored
+- Lace wallet manages keys
+- Transaction review before signing
+- User must explicitly approve
 
 ### Session Management
 
@@ -107,10 +107,10 @@ axios.create({
 
 ### Package Management
 
-- ✅ Lock file committed (pnpm-lock.yaml)
-- ✅ Exact versions specified
-- ✅ Regular updates (weekly)
-- ✅ Automated vulnerability scanning
+- Lock file committed (pnpm-lock.yaml)
+- Exact versions specified
+- Regular updates (weekly)
+- Automated vulnerability scanning
 
 ### Critical Dependencies
 
@@ -200,10 +200,10 @@ privateData = '0'.repeat(privateData.length);
 
 ### Error Display
 
-- ✅ User-friendly messages
-- ❌ No stack traces in production
-- ❌ No internal errors exposed
-- ✅ Generic "Something went wrong"
+- User-friendly messages
+- � No stack traces in production
+- � No internal errors exposed
+- Generic "Something went wrong"
 
 ### Error Logging
 
@@ -241,9 +241,9 @@ export default defineConfig({
 
 ### Environment Variables
 
-- ✅ Prefix with `VITE_` for exposure
-- ✅ No secrets in client-side env vars
-- ✅ API URL configurable per environment
+- Prefix with `VITE_` for exposure
+- No secrets in client-side env vars
+- API URL configurable per environment
 
 ## Third-Party Integrations
 

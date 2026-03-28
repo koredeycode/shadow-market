@@ -55,6 +55,12 @@ export function AdminMarkets() {
           <h1 className="text-3xl font-bold text-white mb-2">Market Management</h1>
           <p className="text-slate-400 text-sm">Lock, resolve, and moderate markets</p>
         </div>
+        <Link
+          to="/markets/create"
+          className="px-6 py-2 bg-electric-blue text-white rounded-sm font-bold text-[10px] tracking-[0.2em] uppercase hover:brightness-110 transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)]"
+        >
+          Create New Market
+        </Link>
       </div>
 
       {/* Filters */}

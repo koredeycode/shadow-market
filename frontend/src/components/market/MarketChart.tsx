@@ -61,15 +61,15 @@ export function MarketChart({ marketId, timeRange }: MarketChartProps) {
         <AreaChart data={chartData}>
           <defs>
             <linearGradient id="colorYes" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-              <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+              <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
+              <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-          <XAxis 
-            dataKey="timestamp" 
-            stroke="#475569" 
-            fontSize={10} 
+          <XAxis
+            dataKey="timestamp"
+            stroke="#475569"
+            fontSize={10}
             tickLine={false}
             axisLine={false}
             dy={10}

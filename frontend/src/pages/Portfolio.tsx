@@ -35,8 +35,11 @@ function StatCard({ title, value, icon, trend, color }: StatCardProps) {
           {icon}
         </div>
         {trend && (
-          <div className={`flex items-center gap-1 text-[10px] font-mono font-bold ${trend.positive ? 'text-success-green' : 'text-red-500'}`}>
-            {trend.positive ? '+' : ''}{trend.value}
+          <div
+            className={`flex items-center gap-1 text-[10px] font-mono font-bold ${trend.positive ? 'text-success-green' : 'text-red-500'}`}
+          >
+            {trend.positive ? '+' : ''}
+            {trend.value}
           </div>
         )}
       </div>
@@ -66,7 +69,9 @@ export function Portfolio() {
     return (
       <div className="flex flex-col items-center justify-center py-24 space-y-4">
         <div className="w-12 h-12 border-4 border-electric-blue/20 border-t-electric-blue rounded-full animate-spin" />
-        <p className="text-slate-500 font-mono text-xs uppercase tracking-widest animate-pulse">Synchronizing Portfolio Data...</p>
+        <p className="text-slate-500 font-mono text-xs uppercase tracking-widest animate-pulse">
+          Synchronizing Portfolio Data...
+        </p>
       </div>
     );
   }
@@ -76,8 +81,13 @@ export function Portfolio() {
       <div className="py-12">
         <div className="bg-red-500/5 border border-red-500/20 p-8 rounded-sm text-center space-y-4">
           <h2 className="text-red-400 font-bold uppercase tracking-wider">Authentication Error</h2>
-          <p className="text-red-300/60 text-sm font-light">Failed to securely retrieve portfolio records. Please verify your connection.</p>
-          <button onClick={() => refetch()} className="px-6 py-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-sm text-xs font-bold hover:bg-red-500/20 transition-all uppercase tracking-widest">
+          <p className="text-red-300/60 text-sm font-light">
+            Failed to securely retrieve portfolio records. Please verify your connection.
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="px-6 py-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-sm text-xs font-bold hover:bg-red-500/20 transition-all uppercase tracking-widest"
+          >
             Retry_Sync
           </button>
         </div>
@@ -106,16 +116,22 @@ export function Portfolio() {
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-electric-blue">
             <LayoutDashboard className="w-4 h-4" />
-            <span className="text-[10px] font-mono font-bold uppercase tracking-[0.3em]">Command_Center</span>
+            <span className="text-[10px] font-mono font-bold uppercase tracking-[0.3em]">
+              Command_Center
+            </span>
           </div>
           <h1 className="text-4xl font-bold text-white tracking-tight">Portfolio Profile</h1>
-          <p className="text-slate-500 font-mono text-[10px] uppercase tracking-widest">Vault ID: {Math.random().toString(36).slice(2, 10).toUpperCase()}</p>
+          <p className="text-slate-500 font-mono text-[10px] uppercase tracking-widest">
+            Vault ID: {Math.random().toString(36).slice(2, 10).toUpperCase()}
+          </p>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <div className="px-3 py-1.5 bg-white/[0.02] border border-white/5 rounded-sm flex items-center gap-2">
             <Clock className="w-3 h-3 text-slate-500" />
-            <span className="text-[9px] font-mono text-slate-400 uppercase tracking-tight">Last Sync: Just Now</span>
+            <span className="text-[9px] font-mono text-slate-400 uppercase tracking-tight">
+              Last Sync: Just Now
+            </span>
           </div>
           <ExportDataButton type="portfolio" />
         </div>
@@ -131,7 +147,9 @@ export function Portfolio() {
         <StatCard
           title="Realized P/L"
           value={(isProfitable ? '+' : '') + formatCurrency(stats.totalProfitLoss)}
-          icon={isProfitable ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+          icon={
+            isProfitable ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />
+          }
           trend={{
             value: `${((totalPnLNum / Math.max(parseFloat(stats.totalVolume || '1'), 1)) * 100).toFixed(1)}%`,
             positive: isProfitable,
@@ -164,7 +182,9 @@ export function Portfolio() {
         <div className="lg:col-span-8 space-y-8">
           <div className="bg-slate-900/40 border-stealth rounded-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-white/5 bg-black/40 flex items-center justify-between">
-              <h3 className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-slate-400">Equity_Growth_Projection</h3>
+              <h3 className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-slate-400">
+                Equity_Growth_Projection
+              </h3>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-electric-blue" />
@@ -179,19 +199,23 @@ export function Portfolio() {
 
           <div className="bg-slate-900/40 border-stealth rounded-sm overflow-hidden flex flex-col">
             <div className="flex items-center border-b border-white/5 bg-black/40">
-              <button 
+              <button
                 onClick={() => setActiveTab('active')}
                 className={`px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-[0.2em] transition-all border-r border-white/5 flex items-center gap-2 ${
-                  activeTab === 'active' ? 'text-electric-blue bg-electric-blue/5' : 'text-slate-500 hover:text-slate-300'
+                  activeTab === 'active'
+                    ? 'text-electric-blue bg-electric-blue/5'
+                    : 'text-slate-500 hover:text-slate-300'
                 }`}
               >
                 <Activity className="w-3 h-3" />
                 Active_Units ({activePositions.length})
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab('settled')}
                 className={`px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-[0.2em] transition-all border-r border-white/5 flex items-center gap-2 ${
-                  activeTab === 'settled' ? 'text-electric-blue bg-electric-blue/5' : 'text-slate-500 hover:text-slate-300'
+                  activeTab === 'settled'
+                    ? 'text-electric-blue bg-electric-blue/5'
+                    : 'text-slate-500 hover:text-slate-300'
                 }`}
               >
                 <ShieldCheck className="w-3 h-3" />
@@ -213,9 +237,11 @@ export function Portfolio() {
           <div className="bg-slate-900/40 border-stealth p-6 rounded-sm space-y-6">
             <div className="flex items-center gap-2 text-white">
               <BoxIcon className="w-4 h-4 text-electric-blue" />
-              <h3 className="text-[10px] font-mono font-bold uppercase tracking-widest">Risk_Allocation</h3>
+              <h3 className="text-[10px] font-mono font-bold uppercase tracking-widest">
+                Risk_Allocation
+              </h3>
             </div>
-            
+
             <div className="space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between text-[9px] font-mono uppercase">
@@ -241,14 +267,17 @@ export function Portfolio() {
               <div className="flex items-start gap-3">
                 <div className="w-1 h-1 rounded-full bg-success-green mt-1.5" />
                 <p className="text-[10px] text-slate-500 leading-relaxed font-light">
-                  Standard risk parameters detected. Your current exposure complies with the Shadow Protocol safety margins.
+                  Standard risk parameters detected. Your current exposure complies with the Shadow
+                  Protocol safety margins.
                 </p>
               </div>
             </div>
           </div>
 
           <div className="bg-gradient-to-br from-electric-blue/10 to-transparent border border-electric-blue/20 p-6 rounded-sm space-y-4">
-            <h4 className="text-white font-bold text-xs uppercase tracking-widest">Advanced Recon</h4>
+            <h4 className="text-white font-bold text-xs uppercase tracking-widest">
+              Advanced Recon
+            </h4>
             <p className="text-[10px] text-slate-400 font-light leading-relaxed font-mono italic">
               "Data is the ultimate currency. Analyze your patterns to out-trade the noise."
             </p>

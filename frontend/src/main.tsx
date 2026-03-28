@@ -12,6 +12,7 @@ import { Toaster } from 'react-hot-toast';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
+import { MidnightProvider } from './contexts/MidnightContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,7 +28,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
-        <App />
+        <MidnightProvider>
+          <App />
+        </MidnightProvider>
         <Toaster
           position="bottom-right"
           toastOptions={{

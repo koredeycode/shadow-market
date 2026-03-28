@@ -1,10 +1,10 @@
-# 🌙 ShadowMarket
+# ShadowMarket
 
 > **Privacy-Preserving Prediction Markets on Midnight Network**
 
 A decentralized prediction market and peer-to-peer wagering platform that leverages zero-knowledge proofs to enable anonymous betting, confidential position sizes, and provably fair outcomes.
 
-## 🎯 What is ShadowMarket?
+## What is ShadowMarket?
 
 ShadowMarket combines the best of prediction markets (like Polymarket) with the privacy guarantees of Midnight Network. Users can:
 
@@ -14,9 +14,9 @@ ShadowMarket combines the best of prediction markets (like Polymarket) with the 
 - **Trade via AMM** - Automated market maker with dynamic pricing
 - **Prove Fairness** - Cryptographic proof of correct outcome resolution
 
-## 🚀 Quick Start
+## Quick Start
 
-> **⚠️ Note**: Currently using stub smart contracts. See [contracts/CONTRACT_STATUS.md](contracts/CONTRACT_STATUS.md) for details.
+> **Note**: Currently using active smart contracts in `contracts/src`. See [contracts/package.json](contracts/package.json) for details.
 
 ```bash
 # Install dependencies
@@ -42,74 +42,74 @@ Visit:
 - **Backend API:** http://localhost:3000
 - **Midnight Network:** http://localhost:9944
 
-## 🏗️ Architecture
+## Architecture
 
 ```
-┌─────────────────┐
-│   React UI      │  Privacy-first trading interface
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│  Express API    │  REST + WebSocket + GraphQL
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│  Midnight.js    │  SDK for contract interaction
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│ Smart Contracts │  Compact language (ZK circuits)
-│  • MarketFactory│  • PredictionMarket
-│  • P2PWager     │  • LiquidityPool
-│  • Oracle       │
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│ Midnight Network│  Privacy blockchain
-└─────────────────┘
++-------------------+
+|   React UI        |  Privacy-first trading interface
++-------------------+
+          |
++-------------------+
+|  Express API      |  REST + WebSocket + GraphQL
++-------------------+
+          |
++-------------------+
+|  Midnight.js      |  SDK for contract interaction
++-------------------+
+          |
++-------------------+
+| Smart Contracts   |  Compact language (ZK circuits)
+| - MarketFactory   |  - PredictionMarket
+| - P2PWager        |  - LiquidityPool
+| - Oracle          |
++-------------------+
+          |
++-------------------+
+| Midnight Network  |  Privacy blockchain
++-------------------+
 ```
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer          | Technology                                              |
 | -------------- | ------------------------------------------------------- |
 | **Contracts**  | Compact 0.29+, ZK Circuits                              |
 | **Backend**    | Node.js 22+, TypeScript, Express, PostgreSQL, Redis     |
-| **Frontend**   | React 19, TypeScript, Vite, Material-UI, TanStack Query |
+| **Frontend**   | React 19, TypeScript, Vite, Tailwind CSS, TanStack Query|
 | **Blockchain** | Midnight Network, Midnight.js SDK, Lace Wallet          |
 | **DevOps**     | Docker, Docker Compose                                  |
 
-## ✨ Key Features
+## Key Features
 
 ### Privacy Features
 
-- ✅ **Anonymous Betting** - Addresses don't reveal identity
-- ✅ **Hidden Amounts** - ZK commitments conceal bet sizes
-- ✅ **Private Strategies** - Positions revealed only on claim
-- ✅ **Confidential Profits** - Others can't see your P&L
+- **Anonymous Betting** - Addresses don't reveal identity
+- **Hidden Amounts** - ZK commitments conceal bet sizes
+- **Private Strategies** - Positions revealed only on claim
+- **Confidential Profits** - Others can't see your P&L
 
 ### Market Features
 
-- ✅ **Binary Markets** - YES/NO predictions
-- ✅ **Automated Market Maker** - Constant product formula (Uniswap-style)
-- ✅ **Peer-to-Peer Wagers** - Custom odds, direct matching
-- ✅ **Liquidity Pools** - Earn fees as LP provider
-- ✅ **Decentralized Oracles** - Multi-oracle consensus for outcomes
+- **Binary Markets** - YES/NO predictions
+- **Automated Market Maker** - Constant product formula (Uniswap-style)
+- **Peer-to-Peer Wagers** - Custom odds, direct matching
+- **Liquidity Pools** - Earn fees as LP provider
+- **Decentralized Oracles** - Multi-oracle consensus for outcomes
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 shadow-market/
-├── contracts/          # Smart contracts (Compact)
-├── api/                # Shared API utilities
-├── backend/            # Backend services (Express + Drizzle)
-├── frontend/           # React web app
-├── local-network/      # Local Midnight network setup
-├── scripts/            # Development & deployment scripts
-└── docs/               # Documentation
++- contracts/          # Smart contracts (Compact)
++- api/                # Shared API utilities
++- backend/            # Backend services (Express + Drizzle)
++- frontend/           # React web app
++- local-network/      # Local Midnight network setup
++- scripts/            # Development & deployment scripts
++- docs/               # Documentation
 ```
 
-## 🧪 Development
+## Development
 
 ```bash
 # Development
@@ -135,23 +135,23 @@ pnpm network:stop     # Stop network
 pnpm network:logs     # View network logs
 ```
 
-## 🔒 Privacy Model
+## Privacy Model
 
-| Data                        | Visibility                 |
-| --------------------------- | -------------------------- |
-| Market exists               | 🟢 Public                  |
-| Your bet amount             | 🔴 Private (ZK commitment) |
-| Your bet direction (YES/NO) | 🔴 Private (until claim)   |
-| Your profit/loss            | 🔴 Private                 |
-| Total market liquidity      | 🟢 Public (aggregated)     |
-| Current prices              | 🟢 Public (from AMM)       |
-| Final outcome               | 🟢 Public                  |
+| Data                        | Visibility              |
+| --------------------------- | ----------------------- |
+| Market exists               | Public                  |
+| Your bet amount             | Private (ZK commitment) |
+| Your bet direction (YES/NO) | Private (until claim)   |
+| Your profit/loss            | Private                 |
+| Total market liquidity      | Public (aggregated)     |
+| Current prices              | Public (from AMM)       |
+| Final outcome               | Public                  |
 
-## 📄 License
+## License
 
 MIT License - see [LICENSE](LICENSE) file
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **Midnight Network** - For the privacy-preserving blockchain platform
 - **Polymarket** - Inspiration for prediction market UX
@@ -160,6 +160,6 @@ MIT License - see [LICENSE](LICENSE) file
 
 ---
 
-**Built with 🌙 for the Midnight Hackathon**
+**Built for the Midnight Hackathon**
 
 _"Bet on the future, keep it to yourself"_

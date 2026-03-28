@@ -1,12 +1,12 @@
-import { 
-  LogOut, 
-  Copy, 
-  ExternalLink, 
-  RefreshCw, 
+import {
+  LogOut,
+  Copy,
+  ExternalLink,
+  RefreshCw,
   ShieldCheck,
-  ChevronRight, 
+  ChevronRight,
   Zap,
-  Briefcase
+  Briefcase,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useWallet } from '../../hooks/useWallet';
@@ -17,13 +17,13 @@ interface WalletDetailViewProps {
 }
 
 export function WalletDetailView({ onClose }: WalletDetailViewProps) {
-  const { 
-    address, 
-    formattedAddress, 
-    formattedBalance, 
-    networkId, 
-    disconnectWallet, 
-    refreshBalance 
+  const {
+    address,
+    formattedAddress,
+    formattedBalance,
+    networkId,
+    disconnectWallet,
+    refreshBalance,
   } = useWallet();
 
   const handleCopy = () => {
@@ -48,7 +48,7 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
               {networkId || 'MIDNIGHT_TESTNET'}
             </span>
           </div>
-          <button 
+          <button
             onClick={refreshBalance}
             className="p-1.5 text-slate-500 hover:text-white transition-colors hover:bg-white/5 rounded-sm"
           >
@@ -57,7 +57,9 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
         </div>
 
         <div className="space-y-1">
-          <div className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">Wallet Balance</div>
+          <div className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">
+            Wallet Balance
+          </div>
           <div className="text-2xl font-mono font-bold text-white flex items-baseline gap-2">
             {formattedBalance}
             <span className="text-xs text-slate-500 font-light">DUST</span>
@@ -67,11 +69,15 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
 
       <div className="p-4 space-y-4">
         <div className="space-y-2">
-          <div className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">Account Address</div>
+          <div className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">
+            Account Address
+          </div>
           <div className="flex items-center justify-between p-2 bg-black/20 border border-white/5 rounded-sm group">
-            <span className="text-xs text-slate-300 font-mono truncate mr-2">{formattedAddress}</span>
+            <span className="text-xs text-slate-300 font-mono truncate mr-2">
+              {formattedAddress}
+            </span>
             <div className="flex items-center gap-1">
-              <button 
+              <button
                 onClick={handleCopy}
                 className="p-1 text-slate-600 hover:text-electric-blue transition-colors"
               >
@@ -85,7 +91,7 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
         </div>
 
         <div className="space-y-1 pt-2">
-          <Link 
+          <Link
             to="/portfolio"
             onClick={onClose}
             className="w-full flex items-center justify-between p-2 hover:bg-white/5 rounded-sm transition-colors text-xs text-slate-400 hover:text-white group"
@@ -104,8 +110,8 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
             </div>
             <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all" />
           </button>
-          
-          <button 
+
+          <button
             onClick={handleDisconnect}
             className="w-full flex items-center gap-3 p-2 hover:bg-red-500/10 rounded-sm transition-colors text-xs text-red-500 group"
           >

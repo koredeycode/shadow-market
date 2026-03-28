@@ -1,7 +1,12 @@
 import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { markets, marketUpvotes, positions, pricePoints } from '../db/schema.js';
-import type { CreateMarketRequest, MarketFilters, PaginatedResponse, PricePoint } from '../types/index.js';
+import type {
+  CreateMarketRequest,
+  MarketFilters,
+  PaginatedResponse,
+  PricePoint,
+} from '../types/index.js';
 import { generateId } from '../utils/crypto.js';
 
 export class MarketService {

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Activity,
   BarChart3,
@@ -8,10 +8,16 @@ import {
   Shield,
   TrendingUp,
   Users,
+  Zap,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { adminApi } from '../../api/admin';
+import { authApi } from '../../api/auth';
 import type { AdminStats } from '../../types';
+import { useContract } from '../../hooks/useContract';
+import { contractManager } from '../../services/contract.service';
+import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 
 interface StatCardProps {
   title: string;
@@ -49,11 +55,118 @@ function StatCard({ title, value, icon: Icon, trend, color }: StatCardProps) {
 }
 
 export function AdminDashboard() {
-  const { data: stats, isLoading } = useQuery<AdminStats>({
+  const queryClient = useQueryClient();
+  const { isInitialized, isInitializing } = useContract();
+  const { 
+    data: stats, 
+    isLoading: isStatsLoading, 
+    error: statsError,
+    refetch: refetchStats 
+  } = useQuery<AdminStats>({
     queryKey: ['admin-stats'],
     queryFn: () => adminApi.getStats(),
     refetchInterval: 30000,
+    retry: false,
   });
+
+  const [isInitializingContract, setIsInitializingContract] = useState(false);
+  const [isAdminLoggingIn, setIsAdminLoggingIn] = useState(false);
+  const [adminUsername, setAdminUsername] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+
+  const isForbidden = (statsError as any)?.response?.status === 403;
+  const isLoading = isStatsLoading || isInitializing;
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsAdminLoggingIn(true);
+    const id = toast.loading('Verifying admin credentials...');
+
+    try {
+      await authApi.adminClaim({ 
+        username: adminUsername, 
+        password: adminPassword 
+      });
+      toast.success('Admin access granted!', { id });
+      setAdminPassword('');
+      await refetchStats();
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+    } catch (error: any) {
+      const msg = error.response?.data?.error || 'Login failed';
+      toast.error(msg, { id });
+    } finally {
+      setIsAdminLoggingIn(false);
+    }
+  };
+
+  const handleInitialize = async () => {
+    setIsInitializingContract(true);
+    const id = toast.loading('Initializing protocol on-chain...');
+    try {
+      // @ts-ignore
+      await contractManager.api?.initialize();
+      toast.success('Protocol initialized successfully', { id });
+    } catch (error: any) {
+      console.error('Initialization failed:', error);
+      toast.error(`Initialization failed: ${error.message}`, { id });
+    } finally {
+      setIsInitializingContract(false);
+    }
+  };
+
+  if (isForbidden) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24">
+        <div className="w-full max-w-md p-8 glass-shine border border-white/5 rounded-sm">
+          <div className="flex flex-col items-center mb-8 text-center">
+            <div className="w-16 h-16 bg-electric-blue/10 rounded-sm flex items-center justify-center mb-4 border border-electric-blue/20">
+              <Shield className="w-8 h-8 text-electric-blue" />
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-2 uppercase tracking-tight">Admin Access</h1>
+            <p className="text-slate-500 text-xs font-mono uppercase tracking-widest">Provide credentials to unlock dashboard</p>
+          </div>
+
+          <form onSubmit={handleAdminLogin} className="space-y-6">
+            <div className="space-y-2">
+              <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">
+                Username
+              </label>
+              <input
+                type="text"
+                value={adminUsername}
+                onChange={(e) => setAdminUsername(e.target.value)}
+                autoComplete="username"
+                className="w-full bg-black/40 border border-white/5 rounded-sm px-4 py-3 text-white font-mono text-sm focus:outline-none focus:border-electric-blue/50 transition-colors"
+                placeholder="ADMIN_ID"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">
+                Password
+              </label>
+              <input
+                type="password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                autoComplete="current-password"
+                className="w-full bg-black/40 border border-white/5 rounded-sm px-4 py-3 text-white font-mono text-sm focus:outline-none focus:border-electric-blue/50 transition-colors"
+                placeholder="********"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={isAdminLoggingIn}
+              className="w-full py-4 bg-electric-blue text-white rounded-sm font-bold text-xs tracking-[0.3em] uppercase hover:brightness-110 disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(59,130,246,0.2)]"
+            >
+              {isAdminLoggingIn ? 'Verifying...' : 'Unlock Terminal'}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading || !stats) {
     return (
@@ -155,6 +268,41 @@ export function AdminDashboard() {
           <p className="text-2xl font-bold font-mono text-white">
             ${(parseFloat(stats.last24hVolume) / 1000).toFixed(2)}K
           </p>
+        </div>
+      </div>
+
+      {/* Protocol Control */}
+      <div className="glass-shine p-6 border border-white/5 rounded-sm bg-electric-blue/5">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Shield className="w-5 h-5 text-electric-blue" />
+              Protocol Control
+            </h2>
+            <p className="text-xs text-slate-500 mt-1">Global administrative operations</p>
+          </div>
+          {!isInitialized && (
+            <button
+              onClick={handleInitialize}
+              disabled={isInitializingContract}
+              className="px-6 py-2 bg-electric-blue text-white rounded-sm font-bold text-[10px] tracking-[0.2em] uppercase hover:brightness-110 disabled:opacity-50 transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(59,130,246,0.3)]"
+            >
+              {isInitializingContract ? (
+                <div className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Zap className="w-3.5 h-3.5" />
+              )}
+              Initialize Protocol
+            </button>
+          )}
+          {isInitialized && (
+            <div className="flex items-center gap-2 px-3 py-1 bg-success-green/10 border border-success-green/20 rounded-sm">
+              <CheckCircle className="w-3.5 h-3.5 text-success-green" />
+              <span className="text-[10px] font-mono text-success-green uppercase tracking-wider">
+                Initialized
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

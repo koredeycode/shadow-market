@@ -26,7 +26,7 @@ api.interceptors.response.use(
     const skipRedirect = error.config?._skipRedirect;
 
     if (error.response?.status === 401 && !skipRedirect) {
-      console.warn('⚠️ Unauthorized access detected, redirecting to home...');
+      console.warn('Unauthorized access detected, redirecting to home...');
       localStorage.removeItem('authToken');
       window.location.href = '/';
     }

@@ -120,19 +120,19 @@ export function useWallet() {
 
       // Authenticate user with backend (create account if doesn't exist)
       try {
-        console.log('🔐 Authenticating user with backend...');
+        console.log('Authenticating user with backend...');
         const authResponse = await authApi.authenticate({ address: walletAddress });
 
         // Store JWT token in localStorage
         localStorage.setItem('authToken', authResponse.token);
 
-        console.log('✅ User authenticated:', authResponse.user.id);
+        console.log('User authenticated:', authResponse.user.id);
         console.log('   Address:', authResponse.user.address);
         if (authResponse.user.username) {
           console.log('   Username:', authResponse.user.username);
         }
       } catch (authError) {
-        console.error('⚠️ User authentication failed:', authError);
+        console.error('User authentication failed:', authError);
         // Don't fail wallet connection if auth fails - user can retry
         toast.error('Failed to authenticate with backend. Some features may not work.');
       }
@@ -142,15 +142,18 @@ export function useWallet() {
       // Private state management is handled internally by the wallet now
       let contractInitialized = false;
       try {
-        const result = await initializeContract(connectedAPI);
+        const result = await initializeContract(connectedAPI, {
+          shieldedCoinPublicKey: shieldedAddresses.shieldedCoinPublicKey,
+          shieldedEncryptionPublicKey: shieldedAddresses.shieldedEncryptionPublicKey,
+        });
         contractInitialized = result === true;
         if (contractInitialized) {
-          console.log('✅ Contract initialized successfully');
+          console.log('Contract initialized successfully');
         } else {
-          console.error('⚠️ Contract initialization returned false');
+          console.error('Contract initialization returned false');
         }
       } catch (error) {
-        console.error('❌ Contract initialization failed with exception:', error);
+        console.error('Contract initialization failed with exception:', error);
         const errorMsg = error instanceof Error ? error.message : 'Unknown error';
         toast.error(`Contract initialization failed: ${errorMsg}`);
       }
@@ -158,9 +161,7 @@ export function useWallet() {
       if (contractInitialized) {
         toast.success('Wallet connected successfully!');
       } else {
-        toast.warning(
-          'Wallet connected but contract initialization failed. Please try reconnecting.'
-        );
+        toast('Wallet connected but contract initialization failed. Please try reconnecting.');
       }
     } catch (error) {
       console.error('Failed to connect wallet:', error);
@@ -179,7 +180,7 @@ export function useWallet() {
 
     // Clear auth token
     localStorage.removeItem('authToken');
-    console.log('🔐 Auth token cleared');
+    console.log('Auth token cleared');
 
     toast.success('Wallet disconnected');
   }, [disconnect, cleanupContract]);

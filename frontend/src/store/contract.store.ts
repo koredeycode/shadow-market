@@ -7,7 +7,13 @@ interface ContractState {
   error: string | null;
 
   // Actions
-  initialize: (wallet: any, privateState?: any) => Promise<boolean>;
+  initialize: (
+    wallet: any,
+    shieldedKeys?: {
+      shieldedCoinPublicKey: string;
+      shieldedEncryptionPublicKey: string;
+    }
+  ) => Promise<boolean>;
   cleanup: () => void;
   setError: (error: string | null) => void;
 }
@@ -17,7 +23,13 @@ export const useContractStore = create<ContractState>(set => ({
   isInitializing: false,
   error: null,
 
-  initialize: async (wallet: any, _privateState?: any) => {
+  initialize: async (
+    wallet: any,
+    shieldedKeys?: {
+      shieldedCoinPublicKey: string;
+      shieldedEncryptionPublicKey: string;
+    }
+  ) => {
     set({ isInitializing: true, error: null });
 
     try {
@@ -26,17 +38,20 @@ export const useContractStore = create<ContractState>(set => ({
         import.meta.env.VITE_UNIFIED_CONTRACT_ADDRESS?.trim() ||
         'c39a34cfb4509537207d70c4659cf68c5869079f1a36fd1b958721a87abdb429';
 
-      console.log('📝 Contract configuration:');
+      console.log('Contract configuration:');
       console.log('  Contract Address:', contractAddress);
       console.log('  Network ID:', import.meta.env.VITE_NETWORK_ID || 'undeployed');
 
       // Configure the contract connection
       const config = {
-        indexerUri: import.meta.env.VITE_INDEXER_URL || 'http://localhost:8088/api/v1/graphql',
-        indexerWsUri: import.meta.env.VITE_INDEXER_WS || 'ws://localhost:8088/api/v1/graphql/ws',
+        indexerUri: import.meta.env.VITE_INDEXER_URL || 'http://localhost:8088/api/v3',
+        indexerWsUri: import.meta.env.VITE_INDEXER_WS || 'ws://localhost:8088/api/v3',
         proverServerUri: import.meta.env.VITE_PROOF_SERVER_URL || 'http://localhost:6300',
+        zkConfigPath: `${window.location.origin}/zk-config`, // Local absolute URL for ZK artifacts
         contractAddress,
         networkId: import.meta.env.VITE_NETWORK_ID || 'undeployed',
+        shieldedCoinPublicKey: shieldedKeys?.shieldedCoinPublicKey,
+        shieldedEncryptionPublicKey: shieldedKeys?.shieldedEncryptionPublicKey,
       };
 
       // New API uses wallet and config

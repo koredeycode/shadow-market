@@ -31,7 +31,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
 
   // Prevent any accidental navigation
   useEffect(() => {
-    console.log('🎬 BettingTerminal mounted');
+    console.log('BettingTerminal mounted');
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isSubmitting) {
@@ -43,7 +43,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
-      console.log('🛑 BettingTerminal unmounted');
+      console.log('BettingTerminal unmounted');
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [isSubmitting]);
@@ -105,7 +105,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
           );
         }
 
-        console.log('🚀 Placing bet ON-CHAIN (required)...');
+        console.log('Placing bet ON-CHAIN (required)...');
 
         // Step 1: REQUIRED - Execute on-chain transaction first
         const result = await placeBet(
@@ -115,10 +115,10 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
         );
 
         const txId = result?.success ? 'SUCCESS' : null;
-        console.log('✅ On-chain transaction successful!');
+        console.log('On-chain transaction successful!');
 
         // Step 2: Update backend database for caching/indexing (after on-chain success)
-        console.log('💾 Syncing to database...');
+        console.log('Syncing to database...');
         try {
           const dbResult = await wagersApi.placeBet({
             marketId: market.id,
@@ -128,36 +128,36 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
             skipRedirect: true,
           });
 
-          console.log('✅ Database synced successfully');
+          console.log('Database synced successfully');
           return { ...dbResult, txId, contractSuccess: true };
         } catch (dbError) {
           // On-chain succeeded but database update failed - this is acceptable
-          console.warn('⚠️ Database sync failed (on-chain transaction succeeded):', dbError);
-          toast.warning('Bet placed on-chain but database sync failed. This is normal.');
+          console.warn('Database sync failed (on-chain transaction succeeded):', dbError);
+          toast('Bet placed on-chain but database sync failed. This is normal.', { icon: '!' });
           return { positionId: market.id, txId, contractSuccess: true };
         }
       } catch (error: any) {
         // Catch all errors and log them - don't let them bubble up to ErrorBoundary
-        console.error('❌ Mutation error caught:', error);
+        console.error('Mutation error caught:', error);
         throw error; // Re-throw for onError handler
       }
     },
     onSuccess: data => {
       try {
-        console.log('✅ Mutation onSuccess triggered, updating UI...');
+        console.log('Mutation onSuccess triggered, updating UI...');
         console.log('Success data:', data);
 
         // Show success toast
         toast.success(
-          `✅ Position Secured On-Chain!\nTx: ${data.txId || data.positionId.slice(0, 16)}...`
+          `Position Secured On-Chain!\nTx: ${data.txId || data.positionId.slice(0, 16)}...`
         );
 
         // Clear form
         setValue('amount', '');
 
-        console.log('✅ UI update complete - NOT invalidating queries to prevent navigation');
+        console.log('UI update complete - NOT invalidating queries to prevent navigation');
       } catch (error) {
-        console.error('❌ Error in onSuccess handler:', error);
+        console.error('Error in onSuccess handler:', error);
         // Don't re-throw - just log it
       }
     },
@@ -166,7 +166,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
         console.error('On-chain bet placement failed:', error);
         toast.error(error.message || 'Failed to place bet on-chain');
       } catch (toastError) {
-        console.error('❌ Error showing error toast:', toastError);
+        console.error('Error showing error toast:', toastError);
         // Don't re-throw
       }
     },
@@ -174,29 +174,29 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
 
   const onSubmit = async (data: BetFormData) => {
     try {
-      console.log('📝 Form submitted with data:', data);
+      console.log('Form submitted with data:', data);
 
       if (!isConnected) {
-        console.log('⚠️ Wallet not connected, opening modal');
+        console.log('Wallet not connected, opening modal');
         setWalletModalOpen(true);
         return;
       }
 
-      console.log('▶️ Starting mutation...');
+      console.log('Starting mutation...');
       setIsSubmitting(true);
       try {
         await mutation.mutateAsync(data);
-        console.log('✅ Mutation completed successfully');
+        console.log('Mutation completed successfully');
       } catch (error) {
-        console.error('❌ Mutation failed:', error);
+        console.error('Mutation failed:', error);
         // Error is already handled by mutation.onError
         // Don't re-throw - we've already shown the error toast
       } finally {
         setIsSubmitting(false);
-        console.log('🏁 Mutation finished');
+        console.log('Mutation finished');
       }
     } catch (error) {
-      console.error('❌ Unexpected error in onSubmit:', error);
+      console.error('Unexpected error in onSubmit:', error);
       setIsSubmitting(false);
       toast.error('An unexpected error occurred. Please try again.');
       // Don't re-throw - prevents ErrorBoundary from catching it
@@ -340,7 +340,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
           onClick={e => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('🎯 Button clicked');
+            console.log('Button clicked');
 
             if (!isConnected) {
               console.log('Wallet not connected, opening modal');
@@ -358,7 +358,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
 
             // Call onSubmit without await to prevent any async issues
             onSubmit(formData).catch(err => {
-              console.error('❌ onSubmit error:', err);
+              console.error('onSubmit error:', err);
             });
           }}
           disabled={isSubmitting || (isConnected && (!amount || parseFloat(amount) <= 0))}

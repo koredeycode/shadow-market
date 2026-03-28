@@ -1,16 +1,23 @@
-// Contract exports placeholder
-// Will be populated after compilation
+// Contract exports
+import { CompiledContract } from '@midnight-ntwrk/compact-js';
+import {
+  Contract as ShadowMarketContractType,
+  ledger as contractLedger,
+  pureCircuits as contractPureCircuits,
+} from './managed/shadow-market/contract/index.js';
+
+export {
+  Contract as ShadowMarketContract,
+  ledger,
+  pureCircuits,
+} from './managed/shadow-market/contract/index.js';
 
 export * from './types.js';
 
-// Export compiled unified prediction market contract
-export * as UnifiedMarket from './managed/unified-prediction-market/contract/index.js';
-
-// Compiled contract exports will be added here after running:
-// pnpm run compile
+export const compiledShadowMarketContract = CompiledContract.make('shadow-market', ShadowMarketContractType);
 
 /**
- * Private state for the unified prediction market contract
+ * Private state for the shadow market contract
  */
 export interface MarketPrivateState {
   /**
@@ -29,7 +36,7 @@ export const createMarketPrivateState = (secretKey: Uint8Array): MarketPrivateSt
 /**
  * Private state key identifier used by the contract
  */
-export const marketPrivateStateKey = 'unified-market-private-state';
+export const marketPrivateStateKey = 'shadow-market-private-state';
 
 /**
  * Private state ID type

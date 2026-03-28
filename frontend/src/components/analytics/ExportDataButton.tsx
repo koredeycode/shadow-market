@@ -83,7 +83,9 @@ export function ExportDataButton({ type, marketId }: ExportDataButtonProps) {
       {isOpen && type === 'portfolio' && (
         <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-white/10 rounded-sm shadow-2xl z-50 overflow-hidden backdrop-blur-xl">
           <div className="p-2 border-b border-white/5 bg-white/[0.02]">
-            <p className="text-[8px] font-mono text-slate-500 uppercase tracking-widest px-2">Select Interval</p>
+            <p className="text-[8px] font-mono text-slate-500 uppercase tracking-widest px-2">
+              Select Interval
+            </p>
           </div>
           <div className="flex flex-col">
             {[
@@ -97,7 +99,11 @@ export function ExportDataButton({ type, marketId }: ExportDataButtonProps) {
                 onClick={() => handleExport(item.value)}
                 className="flex items-center gap-3 px-4 py-3 text-[10px] font-mono text-slate-400 hover:text-electric-blue hover:bg-electric-blue/5 transition-all text-left"
               >
-                {item.value === 'all' ? <FileJson className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                {item.value === 'all' ? (
+                  <FileJson className="w-3 h-3" />
+                ) : (
+                  <Clock className="w-3 h-3" />
+                )}
                 {item.label}
               </button>
             ))}

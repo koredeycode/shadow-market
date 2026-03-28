@@ -67,9 +67,12 @@ export const createWitnessProviders = (
 
   /**
    * Provides a random nonce for transaction uniqueness
+   * Using 16 bytes (128 bits) ensures it fits in a Field range
    */
   betNonce: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, Uint8Array] => {
-    const nonce = randomBytes(32);
+    const nonce = new Uint8Array(32).fill(0);
+    const randomBits = randomBytes(16);
+    nonce.set(randomBits, 0);
     return [privateState, nonce];
   },
 
@@ -81,6 +84,15 @@ export const createWitnessProviders = (
   ): [MarketPrivateState, bigint] => {
     const amount = context?.wagerAmount ?? 0n;
     return [privateState, amount];
+  },
+
+  /**
+   * Provides the caller's address (placeholder for now)
+   */
+  callerAddress: (
+    ctx: WitnessContext<Ledger, MarketPrivateState>
+  ): [MarketPrivateState, Uint8Array] => {
+    return [privateState, new Uint8Array(32).fill(0)];
   },
 });
 

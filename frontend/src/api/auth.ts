@@ -46,4 +46,11 @@ export const authApi = {
     const response = await api.patch('/users/me', data);
     return response.data.data;
   },
+
+  /**
+   * Elevate current user to admin status
+   */
+  adminClaim: async (data: any): Promise<void> => {
+    await api.post('/admin/auth', data);
+  },
 };

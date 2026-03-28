@@ -2,21 +2,21 @@
 
 This directory contains comprehensive end-to-end tests for the ShadowMarket frontend application using Playwright.
 
-## 📁 Structure
+## � Structure
 
 ```
 e2e/
-├── fixtures/           # Custom test fixtures
-│   └── index.ts       # Authenticated page fixture
-├── helpers/            # Test helper functions
-│   └── test-helpers.ts # Common test utilities
-├── markets.spec.ts     # Market browsing and creation tests
-├── betting.spec.ts     # AMM betting flow tests
-├── p2p-wagers.spec.ts  # P2P wager tests
-└── portfolio-analytics.spec.ts # Portfolio and analytics tests
+��� fixtures/           # Custom test fixtures
+�   ��� index.ts       # Authenticated page fixture
+��� helpers/            # Test helper functions
+�   ��� test-helpers.ts # Common test utilities
+��� markets.spec.ts     # Market browsing and creation tests
+��� betting.spec.ts     # AMM betting flow tests
+��� p2p-wagers.spec.ts  # P2P wager tests
+��� portfolio-analytics.spec.ts # Portfolio and analytics tests
 ```
 
-## 🚀 Running Tests
+## Running Tests
 
 ### Prerequisites
 
@@ -64,61 +64,61 @@ pnpm exec playwright test --debug
 pnpm exec playwright test markets.spec.ts --debug
 ```
 
-## 📋 Test Coverage
+## � Test Coverage
 
 ### Markets Flow (markets.spec.ts)
 
-- ✅ Display markets list
-- ✅ Filter markets by category
-- ✅ Search markets
-- ✅ Sort markets by volume
-- ✅ Display market detail page
-- ✅ Navigate between tabs
-- ✅ Real-time price updates
-- ✅ Create new market
-- ✅ Validate market creation form
-- ✅ Authentication checks
+- Display markets list
+- Filter markets by category
+- Search markets
+- Sort markets by volume
+- Display market detail page
+- Navigate between tabs
+- Real-time price updates
+- Create new market
+- Validate market creation form
+- Authentication checks
 
 ### Betting Flow (betting.spec.ts)
 
-- ✅ Open place bet modal
-- ✅ Place YES bet
-- ✅ Place NO bet
-- ✅ Use quick amount buttons (25%, 50%, 75%, 100%)
-- ✅ Validate minimum bet amount
-- ✅ Validate maximum bet amount
-- ✅ Calculate price impact
-- ✅ Handle insufficient balance
-- ✅ Show bet confirmation details
-- ✅ Close modal on cancel
+- Open place bet modal
+- Place YES bet
+- Place NO bet
+- Use quick amount buttons (25%, 50%, 75%, 100%)
+- Validate minimum bet amount
+- Validate maximum bet amount
+- Calculate price impact
+- Handle insufficient balance
+- Show bet confirmation details
+- Close modal on cancel
 
 ### P2P Wagers (p2p-wagers.spec.ts)
 
-- ✅ Open create P2P wager modal
-- ✅ Create P2P wager with custom odds
-- ✅ Validate odds input
-- ✅ Calculate implied probability
-- ✅ Display open P2P wagers
-- ✅ Show empty state
-- ✅ Accept P2P wager
-- ✅ Cancel own P2P wager
-- ✅ Hide accept button for own wagers
-- ✅ Display time remaining
+- Open create P2P wager modal
+- Create P2P wager with custom odds
+- Validate odds input
+- Calculate implied probability
+- Display open P2P wagers
+- Show empty state
+- Accept P2P wager
+- Cancel own P2P wager
+- Hide accept button for own wagers
+- Display time remaining
 
 ### Portfolio & Analytics (portfolio-analytics.spec.ts)
 
-- ✅ Display portfolio statistics
-- ✅ Switch between active/settled positions tabs
-- ✅ Display position cards
-- ✅ Claim winnings
-- ✅ Show portfolio value chart
-- ✅ Export portfolio data
-- ✅ Display platform statistics
-- ✅ Show top markets
-- ✅ Show top traders leaderboard
-- ✅ Display market volume chart
+- Display portfolio statistics
+- Switch between active/settled positions tabs
+- Display position cards
+- Claim winnings
+- Show portfolio value chart
+- Export portfolio data
+- Display platform statistics
+- Show top markets
+- Show top traders leaderboard
+- Display market volume chart
 
-## 🔧 Configuration
+## � Configuration
 
 ### playwright.config.ts
 
@@ -142,7 +142,7 @@ BASE_URL=http://localhost:5173
 VITE_API_URL=http://localhost:3000
 ```
 
-## 📝 Writing Tests
+## � Writing Tests
 
 ### Basic Test Structure
 
@@ -194,7 +194,7 @@ await waitForToast(page, /success/i);
 const market = createMockMarket({ id: '1', question: 'Test?' });
 ```
 
-## 🐛 Debugging
+## � Debugging
 
 ### View Test Report
 
@@ -221,7 +221,7 @@ pnpm exec playwright show-trace trace.zip
 
 Failed tests automatically capture screenshots in `test-results/`
 
-## 🔍 Best Practices
+## � Best Practices
 
 1. **Use Data Attributes**: Add `data-testid` to elements for stable selectors
 2. **Wait for Network Idle**: Use `waitForPageLoad()` after navigation
@@ -231,7 +231,7 @@ Failed tests automatically capture screenshots in `test-results/`
 6. **Avoid Hard Waits**: Use `waitForSelector` instead of `waitForTimeout` when possible
 7. **Clean State**: Each test should be independent and not rely on previous tests
 
-## 📊 CI/CD Integration
+## CI/CD Integration
 
 Tests run automatically on:
 
@@ -245,7 +245,7 @@ Artifacts generated:
 - HTML test report (retained for 30 days)
 - Screenshots of failed tests (retained for 7 days)
 
-## 🚨 Troubleshooting
+## � Troubleshooting
 
 ### Tests timing out
 
@@ -272,7 +272,7 @@ pnpm exec playwright install --with-deps
 - Check response format matches expected shape
 - Use `page.route()` before navigation
 
-## 📚 Resources
+## � Resources
 
 - [Playwright Documentation](https://playwright.dev/)
 - [Best Practices](https://playwright.dev/docs/best-practices)

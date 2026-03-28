@@ -17,7 +17,7 @@ export function EmptyState({ title, description, actionLabel, onAction, icon }: 
           {icon || <HelpCircle className="w-16 h-16 opacity-20" />}
         </div>
       </div>
-      
+
       <div className="text-center space-y-2 max-w-sm">
         <h3 className="text-sm font-bold text-white uppercase tracking-[0.3em] font-mono italic">
           {title}

@@ -10,6 +10,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      'isomorphic-ws': path.resolve(__dirname, './src/ws-polyfill.js'),
     },
   },
   server: {

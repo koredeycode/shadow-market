@@ -50,7 +50,10 @@ export function RecentTrades({ marketId: _marketId }: RecentTradesProps) {
 
       <div className="space-y-1">
         {trades.map(trade => (
-          <div key={trade.id} className="flex justify-between items-center py-2 px-2 hover:bg-white/[0.03] transition-colors rounded-sm group">
+          <div
+            key={trade.id}
+            className="flex justify-between items-center py-2 px-2 hover:bg-white/[0.03] transition-colors rounded-sm group"
+          >
             <div className="w-20 flex items-center gap-2">
               {trade.side === 'yes' ? (
                 <div className="flex items-center gap-1.5 text-success-green">
@@ -64,15 +67,18 @@ export function RecentTrades({ marketId: _marketId }: RecentTradesProps) {
                 </div>
               )}
             </div>
-            
-            <div className={`flex-1 text-center text-[11px] font-mono font-bold ${trade.side === 'yes' ? 'text-success-green' : 'text-red-400'}`}>
+
+            <div
+              className={`flex-1 text-center text-[11px] font-mono font-bold ${trade.side === 'yes' ? 'text-success-green' : 'text-red-400'}`}
+            >
               {(trade.price * 100).toFixed(1)}%
             </div>
-            
+
             <div className="flex-1 text-center text-[11px] font-mono text-white font-medium">
-              {formatAmount(trade.amount)} <span className="text-[9px] text-slate-600 font-light">DUST</span>
+              {formatAmount(trade.amount)}{' '}
+              <span className="text-[9px] text-slate-600 font-light">DUST</span>
             </div>
-            
+
             <div className="w-16 text-right text-[10px] font-mono text-slate-500 group-hover:text-slate-400">
               {formatTime(trade.timestamp)}
             </div>

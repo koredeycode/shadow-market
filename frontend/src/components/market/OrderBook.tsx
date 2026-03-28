@@ -21,10 +21,7 @@ export function OrderBook({ marketId: _marketId }: OrderBookProps) {
     { price: 0.37, amount: 1900 },
   ];
 
-  const maxAmount = Math.max(
-    ...yesOrders.map(o => o.amount),
-    ...noOrders.map(o => o.amount)
-  );
+  const maxAmount = Math.max(...yesOrders.map(o => o.amount), ...noOrders.map(o => o.amount));
 
   const formatAmount = (amount: number) => {
     if (amount >= 1000) return `${(amount / 1000).toFixed(1)}K`;
@@ -48,7 +45,9 @@ export function OrderBook({ marketId: _marketId }: OrderBookProps) {
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-success-green">
             <TrendingUp className="w-4 h-4" />
-            <h3 className="text-xs font-bold font-mono uppercase tracking-widest text-white">Buy Orders (YES)</h3>
+            <h3 className="text-xs font-bold font-mono uppercase tracking-widest text-white">
+              Buy Orders (YES)
+            </h3>
           </div>
 
           <div className="space-y-1">
@@ -58,13 +57,18 @@ export function OrderBook({ marketId: _marketId }: OrderBookProps) {
             </div>
             {yesOrders.map((order, idx) => (
               <div key={idx} className="relative group overflow-hidden">
-                <div 
+                <div
                   className="absolute inset-y-0 right-0 bg-success-green/10 transition-all duration-500"
                   style={{ width: `${(order.amount / maxAmount) * 100}%` }}
                 />
                 <div className="relative flex justify-between items-center px-2 py-2 text-[11px] font-mono group-hover:bg-white/5 transition-colors">
-                  <span className="text-success-green font-bold">{(order.price * 100).toFixed(1)}%</span>
-                  <span className="text-slate-300 font-bold">{formatAmount(order.amount)} <span className="text-[9px] opacity-40 font-light">DUST</span></span>
+                  <span className="text-success-green font-bold">
+                    {(order.price * 100).toFixed(1)}%
+                  </span>
+                  <span className="text-slate-300 font-bold">
+                    {formatAmount(order.amount)}{' '}
+                    <span className="text-[9px] opacity-40 font-light">DUST</span>
+                  </span>
                 </div>
               </div>
             ))}
@@ -75,7 +79,9 @@ export function OrderBook({ marketId: _marketId }: OrderBookProps) {
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-red-500">
             <TrendingDown className="w-4 h-4" />
-            <h3 className="text-xs font-bold font-mono uppercase tracking-widest text-white">Buy Orders (NO)</h3>
+            <h3 className="text-xs font-bold font-mono uppercase tracking-widest text-white">
+              Buy Orders (NO)
+            </h3>
           </div>
 
           <div className="space-y-1">
@@ -85,13 +91,16 @@ export function OrderBook({ marketId: _marketId }: OrderBookProps) {
             </div>
             {noOrders.map((order, idx) => (
               <div key={idx} className="relative group overflow-hidden">
-                <div 
+                <div
                   className="absolute inset-y-0 right-0 bg-red-500/10 transition-all duration-500"
                   style={{ width: `${(order.amount / maxAmount) * 100}%` }}
                 />
                 <div className="relative flex justify-between items-center px-2 py-2 text-[11px] font-mono group-hover:bg-white/5 transition-colors">
                   <span className="text-red-500 font-bold">{(order.price * 100).toFixed(1)}%</span>
-                  <span className="text-slate-300 font-bold">{formatAmount(order.amount)} <span className="text-[9px] opacity-40 font-light">DUST</span></span>
+                  <span className="text-slate-300 font-bold">
+                    {formatAmount(order.amount)}{' '}
+                    <span className="text-[9px] opacity-40 font-light">DUST</span>
+                  </span>
                 </div>
               </div>
             ))}

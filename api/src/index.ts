@@ -1,11 +1,11 @@
 /**
- * Unified Market API - Contract integration layer
+ * Shadow Market API - Contract integration layer
  *
  * This module provides a structured API for interacting with the Shadow Market
  * smart contract on the Midnight network. It implements the Observable pattern
  * for state management following the bboard example.
  *
- * Status: Using REAL contract integration with deployed unified-prediction-market
+ * Status: Using REAL contract integration with deployed shadow-market.compact
  *
  * @packageDocumentation
  */
@@ -13,7 +13,9 @@
 import type { ContractAddress } from '@midnight-ntwrk/compact-runtime';
 import type { ConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
 import { findDeployedContract, type DeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
-import { UnifiedMarket } from '@shadow-market/contracts';
+import { CompiledContract } from '@midnight-ntwrk/compact-js';
+import { setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
+import { ShadowMarketContract, compiledShadowMarketContract, ledger as contractLedger } from '@shadow-market/contracts';
 import { map, Observable } from 'rxjs';
 import {
   createProvidersFromWallet,
@@ -25,24 +27,26 @@ import {
 /**
  * Configuration for connecting to a deployed contract
  */
-export interface DeployedUnifiedMarketConfig {
+export interface DeployedShadowMarketConfig {
   indexerUri: string;
   indexerWsUri: string;
   proverServerUri: string;
   zkConfigPath?: string;
   contractAddress?: ContractAddress;
   networkId: string;
+  shieldedCoinPublicKey?: string;
+  shieldedEncryptionPublicKey?: string;
 }
 
 /**
  * Ledger state from contract
  */
-export type Ledger = ReturnType<typeof UnifiedMarket.ledger>;
+export type Ledger = ReturnType<typeof contractLedger>;
 
 /**
  * Deployed contract type
  */
-type DeployedUnifiedMarketContract = DeployedContract<typeof UnifiedMarket>;
+type DeployedShadowMarketContract = DeployedContract<any>;
 
 /**
  * Derived state combining public and private data
@@ -55,27 +59,20 @@ export interface MarketDerivedState {
 }
 
 /**
- * Unified Market API - Real on-chain contract integration
- *
- * @remarks
- * This API follows the pattern from example-bboard-clone:
- * - Static .connect() method for initialization
- * - Observable state$ for reactive updates
- * - Witness providers for private circuit inputs
- * - Real on-chain transaction execution
+ * Shadow Market API - Real on-chain contract integration
  */
-export class UnifiedMarketAPI {
-  private deployedContract: DeployedUnifiedMarketContract;
+export class ShadowMarketAPI {
+  private deployedContract: DeployedShadowMarketContract;
   private providers: MarketProviders;
   private privateState: MarketPrivateState;
   public readonly state$: Observable<MarketDerivedState>;
   public readonly deployedContractAddress: ContractAddress;
 
   /**
-   * Private constructor - use UnifiedMarketAPI.connect() instead
+   * Private constructor - use ShadowMarketAPI.connect() instead
    */
   private constructor(
-    deployedContract: DeployedUnifiedMarketContract,
+    deployedContract: DeployedShadowMarketContract,
     providers: MarketProviders,
     privateState: MarketPrivateState
   ) {
@@ -89,7 +86,7 @@ export class UnifiedMarketAPI {
       .contractStateObservable(this.deployedContractAddress, { type: 'latest' })
       .pipe(
         map(contractState => {
-          const ledger = UnifiedMarket.ledger(contractState.data);
+          const ledger = contractLedger(contractState.data);
           return {
             ledger,
             isInitialized: ledger.isInitialized > 0n,
@@ -99,7 +96,23 @@ export class UnifiedMarketAPI {
         })
       );
 
-    console.log('✅ UnifiedMarketAPI connected to contract:', this.deployedContractAddress);
+    console.log('ShadowMarketAPI connected to contract:', this.deployedContractAddress);
+  }
+
+  /**
+   * Initialize the contract (sets adminKey and marks as initialized)
+   * This should be called once after deployment.
+   */
+  async initialize(): Promise<void> {
+    console.log('INITIALIZING CONTRACT ON-CHAIN');
+
+    try {
+      const txData = await (this.deployedContract.callTx.initialize as any)();
+      console.log('Contract initialized! Transaction:', txData.public.txHash);
+    } catch (error: any) {
+      console.error('initialize circuit execution failed:', error);
+      throw new Error(`Failed to initialize contract: ${error.message}`);
+    }
   }
 
   /**
@@ -107,19 +120,18 @@ export class UnifiedMarketAPI {
    */
   async placeBet(marketId: string, betAmount: bigint, betOutcome: boolean): Promise<void> {
     console.log(
-      `🚀 PLACING BET ON-CHAIN: market=${marketId}, amount=${betAmount}, side=${betOutcome ? 'YES' : 'NO'}`
+      `PLACING BET ON-CHAIN: market=${marketId}, amount=${betAmount}, side=${betOutcome ? 'YES' : 'NO'}`
     );
 
     try {
-      const txData = await this.deployedContract.callTx.placeBet(
+      const txData = await (this.deployedContract.callTx.placeBet as any)(
         BigInt(marketId),
         betOutcome ? 1n : 0n
       );
 
-      console.log('✅ Bet placed! Transaction:', txData.public.txHash);
-      console.log('   Block height:', txData.public.blockHeight);
+      console.log('Bet placed! Transaction:', txData.public.txHash);
     } catch (error: any) {
-      console.error('❌ placeBet circuit execution failed:', error);
+      console.error('placeBet circuit execution failed:', error);
       throw new Error(`Failed to place bet: ${error.message}`);
     }
   }
@@ -129,15 +141,14 @@ export class UnifiedMarketAPI {
    * @param betId The bet ID to claim winnings for
    */
   async claimWinnings(betId: string): Promise<void> {
-    console.log(`🚀 CLAIMING POOL WINNINGS ON-CHAIN: betId=${betId}`);
+    console.log(`CLAIMING POOL WINNINGS ON-CHAIN: betId=${betId}`);
 
     try {
-      const txData = await this.deployedContract.callTx.claimPoolWinnings(BigInt(betId));
+      const txData = await (this.deployedContract.callTx.claimPoolWinnings as any)(BigInt(betId));
 
-      console.log('✅ Winnings claimed! Transaction:', txData.public.txHash);
-      console.log('   Block height:', txData.public.blockHeight);
+      console.log('Winnings claimed! Transaction:', txData.public.txHash);
     } catch (error: any) {
-      console.error('❌ claimPoolWinnings circuit execution failed:', error);
+      console.error('claimPoolWinnings circuit execution failed:', error);
       throw new Error(`Failed to claim winnings: ${error.message}`);
     }
   }
@@ -146,20 +157,18 @@ export class UnifiedMarketAPI {
    * Add liquidity to an AMM pool (not implemented in contract)
    */
   async addLiquidity(marketId: string, amount: bigint): Promise<void> {
-    throw new Error('addLiquidity circuit not available in unified-prediction-market contract');
+    throw new Error('addLiquidity circuit not available in Shadow Market contract');
   }
 
   /**
    * Remove liquidity from an AMM pool (not implemented in contract)
    */
   async removeLiquidity(marketId: string, lpTokenAmount: bigint): Promise<void> {
-    throw new Error('removeLiquidity circuit not available in unified-prediction-market contract');
+    throw new Error('removeLiquidity circuit not available in Shadow Market contract');
   }
 
   /**
    * Create a new prediction market
-   * @param endTime Unix timestamp when market closes
-   * @param minBet Minimum bet amount
    */
   async createMarket(
     question: string,
@@ -167,20 +176,17 @@ export class UnifiedMarketAPI {
     initialLiquidity: bigint,
     oracleAddress: string
   ): Promise<void> {
-    console.log(`🚀 CREATING MARKET ON-CHAIN: ${question}, endTime=${resolutionTime}`);
+    console.log(`CREATING MARKET ON-CHAIN: ${question}, endTime=${resolutionTime}`);
 
     try {
-      // Note: question and oracleAddress are stored off-chain (in backend DB)
-      // On-chain we only store endTime and minBet
-      const txData = await this.deployedContract.callTx.createMarket(
-        resolutionTime, // endTime
-        initialLiquidity // minBet
+      const txData = await (this.deployedContract.callTx.createMarket as any)(
+        resolutionTime,
+        initialLiquidity
       );
 
-      console.log('✅ Market created! Transaction:', txData.public.txHash);
-      console.log('   Block height:', txData.public.blockHeight);
+      console.log('Market created! Transaction:', txData.public.txHash);
     } catch (error: any) {
-      console.error('❌ createMarket circuit execution failed:', error);
+      console.error('createMarket circuit execution failed:', error);
       throw new Error(`Failed to create market: ${error.message}`);
     }
   }
@@ -189,15 +195,14 @@ export class UnifiedMarketAPI {
    * Lock a market (admin only)
    */
   async lockMarket(marketId: string): Promise<void> {
-    console.log(`🚀 LOCKING MARKET ON-CHAIN: ${marketId}`);
+    console.log(`LOCKING MARKET ON-CHAIN: ${marketId}`);
 
     try {
-      const txData = await this.deployedContract.callTx.lockMarket(BigInt(marketId));
+      const txData = await (this.deployedContract.callTx.lockMarket as any)(BigInt(marketId));
 
-      console.log('✅ Market locked! Transaction:', txData.public.txHash);
-      console.log('   Block height:', txData.public.blockHeight);
+      console.log('Market locked! Transaction:', txData.public.txHash);
     } catch (error: any) {
-      console.error('❌ lockMarket circuit execution failed:', error);
+      console.error('lockMarket circuit execution failed:', error);
       throw new Error(`Failed to lock market: ${error.message}`);
     }
   }
@@ -206,36 +211,19 @@ export class UnifiedMarketAPI {
    * Resolve a market with the outcome
    */
   async resolveMarket(marketId: string, outcome: boolean): Promise<void> {
-    console.log(`🚀 RESOLVING MARKET ON-CHAIN: ${marketId}, outcome=${outcome ? 'YES' : 'NO'}`);
+    console.log(`RESOLVING MARKET ON-CHAIN: ${marketId}, outcome=${outcome ? 'YES' : 'NO'}`);
 
     try {
-      const txData = await this.deployedContract.callTx.resolveMarket(
+      const txData = await (this.deployedContract.callTx.resolveMarket as any)(
         BigInt(marketId),
         outcome ? 1n : 0n
       );
 
-      console.log('✅ Market resolved! Transaction:', txData.public.txHash);
-      console.log('   Block height:', txData.public.blockHeight);
+      console.log('Market resolved! Transaction:', txData.public.txHash);
     } catch (error: any) {
-      console.error('❌ resolveMarket circuit execution failed:', error);
+      console.error('resolveMarket circuit execution failed:', error);
       throw new Error(`Failed to resolve market: ${error.message}`);
     }
-  }
-
-  /**
-   * Cancel an unresolved market (not implemented in current contract)
-   */
-  async cancelMarket(marketId: string): Promise<void> {
-    throw new Error('cancelMarket circuit not available in unified-prediction-market contract');
-  }
-
-  /**
-   * Withdraw funds from cancelled market (not implemented in current contract)
-   */
-  async withdrawFromCancelled(marketId: string): Promise<void> {
-    throw new Error(
-      'withdrawFromCancelled circuit not available in unified-prediction-market contract'
-    );
   }
 
   /**
@@ -247,20 +235,19 @@ export class UnifiedMarketAPI {
     oddsNumerator: bigint,
     oddsDenominator: bigint
   ): Promise<void> {
-    console.log(`🚀 CREATING P2P WAGER ON-CHAIN: market=${marketId}`);
+    console.log(`CREATING P2P WAGER ON-CHAIN: market=${marketId}`);
 
     try {
-      const txData = await this.deployedContract.callTx.createWager(
+      const txData = await (this.deployedContract.callTx.createWager as any)(
         BigInt(marketId),
         side ? 1n : 0n,
         oddsNumerator,
         oddsDenominator
       );
 
-      console.log('✅ Wager created! Transaction:', txData.public.txHash);
-      console.log('   Block height:', txData.public.blockHeight);
+      console.log('Wager created! Transaction:', txData.public.txHash);
     } catch (error: any) {
-      console.error('❌ createWager circuit execution failed:', error);
+      console.error('createWager circuit execution failed:', error);
       throw new Error(`Failed to create wager: ${error.message}`);
     }
   }
@@ -269,15 +256,14 @@ export class UnifiedMarketAPI {
    * Accept a P2P wager
    */
   async acceptWager(wagerId: string): Promise<void> {
-    console.log(`🚀 ACCEPTING WAGER ON-CHAIN: ${wagerId}`);
+    console.log(`ACCEPTING WAGER ON-CHAIN: ${wagerId}`);
 
     try {
-      const txData = await this.deployedContract.callTx.acceptWager(BigInt(wagerId));
+      const txData = await (this.deployedContract.callTx.acceptWager as any)(BigInt(wagerId));
 
-      console.log('✅ Wager accepted! Transaction:', txData.public.txHash);
-      console.log('   Block height:', txData.public.blockHeight);
+      console.log('Wager accepted! Transaction:', txData.public.txHash);
     } catch (error: any) {
-      console.error('❌ acceptWager circuit execution failed:', error);
+      console.error('acceptWager circuit execution failed:', error);
       throw new Error(`Failed to accept wager: ${error.message}`);
     }
   }
@@ -286,15 +272,14 @@ export class UnifiedMarketAPI {
    * Cancel a P2P wager
    */
   async cancelWager(wagerId: string): Promise<void> {
-    console.log(`🚀 CANCELING WAGER ON-CHAIN: ${wagerId}`);
+    console.log(`CANCELING WAGER ON-CHAIN: ${wagerId}`);
 
     try {
-      const txData = await this.deployedContract.callTx.cancelWager(BigInt(wagerId));
+      const txData = await (this.deployedContract.callTx.cancelWager as any)(BigInt(wagerId));
 
-      console.log('✅ Wager cancelled! Transaction:', txData.public.txHash);
-      console.log('   Block height:', txData.public.blockHeight);
+      console.log('Wager cancelled! Transaction:', txData.public.txHash);
     } catch (error: any) {
-      console.error('❌ cancelWager circuit execution failed:', error);
+      console.error('cancelWager circuit execution failed:', error);
       throw new Error(`Failed to cancel wager: ${error.message}`);
     }
   }
@@ -303,15 +288,14 @@ export class UnifiedMarketAPI {
    * Claim winnings from a P2P wager
    */
   async claimWagerWinnings(wagerId: string): Promise<void> {
-    console.log(`🚀 CLAIMING WAGER WINNINGS ON-CHAIN: ${wagerId}`);
+    console.log(`CLAIMING WAGER WINNINGS ON-CHAIN: ${wagerId}`);
 
     try {
-      const txData = await this.deployedContract.callTx.claimWagerWinnings(BigInt(wagerId));
+      const txData = await (this.deployedContract.callTx.claimWagerWinnings as any)(BigInt(wagerId));
 
-      console.log('✅ Wager winnings claimed! Transaction:', txData.public.txHash);
-      console.log('   Block height:', txData.public.blockHeight);
+      console.log('Wager winnings claimed! Transaction:', txData.public.txHash);
     } catch (error: any) {
-      console.error('❌ claimWagerWinnings circuit execution failed:', error);
+      console.error('claimWagerWinnings circuit execution failed:', error);
       throw new Error(`Failed to claim wager winnings: ${error.message}`);
     }
   }
@@ -332,18 +316,13 @@ export class UnifiedMarketAPI {
 
   /**
    * Connect to an existing deployed contract
-   *
-   * This is the main entry point - call this to initialize the API
-   *
-   * @param wallet - Connected wallet from Midnight connector
-   * @param config - Network and contract configuration
-   * @returns Initialized API instance
    */
   static async connect(
     wallet: ConnectedAPI,
-    config: DeployedUnifiedMarketConfig
-  ): Promise<UnifiedMarketAPI> {
-    console.log('🔌 Connecting to Unified Market contract...');
+    config: DeployedShadowMarketConfig
+  ): Promise<ShadowMarketAPI> {
+    console.log('Connecting to Shadow Market contract...');
+    setNetworkId(config.networkId); // Set global network ID for SDK v4
 
     try {
       // Create all SDK providers
@@ -352,30 +331,33 @@ export class UnifiedMarketAPI {
       // Get or create private state
       const privateState = await getOrCreatePrivateState(providers.privateStateProvider);
 
-      console.log('✅ Providers and private state initialized');
+      console.log('Providers and private state initialized');
 
       // Find the deployed contract
       if (!config.contractAddress) {
         throw new Error('Contract address required for connection');
       }
 
-      const deployedContract = (await findDeployedContract(
-        providers,
-        UnifiedMarket
-      )) as DeployedUnifiedMarketContract;
+      // Bind witnesses before finding the contract
+      const compiledWithWitnesses = (compiledShadowMarketContract as any).pipe(
+        (CompiledContract as any).withWitnesses((providers as any).witnesses)
+      );
 
-      if (deployedContract.deployTxData.public.contractAddress !== config.contractAddress) {
-        console.warn('⚠️ Found contract address does not match config - using found address');
-      }
+      const deployedContract = (await findDeployedContract(providers, {
+        compiledContract: compiledWithWitnesses,
+        contractAddress: config.contractAddress,
+        privateStateId: 'shadow-market-private-state',
+        initialPrivateState: privateState,
+      } as any)) as DeployedShadowMarketContract;
 
       console.log(
-        '✅ Found deployed contract at:',
+        'Found deployed contract at:',
         deployedContract.deployTxData.public.contractAddress
       );
 
-      return new UnifiedMarketAPI(deployedContract, providers, privateState);
+      return new ShadowMarketAPI(deployedContract, providers, privateState);
     } catch (error: any) {
-      console.error('❌ Failed to connect to contract:', error);
+      console.error('Failed to connect to contract:', error);
       throw new Error(`Contract connection failed: ${error.message}`);
     }
   }

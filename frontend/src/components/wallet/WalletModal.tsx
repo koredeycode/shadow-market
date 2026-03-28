@@ -7,7 +7,16 @@ interface WalletModalProps {
 }
 
 const walletTypes = [
-  { id: 'lace', name: 'Lace', icon: <div className="w-8 h-8 bg-electric-blue/20 rounded-full border border-electric-blue/40 flex items-center justify-center text-electric-blue font-bold">L</div>, description: 'Midnight Testnet Optimized' },
+  {
+    id: 'lace',
+    name: 'Lace',
+    icon: (
+      <div className="w-8 h-8 bg-electric-blue/20 rounded-full border border-electric-blue/40 flex items-center justify-center text-electric-blue font-bold">
+        L
+      </div>
+    ),
+    description: 'Midnight Testnet Optimized',
+  },
 ];
 
 export function WalletModal({ isOpen, onClose }: WalletModalProps) {
@@ -22,21 +31,26 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-[200] grid place-items-center w-screen h-screen bg-black/80 backdrop-blur-sm p-4 transition-all duration-300 animate-in fade-in"
       onClick={onClose}
     >
       {/* Modal Content - e.stopPropagation to prevent closing when clicking inside */}
-      <div 
+      <div
         className="relative w-full max-w-sm bg-slate-900 border border-white/10 rounded-sm shadow-2xl overflow-hidden animate-in zoom-in duration-300"
-        onClick={(e) => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-6 border-b border-white/5 bg-black/40">
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-electric-blue" />
-            <h2 className="text-xl font-bold text-white uppercase tracking-tight">Connect Wallet</h2>
+            <h2 className="text-xl font-bold text-white uppercase tracking-tight">
+              Connect Wallet
+            </h2>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-500 hover:text-white transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 text-slate-500 hover:text-white transition-colors"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -47,7 +61,7 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
           </p>
 
           <div className="space-y-3">
-            {walletTypes.map((wallet) => (
+            {walletTypes.map(wallet => (
               <button
                 key={wallet.id}
                 onClick={() => handleConnect(wallet.id)}
@@ -75,9 +89,12 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
               <Zap className="w-5 h-5" />
             </div>
             <div className="space-y-1">
-              <h4 className="text-xs font-bold text-white uppercase tracking-widest leading-none">Confidential Connection</h4>
+              <h4 className="text-xs font-bold text-white uppercase tracking-widest leading-none">
+                Confidential Connection
+              </h4>
               <p className="text-[10px] text-slate-500 font-light leading-relaxed">
-                Powered by Midnight's ZK-SNARE technology. Your identity remains private during all network interactions.
+                Powered by Midnight's ZK-SNARE technology. Your identity remains private during all
+                network interactions.
               </p>
             </div>
           </div>

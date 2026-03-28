@@ -2,7 +2,7 @@
 
 Thank you for considering contributing to ShadowMarket! This document provides guidelines and instructions for contributing to the project.
 
-## 📋 Table of Contents
+## Table of Contents
 
 1. [Code of Conduct](#code-of-conduct)
 2. [Getting Started](#getting-started)
@@ -17,7 +17,7 @@ Thank you for considering contributing to ShadowMarket! This document provides g
 
 ---
 
-## 📜 Code of Conduct
+## Code of Conduct
 
 ### Our Pledge
 
@@ -26,6 +26,7 @@ We pledge to make participation in our project a harassment-free experience for 
 ### Our Standards
 
 **Examples of behavior that contributes to a positive environment:**
+
 - Using welcoming and inclusive language
 - Being respectful of differing viewpoints
 - Gracefully accepting constructive criticism
@@ -33,6 +34,7 @@ We pledge to make participation in our project a harassment-free experience for 
 - Showing empathy towards other community members
 
 **Examples of unacceptable behavior:**
+
 - Trolling, insulting/derogatory comments, and personal attacks
 - Public or private harassment
 - Publishing others' private information without permission
@@ -44,11 +46,12 @@ Instances of abusive, harassing, or otherwise unacceptable behavior may be repor
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
 Before you begin, ensure you have:
+
 - [ ] Read the [README.md](./README.md)
 - [ ] Completed the [Developer Setup Guide](./DEVELOPER_SETUP.md)
 - [ ] Familiarized yourself with the [Architecture](./ARCHITECTURE.md)
@@ -70,7 +73,7 @@ Before you begin, ensure you have:
 
 ---
 
-## 🔄 Development Workflow
+## Development Workflow
 
 ### 1. Fork the Repository
 
@@ -86,6 +89,7 @@ git remote add upstream https://github.com/shadowmarket/shadow-market.git
 ### 2. Create a Branch
 
 **Branch naming convention**:
+
 ```bash
 # Features
 git checkout -b feature/add-market-filters
@@ -103,6 +107,7 @@ git checkout -b refactor/simplify-bet-modal
 **Branch naming format**: `type/brief-description`
 
 **Types**:
+
 - `feature/` - New features
 - `fix/` - Bug fixes
 - `docs/` - Documentation changes
@@ -160,17 +165,19 @@ git push origin feature/add-market-filters
 
 ---
 
-## 💻 Coding Standards
+## Coding Standards
 
 ### TypeScript Style Guide
 
 **General Principles**:
+
 - Write clear, readable code
 - Prefer explicitness over cleverness
 - Use TypeScript features (types, interfaces)
 - Avoid `any` type
 
 **Naming Conventions**:
+
 ```typescript
 // Interface: PascalCase, prefix with I (optional)
 interface Market {
@@ -211,6 +218,7 @@ function calculatePayout(amount: number): number {
 ```
 
 **Code Organization**:
+
 ```typescript
 // 1. Imports (grouped and sorted)
 import { useState, useEffect } from 'react';
@@ -236,14 +244,15 @@ export function PlaceBetModal({ marketId, onBetPlaced }: Props) {
 ```
 
 **Function Guidelines**:
+
 ```typescript
 // Prefer named parameters for > 2 arguments
-// ❌ Bad
+// Bad
 function createMarket(question: string, endTime: Date, category: string, minBet: number) {
   // ...
 }
 
-// ✅ Good
+// Good
 interface CreateMarketParams {
   question: string;
   endTime: Date;
@@ -256,8 +265,8 @@ function createMarket(params: CreateMarketParams) {
 }
 
 // Use arrow functions for callbacks
-// ✅ Good
-markets.map((market) => market.id);
+// Good
+markets.map(market => market.id);
 
 // Document complex functions
 /**
@@ -268,23 +277,20 @@ markets.map((market) => market.id);
  * @param side - The side bet on ('YES' or 'NO')
  * @returns The payout amount in tokens
  */
-function calculatePayout(
-  betAmount: number,
-  entryPrice: number,
-  side: 'YES' | 'NO'
-): number {
+function calculatePayout(betAmount: number, entryPrice: number, side: 'YES' | 'NO'): number {
   // ...
 }
 ```
 
 **React Component Standards**:
+
 ```typescript
 // Use function components (not class components)
 // Use TypeScript for props
 // Destructure props
 // Use hooks appropriately
 
-// ✅ Good
+// Good
 interface MarketCardProps {
   market: Market;
   onSelect: (id: string) => void;
@@ -345,23 +351,23 @@ circuit PredictionMarket {
 
 ```
 src/
-├── components/          # Reusable UI components
-│   ├── ui/             # Base UI components (buttons, inputs)
-│   ├── layout/         # Layout components (header, footer)
-│   └── features/       # Feature-specific components
-├── pages/              # Page components (routes)
-├── hooks/              # Custom React hooks
-├── utils/              # Utility functions
-├── types/              # TypeScript type definitions
-├── api/                # API client code
-├── stores/             # State management (Zustand)
-├── constants/          # App constants
-└── styles/             # Global styles
+  components/          # Reusable UI components
+    ui/             # Base UI components (buttons, inputs)
+    layout/         # Layout components (header, footer)
+    features/       # Feature-specific components
+  pages/              # Page components (routes)
+  hooks/              # Custom React hooks
+  utils/              # Utility functions
+  types/              # TypeScript type definitions
+  api/                # API client code
+  stores/             # State management (Zustand)
+  constants/          # App constants
+  styles/             # Global styles
 ```
 
 ---
 
-## 📝 Commit Guidelines
+## Commit Guidelines
 
 ### Commit Message Format
 
@@ -374,6 +380,7 @@ src/
 ```
 
 **Example**:
+
 ```
 feat(frontend): add market filtering by category
 
@@ -386,60 +393,62 @@ Closes #123
 
 ### Commit Types
 
-| Type | Description |
-|------|-------------|
-| `feat` | New feature |
-| `fix` | Bug fix |
-| `docs` | Documentation changes |
-| `style` | Code style changes (formatting, no logic change) |
-| `refactor` | Code refactoring |
-| `test` | Adding or updating tests |
-| `chore` | Maintenance tasks |
-| `perf` | Performance improvements |
-| `ci` | CI/CD changes |
-| `build` | Build system changes |
-| `revert` | Revert previous commit |
+| Type       | Description                                      |
+| ---------- | ------------------------------------------------ |
+| `feat`     | New feature                                      |
+| `fix`      | Bug fix                                          |
+| `docs`     | Documentation changes                            |
+| `style`    | Code style changes (formatting, no logic change) |
+| `refactor` | Code refactoring                                 |
+| `test`     | Adding or updating tests                         |
+| `chore`    | Maintenance tasks                                |
+| `perf`     | Performance improvements                         |
+| `ci`       | CI/CD changes                                    |
+| `build`    | Build system changes                             |
+| `revert`   | Revert previous commit                           |
 
 ### Commit Scopes
 
-| Scope | Description |
-|-------|-------------|
-| `contracts` | Smart contract changes |
-| `backend` | Backend API changes |
-| `frontend` | Frontend UI changes |
-| `db` | Database schema changes |
-| `api` | API endpoint changes |
-| `ui` | UI component changes |
-| `deps` | Dependency updates |
-| `config` | Configuration changes |
+| Scope       | Description             |
+| ----------- | ----------------------- |
+| `contracts` | Smart contract changes  |
+| `backend`   | Backend API changes     |
+| `frontend`  | Frontend UI changes     |
+| `db`        | Database schema changes |
+| `api`       | API endpoint changes    |
+| `ui`        | UI component changes    |
+| `deps`      | Dependency updates      |
+| `config`    | Configuration changes   |
 
 ### Commit Message Guidelines
 
 **DO**:
-- ✅ Use imperative mood: "add feature" not "added feature"
-- ✅ Keep subject line under 72 characters
-- ✅ Capitalize the subject line
-- ✅ No period at the end of subject
-- ✅ Separate subject from body with blank line
-- ✅ Reference issue numbers in footer
+
+- Use imperative mood: "add feature" not "added feature"
+- Keep subject line under 72 characters
+- Capitalize the subject line
+- No period at the end of subject
+- Separate subject from body with blank line
+- Reference issue numbers in footer
 
 **DON'T**:
-- ❌ Commit broken code
-- ❌ Commit commented-out code
-- ❌ Mix multiple concerns in one commit
-- ❌ Use vague messages like "fix stuff"
+
+- Commit broken code
+- Commit commented-out code
+- Mix multiple concerns in one commit
+- Use vague messages like "fix stuff"
 
 **Examples**:
 
 ```bash
-# ✅ Good commits
+# Good commits
 feat(backend): add P2P wager creation endpoint
 fix(frontend): resolve wallet connection timeout issue
 docs(api): update OpenAPI spec with new endpoints
 test(contracts): add tests for Oracle dispute mechanism
 refactor(backend): simplify market resolution logic
 
-# ❌ Bad commits
+# Bad commits
 Fixed bug
 WIP
 Updated files
@@ -449,11 +458,12 @@ trying to fix issue
 
 ---
 
-## 🔀 Pull Request Process
+## Pull Request Process
 
 ### Before Submitting
 
 **Checklist**:
+
 - [ ] Code follows style guidelines
 - [ ] All tests pass locally
 - [ ] Added tests for new features
@@ -469,6 +479,7 @@ trying to fix issue
 ```
 
 **Examples**:
+
 - `feat(frontend): add market category filters`
 - `fix(backend): resolve race condition in bet placement`
 - `docs: update deployment guide`
@@ -477,31 +488,38 @@ trying to fix issue
 
 ```markdown
 ## Description
+
 Brief description of what this PR does.
 
 ## Type of Change
+
 - [ ] Bug fix (non-breaking change which fixes an issue)
 - [ ] New feature (non-breaking change which adds functionality)
 - [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
 - [ ] Documentation update
 
 ## Related Issues
+
 Fixes #123
 Closes #456
 
 ## Changes Made
+
 - Bullet points describing changes
 - What was added/modified/removed
 - Why these changes were necessary
 
 ## Testing
+
 Describe how you tested these changes:
+
 - [ ] Unit tests added/updated
 - [ ] Integration tests added/updated
 - [ ] Manual testing performed
 - [ ] All tests pass locally
 
 ## Screenshots (if applicable)
+
 Before:
 [screenshot]
 
@@ -509,6 +527,7 @@ After:
 [screenshot]
 
 ## Checklist
+
 - [ ] My code follows the style guidelines
 - [ ] I have performed a self-review of my code
 - [ ] I have commented my code, particularly in hard-to-understand areas
@@ -519,6 +538,7 @@ After:
 - [ ] Any dependent changes have been merged and published
 
 ## Additional Notes
+
 Any additional information for reviewers.
 ```
 
@@ -566,7 +586,7 @@ git push origin --delete feature/add-market-filters
 
 ---
 
-## 🧪 Testing Requirements
+## Testing Requirements
 
 ### Test Coverage Goals
 
@@ -577,6 +597,7 @@ git push origin --delete feature/add-market-filters
 ### Writing Tests
 
 **Unit Tests** (contracts, backend, frontend):
+
 ```typescript
 import { describe, it, expect } from 'vitest';
 import { calculatePayout } from './utils';
@@ -594,6 +615,7 @@ describe('calculatePayout', () => {
 ```
 
 **Integration Tests** (backend):
+
 ```typescript
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
@@ -617,6 +639,7 @@ describe('POST /api/markets', () => {
 ```
 
 **Component Tests** (frontend):
+
 ```typescript
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
@@ -664,12 +687,13 @@ npm test --workspace=backend -- markets.test.ts
 
 ---
 
-## 📚 Documentation Standards
+## Documentation Standards
 
 ### Code Documentation
 
 **TypeScript/JavaScript**:
-```typescript
+
+````typescript
 /**
  * Calculates the expected payout for a bet using the AMM formula.
  *
@@ -688,11 +712,7 @@ npm test --workspace=backend -- markets.test.ts
  * console.log(payout); // 15384
  * ```
  */
-export function calculatePayout(
-  betAmount: number,
-  entryPrice: number,
-  side: 'YES' | 'NO'
-): number {
+export function calculatePayout(betAmount: number, entryPrice: number, side: 'YES' | 'NO'): number {
   // Validation
   if (betAmount < 0) throw new Error('Bet amount must be positive');
   if (entryPrice < 0 || entryPrice > 100) throw new Error('Invalid entry price');
@@ -704,10 +724,11 @@ export function calculatePayout(
     return (betAmount / (100 - entryPrice)) * 100;
   }
 }
-```
+````
 
 **React Components**:
-```typescript
+
+````typescript
 /**
  * Displays a market card with question, price, and status.
  *
@@ -723,7 +744,7 @@ export function calculatePayout(
 export function MarketCard({ market, onSelect }: MarketCardProps) {
   // ...
 }
-```
+````
 
 ### Documentation Files
 
@@ -745,23 +766,26 @@ export function MarketCard({ market, onSelect }: MarketCardProps) {
 
 ---
 
-## 🐛 Issue Guidelines
+## Issue Guidelines
 
 ### Creating Issues
 
 **Use Templates**:
+
 - Bug Report
 - Feature Request
 - Documentation Improvement
 - Question
 
 **Bug Report Template**:
+
 ```markdown
 **Describe the bug**
 A clear and concise description of what the bug is.
 
 **To Reproduce**
 Steps to reproduce the behavior:
+
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
@@ -774,15 +798,17 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Environment:**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+
+- OS: [e.g. iOS]
+- Browser [e.g. chrome, safari]
+- Version [e.g. 22]
 
 **Additional context**
 Add any other context about the problem here.
 ```
 
 **Feature Request Template**:
+
 ```markdown
 **Is your feature request related to a problem? Please describe.**
 A clear and concise description of what the problem is.
@@ -799,22 +825,22 @@ Add any other context or screenshots about the feature request here.
 
 ### Issue Labels
 
-| Label | Description |
-|-------|-------------|
-| `bug` | Something isn't working |
-| `enhancement` | New feature or request |
-| `documentation` | Documentation improvements |
-| `good-first-issue` | Good for newcomers |
-| `help-wanted` | Extra attention is needed |
-| `question` | Further information is requested |
-| `wontfix` | This will not be worked on |
-| `duplicate` | This issue already exists |
-| `priority-high` | High priority |
-| `priority-low` | Low priority |
+| Label              | Description                      |
+| ------------------ | -------------------------------- |
+| `bug`              | Something isn't working          |
+| `enhancement`      | New feature or request           |
+| `documentation`    | Documentation improvements       |
+| `good-first-issue` | Good for newcomers               |
+| `help-wanted`      | Extra attention is needed        |
+| `question`         | Further information is requested |
+| `wontfix`          | This will not be worked on       |
+| `duplicate`        | This issue already exists        |
+| `priority-high`    | High priority                    |
+| `priority-low`     | Low priority                     |
 
 ---
 
-## 👥 Community
+## � Community
 
 ### Communication Channels
 
@@ -833,6 +859,7 @@ Add any other context or screenshots about the feature request here.
 ### Recognition
 
 Contributors will be:
+
 - Listed in CONTRIBUTORS.md
 - Mentioned in release notes
 - Invited to contributor calls
@@ -840,13 +867,13 @@ Contributors will be:
 
 ---
 
-## 📜 License
+## � License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.
 
 ---
 
-## 🙏 Thank You!
+## Thank You!
 
 Thank you for contributing to ShadowMarket! Your efforts make this project better for everyone.
 

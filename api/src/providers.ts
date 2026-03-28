@@ -13,8 +13,17 @@ import type { ConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
 import { FetchZkConfigProvider } from '@midnight-ntwrk/midnight-js-fetch-zk-config-provider';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
-import type { MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
-import { randomBytes } from './utils.js';
+import type { 
+  MidnightProviders,
+} from '@midnight-ntwrk/midnight-js-types';
+import type {
+  UnprovenTransaction as UnboundTransaction,
+  FinalizedTransaction,
+  CoinPublicKey,
+  EncPublicKey,
+  TransactionId
+} from '@midnight-ntwrk/ledger-v8';
+import { randomBytes, toHex, fromHex } from './utils.js';
 import { createWitnessProviders, type MarketWitnesses } from './witnesses.js';
 
 /**
@@ -27,7 +36,7 @@ export interface MarketPrivateState {
 /**
  * Private state key identifier
  */
-export type PrivateStateId = 'unified-market-private-state';
+export type PrivateStateId = 'shadow-market-private-state';
 
 /**
  * Configuration for provider setup
@@ -38,6 +47,8 @@ export interface ProviderConfig {
   proverServerUri: string;
   zkConfigPath?: string;
   networkId: string;
+  shieldedCoinPublicKey?: string;
+  shieldedEncryptionPublicKey?: string;
 }
 
 /**
@@ -58,6 +69,19 @@ class MemoryPrivateStateProvider {
 
   async delete(key: string): Promise<void> {
     this.states.delete(key);
+  }
+
+  setContractAddress(address: string): void {
+    // Memory provider doesn't need to scope by address, but satisfies the interface
+    console.log(`Private state provider scoped to contract: ${address}`);
+  }
+
+  async getSigningKey(address: string): Promise<Uint8Array | undefined> {
+    return this.states.get(`signing-key-${address}`);
+  }
+
+  async setSigningKey(address: string, key: Uint8Array): Promise<void> {
+    this.states.set(`signing-key-${address}`, key);
   }
 }
 
@@ -96,15 +120,29 @@ export const createProvidersFromWallet = async (
 ): Promise<MarketProviders> => {
   const walletConfig = await wallet.getConfiguration();
 
+  // Derive endpoints (appending suffixes if missing)
+  const graphqlUri = config.indexerUri.endsWith('/graphql')
+    ? config.indexerUri
+    : `${config.indexerUri}/graphql`;
+
+  const graphqlWsUri = config.indexerWsUri.endsWith('/graphql/ws')
+    ? config.indexerWsUri
+    : (config.indexerWsUri.endsWith('/ws') 
+        ? config.indexerWsUri 
+        : `${config.indexerWsUri}/graphql/ws`);
+
   // Public data provider - reads blockchain state from indexer
-  const publicDataProvider = indexerPublicDataProvider(config.indexerUri, config.indexerWsUri);
+  const publicDataProvider = indexerPublicDataProvider(graphqlUri, graphqlWsUri);
 
   // Private state provider - manages user's secret keys
   const privateStateProvider = new MemoryPrivateStateProvider();
 
+  // Derive base URI for ZK configs (stripping /graphql if present)
+  const baseIndexerUri = config.indexerUri.replace(/\/graphql$/, '');
+
   // ZK config provider - provides circuit proving/verification keys
   const zkConfigProvider = new FetchZkConfigProvider(
-    config.zkConfigPath || `${config.indexerUri}/zk-config`,
+    config.zkConfigPath || `${baseIndexerUri}/zk-config`,
     fetch
   );
 
@@ -112,7 +150,7 @@ export const createProvidersFromWallet = async (
   const proofProvider = httpClientProofProvider(config.proverServerUri, zkConfigProvider);
 
   // Get or create private state
-  const privateStateKey = 'unified-market-private-state';
+  const privateStateKey = 'shadow-market-private-state';
   let privateState = await privateStateProvider.get<MarketPrivateState>(privateStateKey);
 
   if (!privateState) {
@@ -120,26 +158,38 @@ export const createProvidersFromWallet = async (
     const secretKey = randomBytes(32);
     privateState = { userSecretKey: secretKey };
     await privateStateProvider.set(privateStateKey, privateState);
-    console.log('🔑 Generated new user secret key');
+    console.log('Generated new user secret key');
   }
 
   // Create witness providers
   const witnesses = createWitnessProviders(privateState);
 
-  // Wallet provider wraps the connected wallet API
+  // Wallet provider implementation covering balancing and keys
   const walletProvider = {
-    submitTransaction: async (tx: any) => {
-      return await wallet.submitTransaction(tx);
+    balanceTx: async (tx: UnboundTransaction, ttl?: Date): Promise<FinalizedTransaction> => {
+      // Convert UnboundTransaction to hex for the bridge
+      const txHex = toHex(tx.serialize()); 
+      const balanced = await wallet.balanceUnsealedTransaction(txHex);
+      // The wallet returns { tx: string } where tx is hex encoded balanced transaction
+      // We need to return it as FinalizedTransaction (Uint8Array)
+      const balancedBytes = fromHex(balanced.tx);
+      return balancedBytes as unknown as FinalizedTransaction;
     },
-    getState: async () => {
-      return await wallet.getConnectionStatus();
+    getCoinPublicKey: (): CoinPublicKey => {
+      return config.shieldedCoinPublicKey as CoinPublicKey;
+    },
+    getEncryptionPublicKey: (): EncPublicKey => {
+      return config.shieldedEncryptionPublicKey as EncPublicKey;
     },
   };
 
-  // Midnight provider combines all transaction submission capabilities
+  // Midnight provider handles transaction submission
   const midnightProvider = {
-    submitTransaction: walletProvider.submitTransaction,
-    getState: walletProvider.getState,
+    submitTx: async (tx: FinalizedTransaction): Promise<TransactionId> => {
+      await wallet.submitTransaction(toHex(tx.serialize()));
+      // Derive transaction ID - this is complex, usually we just return a mock or wait
+      return 'submitted' as unknown as TransactionId;
+    },
   };
 
   return {
@@ -159,7 +209,7 @@ export const createProvidersFromWallet = async (
 export const getOrCreatePrivateState = async (
   privateStateProvider: any
 ): Promise<MarketPrivateState> => {
-  const privateStateKey = 'unified-market-private-state';
+  const privateStateKey = 'shadow-market-private-state';
   let privateState = (await privateStateProvider.get(privateStateKey)) as
     | MarketPrivateState
     | undefined;

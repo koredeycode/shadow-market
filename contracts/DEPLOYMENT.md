@@ -89,8 +89,8 @@ After deployment, you'll find:
 
 ```
 deployments/
-  ├── latest.json                    # Latest deployment info
-  └── deployment-2026-03-27T....json # Timestamped deployment record
+  +- latest.json                    # Latest deployment info
+  +- deployment-2026-03-27T....json # Timestamped deployment record
 ```
 
 Each deployment file contains:
@@ -156,20 +156,20 @@ Wait 30-60 seconds for DUST token generation after funding wallet.
 
 After deployment:
 
-1. ✅ Contract is live on Midnight Network
-2. Update backend with contract address
-3. Test contract interaction via `pnpm interact`
-4. Integrate contract calls into API endpoints
+1.  Contract is live on Midnight Network
+2.  Update backend with contract address
+3.  Test contract interaction via `pnpm interact`
+4.  Integrate contract calls into API endpoints
 
 ## Contract Stub Limitations
 
 The current `market-stub.compact` is a simplified version with:
 
-- ✅ Basic state tracking (OPEN, CLOSED, RESOLVED)
-- ✅ Bet commitment storage
-- ✅ Market lifecycle (place bet, close, resolve)
-- ❌ No privacy features (witnesses disclosed)
-- ❌ No AMM pricing calculations
-- ❌ No payout distribution
+- Basic state tracking (OPEN, CLOSED, RESOLVED)
+- Bet commitment storage
+- Market lifecycle (place bet, close, resolve)
+- No privacy features (witnesses disclosed)
+- No AMM pricing calculations
+- No payout distribution
 
 Full contract implementation will require Compact language version 0.29+.

@@ -1,11 +1,4 @@
-import {
-  Activity,
-  Trophy,
-  XCircle,
-  ExternalLink,
-  Clock,
-  Zap,
-} from 'lucide-react';
+import { Activity, Trophy, XCircle, ExternalLink, Clock, Zap } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
@@ -85,10 +78,10 @@ function PositionRow({ position, isActive: _isActive, onClaimSuccess }: Position
 
   const canClaim = position.isSettled && position.payout && parseFloat(position.payout) > 0;
 
-  const outcomeWon = position.marketStatus === 'resolved' && (
-    (position.side === 'yes' && position.marketOutcome === 1) ||
-    (position.side === 'no' && position.marketOutcome === 0)
-  );
+  const outcomeWon =
+    position.marketStatus === 'resolved' &&
+    ((position.side === 'yes' && position.marketOutcome === 1) ||
+      (position.side === 'no' && position.marketOutcome === 0));
 
   return (
     <div className="group border-b border-white/5 hover:bg-white/[0.02] transition-colors">
@@ -100,19 +93,27 @@ function PositionRow({ position, isActive: _isActive, onClaimSuccess }: Position
               {position.marketQuestion}
             </h4>
             <div className="flex items-center gap-2">
-              <span className={`text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-sm border ${
-                position.side === 'yes' ? 'border-success-green/30 text-success-green bg-success-green/5' : 'border-red-500/30 text-red-500 bg-red-500/5'
-              }`}>
+              <span
+                className={`text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-sm border ${
+                  position.side === 'yes'
+                    ? 'border-success-green/30 text-success-green bg-success-green/5'
+                    : 'border-red-500/30 text-red-500 bg-red-500/5'
+                }`}
+              >
                 {position.side}
               </span>
-              <span className="text-[9px] font-mono text-slate-600 uppercase">ID: {position.marketId.slice(0, 8)}</span>
+              <span className="text-[9px] font-mono text-slate-600 uppercase">
+                ID: {position.marketId.slice(0, 8)}
+              </span>
             </div>
           </div>
 
           <div className="col-span-2 text-center flex flex-col items-center">
             <span className="text-[9px] font-mono text-slate-500 uppercase mb-1">Status</span>
             {position.marketStatus === 'resolved' ? (
-              <div className={`flex items-center gap-1.5 text-[10px] font-bold font-mono ${outcomeWon ? 'text-success-green' : 'text-red-500'}`}>
+              <div
+                className={`flex items-center gap-1.5 text-[10px] font-bold font-mono ${outcomeWon ? 'text-success-green' : 'text-red-500'}`}
+              >
                 {outcomeWon ? <Trophy className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
                 {outcomeWon ? 'WON' : 'LOST'}
               </div>
@@ -125,15 +126,23 @@ function PositionRow({ position, isActive: _isActive, onClaimSuccess }: Position
           </div>
 
           <div className="col-span-2 text-right space-y-1">
-            <p className="text-[11px] font-mono text-white font-bold">{formatCurrency(position.amount)}</p>
-            <p className="text-[9px] font-mono text-slate-500">@{ (position.entryPrice * 100).toFixed(1) }%</p>
+            <p className="text-[11px] font-mono text-white font-bold">
+              {formatCurrency(position.amount)}
+            </p>
+            <p className="text-[9px] font-mono text-slate-500">
+              @{(position.entryPrice * 100).toFixed(1)}%
+            </p>
           </div>
 
           <div className="col-span-2 text-right space-y-1">
-            <p className={`text-[11px] font-mono font-bold ${isProfitable ? 'text-success-green' : 'text-red-500'}`}>
+            <p
+              className={`text-[11px] font-mono font-bold ${isProfitable ? 'text-success-green' : 'text-red-500'}`}
+            >
               {(isProfitable ? '+' : '') + formatCurrency(pnl.toString())}
             </p>
-            <p className={`text-[9px] font-mono ${isProfitable ? 'text-success-green/60' : 'text-red-500/60'}`}>
+            <p
+              className={`text-[9px] font-mono ${isProfitable ? 'text-success-green/60' : 'text-red-500/60'}`}
+            >
               {(isProfitable ? '+' : '') + roi.toFixed(1)}%
             </p>
           </div>
@@ -166,21 +175,29 @@ function PositionRow({ position, isActive: _isActive, onClaimSuccess }: Position
             <h4 className="text-xs font-bold text-white pr-4 leading-relaxed">
               {position.marketQuestion}
             </h4>
-            <span className={`text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-sm shrink-0 ${
-              position.side === 'yes' ? 'border border-success-green/30 text-success-green' : 'border border-red-500/30 text-red-500'
-            }`}>
+            <span
+              className={`text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-sm shrink-0 ${
+                position.side === 'yes'
+                  ? 'border border-success-green/30 text-success-green'
+                  : 'border border-red-500/30 text-red-500'
+              }`}
+            >
               {position.side}
             </span>
           </div>
-          
+
           <div className="grid grid-cols-3 gap-2 py-3 border-y border-white/5">
             <div className="space-y-1">
               <span className="text-[8px] font-mono text-slate-500 uppercase">Amount</span>
-              <p className="text-[10px] font-mono text-white font-bold">{formatCurrency(position.amount)}</p>
+              <p className="text-[10px] font-mono text-white font-bold">
+                {formatCurrency(position.amount)}
+              </p>
             </div>
             <div className="space-y-1">
               <span className="text-[8px] font-mono text-slate-500 uppercase">P/L</span>
-              <p className={`text-[10px] font-mono font-bold ${isProfitable ? 'text-success-green' : 'text-red-500'}`}>
+              <p
+                className={`text-[10px] font-mono font-bold ${isProfitable ? 'text-success-green' : 'text-red-500'}`}
+              >
                 {roi.toFixed(1)}%
               </p>
             </div>
