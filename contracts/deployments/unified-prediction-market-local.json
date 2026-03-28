@@ -1,8 +1,8 @@
 {
-  "contractAddress": "cd9dae0f85be015b6b6c6b4008de30fc0be98d55bbf6b61f0fbda0e359f9aea7",
+  "contractAddress": "c39a34cfb4509537207d70c4659cf68c5869079f1a36fd1b958721a87abdb429",
   "contractType": "unified-prediction-market",
   "network": "undeployed",
-  "deployedAt": "2026-03-27T15:40:29.479Z",
+  "deployedAt": "2026-03-28T17:50:05.966Z",
   "walletAddress": {
     "type": "addr",
     "network": "undeployed",

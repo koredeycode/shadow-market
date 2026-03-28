@@ -27,15 +27,11 @@ services:
       - '8088:8088'
     environment:
       APP__APPLICATION__NETWORK_ID: 'undeployed'
-      APP__APPLICATION__NODE_URL: 'http://midnight-node:9944'
+      APP__INFRA__NODE__URL: 'ws://midnight-node:9944'
+      APP__INFRA__SECRET: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
     depends_on:
       midnight-node:
         condition: service_healthy
-    healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:8088/health']
-      interval: 5s
-      timeout: 5s
-      retries: 10
     networks:
       - shadow-network
 

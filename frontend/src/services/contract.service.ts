@@ -17,6 +17,7 @@ export interface ContractConfig {
   indexerWsUri: string;
   proverServerUri: string;
   zkConfigPath?: string;
+  contractAddress?: string;
   networkId: string;
 }
 

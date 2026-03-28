@@ -10,13 +10,17 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./managed/*": "./dist/managed/*"
+    "./managed/unified-prediction-market/contract/index.js": {
+      "types": "./dist/managed/unified-prediction-market/contract/index.d.ts",
+      "import": "./dist/managed/unified-prediction-market/contract/index.js"
+    }
   },
   "scripts": {
     "compile": "mkdir -p src/managed && compact compile src/mvp/unified-prediction-market.compact src/managed/unified-prediction-market",
     "build": "tsc",
     "dev": "tsc --watch",
     "deploy": "MIDNIGHT_NETWORK=local node --loader ts-node/esm --experimental-specifier-resolution=node src/deployment/deploy-unified-local.ts",
+    "initialize": "MIDNIGHT_NETWORK=local node --loader ts-node/esm --experimental-specifier-resolution=node scripts/initialize-contract.ts",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "clean": "rm -rf dist src/managed deployments",

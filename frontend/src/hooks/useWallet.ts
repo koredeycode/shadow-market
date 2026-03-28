@@ -140,15 +140,28 @@ export function useWallet() {
       // Initialize contract connection
       // Note: SDK v4 doesn't expose getPrivateStateProvider on ConnectedAPI
       // Private state management is handled internally by the wallet now
+      let contractInitialized = false;
       try {
-        await initializeContract(connectedAPI);
-        console.log('✅ Contract initialized');
+        const result = await initializeContract(connectedAPI);
+        contractInitialized = result === true;
+        if (contractInitialized) {
+          console.log('✅ Contract initialized successfully');
+        } else {
+          console.error('⚠️ Contract initialization returned false');
+        }
       } catch (error) {
-        console.error('⚠️ Contract initialization failed:', error);
-        // Don't fail wallet connection if contract init fails
+        console.error('❌ Contract initialization failed with exception:', error);
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        toast.error(`Contract initialization failed: ${errorMsg}`);
       }
 
-      toast.success('Wallet connected successfully!');
+      if (contractInitialized) {
+        toast.success('Wallet connected successfully!');
+      } else {
+        toast.warning(
+          'Wallet connected but contract initialization failed. Please try reconnecting.'
+        );
+      }
     } catch (error) {
       console.error('Failed to connect wallet:', error);
       const errorMessage =

@@ -21,11 +21,21 @@ export const useContractStore = create<ContractState>(set => ({
     set({ isInitializing: true, error: null });
 
     try {
+      // Get contract address from env or use hardcoded fallback
+      const contractAddress =
+        import.meta.env.VITE_UNIFIED_CONTRACT_ADDRESS?.trim() ||
+        'c39a34cfb4509537207d70c4659cf68c5869079f1a36fd1b958721a87abdb429';
+
+      console.log('📝 Contract configuration:');
+      console.log('  Contract Address:', contractAddress);
+      console.log('  Network ID:', import.meta.env.VITE_NETWORK_ID || 'undeployed');
+
       // Configure the contract connection
       const config = {
         indexerUri: import.meta.env.VITE_INDEXER_URL || 'http://localhost:8088/api/v1/graphql',
         indexerWsUri: import.meta.env.VITE_INDEXER_WS || 'ws://localhost:8088/api/v1/graphql/ws',
-        proverServerUri: import.meta.env.VITE_PROOF_SERVER_URL || 'http://localhost:8089',
+        proverServerUri: import.meta.env.VITE_PROOF_SERVER_URL || 'http://localhost:6300',
+        contractAddress,
         networkId: import.meta.env.VITE_NETWORK_ID || 'undeployed',
       };
 

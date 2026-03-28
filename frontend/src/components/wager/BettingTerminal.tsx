@@ -92,17 +92,22 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
   const mutation = useMutation({
     mutationFn: async (data: BetFormData) => {
       try {
-        // ENFORCE on-chain transactions - no database fallback
-        if (!isInitialized) {
+        // ENFORCE on-chain transactions - wallet and contract must be ready
+        if (!isConnected) {
           throw new Error(
             'Wallet not connected. Please connect your Midnight wallet to place bets.'
           );
         }
 
-        console.log('🚀 Placing bet ON-CHAIN (enforced)...');
+        if (!isInitialized) {
+          throw new Error(
+            'Contract not initialized. Please reconnect your wallet or check your network configuration.'
+          );
+        }
 
-        // Call smart contract - this is required, no fallback
-        // Errors will propagate with detailed integration instructions
+        console.log('🚀 Placing bet ON-CHAIN (required)...');
+
+        // Step 1: REQUIRED - Execute on-chain transaction first
         const result = await placeBet(
           market.onchainId || market.id,
           data.side.toUpperCase() as 'YES' | 'NO',
@@ -110,11 +115,12 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
         );
 
         const txId = result?.success ? 'SUCCESS' : null;
-        console.log('✅ Contract bet placed on-chain');
+        console.log('✅ On-chain transaction successful!');
 
-        // After successful on-chain transaction, update backend database for caching/indexing
+        // Step 2: Update backend database for caching/indexing (after on-chain success)
+        console.log('💾 Syncing to database...');
         try {
-          const result = await wagersApi.placeBet({
+          const dbResult = await wagersApi.placeBet({
             marketId: market.id,
             amount: data.amount,
             side: data.side,
@@ -122,10 +128,12 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
             skipRedirect: true,
           });
 
-          return { ...result, txId, contractSuccess: true };
+          console.log('✅ Database synced successfully');
+          return { ...dbResult, txId, contractSuccess: true };
         } catch (dbError) {
           // On-chain succeeded but database update failed - this is acceptable
-          console.warn('Database update failed (on-chain transaction succeeded):', dbError);
+          console.warn('⚠️ Database sync failed (on-chain transaction succeeded):', dbError);
+          toast.warning('Bet placed on-chain but database sync failed. This is normal.');
           return { positionId: market.id, txId, contractSuccess: true };
         }
       } catch (error: any) {
