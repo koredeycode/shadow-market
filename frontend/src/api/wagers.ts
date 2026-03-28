@@ -5,6 +5,7 @@ export interface PlaceBetRequest {
   amount: string;
   side: 'yes' | 'no';
   slippage?: number;
+  skipRedirect?: boolean;
 }
 
 export interface PlaceBetResponse {
@@ -38,7 +39,10 @@ export interface ClaimWinningsRequest {
 export const wagersApi = {
   // Place a bet on market (AMM)
   placeBet: async (data: PlaceBetRequest): Promise<PlaceBetResponse> => {
-    const response = await api.post('/wagers', data);
+    const { skipRedirect, ...payload } = data;
+    const response = await api.post('/wagers', payload, { 
+      ['_skipRedirect' as any]: skipRedirect 
+    } as any);
     return response.data.data;
   },
 

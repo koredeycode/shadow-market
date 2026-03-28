@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import toast from 'react-hot-toast';
 import semver from 'semver';
+import { authApi } from '../api/auth';
 import { useContractStore } from '../store/contract.store';
 import { useWalletStore } from '../store/wallet.store';
 
@@ -117,6 +118,25 @@ export function useWallet() {
       connect(connectedAPI, walletAddress, NETWORK_ID);
       updateBalance(walletBalance);
 
+      // Authenticate user with backend (create account if doesn't exist)
+      try {
+        console.log('🔐 Authenticating user with backend...');
+        const authResponse = await authApi.authenticate({ address: walletAddress });
+
+        // Store JWT token in localStorage
+        localStorage.setItem('authToken', authResponse.token);
+
+        console.log('✅ User authenticated:', authResponse.user.id);
+        console.log('   Address:', authResponse.user.address);
+        if (authResponse.user.username) {
+          console.log('   Username:', authResponse.user.username);
+        }
+      } catch (authError) {
+        console.error('⚠️ User authentication failed:', authError);
+        // Don't fail wallet connection if auth fails - user can retry
+        toast.error('Failed to authenticate with backend. Some features may not work.');
+      }
+
       // Initialize contract connection
       // Note: SDK v4 doesn't expose getPrivateStateProvider on ConnectedAPI
       // Private state management is handled internally by the wallet now
@@ -143,6 +163,11 @@ export function useWallet() {
     connectedAPIRef.current = null;
     cleanupContract();
     disconnect();
+
+    // Clear auth token
+    localStorage.removeItem('authToken');
+    console.log('🔐 Auth token cleared');
+
     toast.success('Wallet disconnected');
   }, [disconnect, cleanupContract]);
 

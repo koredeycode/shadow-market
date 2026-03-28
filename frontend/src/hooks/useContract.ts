@@ -14,27 +14,17 @@ export function useContract() {
   const placeBet = useCallback(
     async (marketId: string, side: 'YES' | 'NO', amount: number) => {
       if (!isInitialized) {
-        toast.error('Contract not initialized. Please reconnect your wallet.');
-        return null;
+        throw new Error('Contract not initialized. Please reconnect your wallet.');
       }
 
-      try {
-        const betAmount = BigInt(amount);
-        const betOutcome = side === 'YES';
+      const betAmount = BigInt(amount);
+      const betOutcome = side === 'YES';
 
-        toast.loading('Placing bet...');
+      // Call contract - errors will propagate with detailed messages
+      await contractManager.placeBet(marketId, betAmount, betOutcome);
 
-        await contractManager.placeBet(marketId, betAmount, betOutcome);
-
-        toast.dismiss();
-        toast.success('Bet placed successfully!');
-        return true;
-      } catch (error: any) {
-        toast.dismiss();
-        toast.error(error.message || 'Failed to place bet');
-        console.error('Place bet error:', error);
-        return null;
-      }
+      // Return transaction details (to be implemented with real SDK)
+      return { success: true };
     },
     [isInitialized]
   );

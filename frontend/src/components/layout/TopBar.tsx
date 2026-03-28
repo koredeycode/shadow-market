@@ -1,6 +1,6 @@
 import { Wallet, Bell, Search, Settings, Moon, ChevronDown } from 'lucide-react';
 import { useWallet } from '../../hooks/useWallet';
-import { Link, NavLink } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import { WalletModal } from '../wallet/WalletModal';
 import { WalletDetailView } from '../wallet/WalletDetailView';
@@ -11,12 +11,6 @@ export function TopBar() {
   const { isWalletModalOpen, setWalletModalOpen } = useWalletStore();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const detailRef = useRef<HTMLDivElement>(null);
-
-  const navItems = [
-    { name: 'Markets', path: '/markets' },
-    { name: 'Portfolio', path: '/portfolio' },
-    { name: 'Analytics', path: '/analytics' },
-  ];
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -39,23 +33,6 @@ export function TopBar() {
           </div>
           <span className="text-lg font-bold tracking-tight text-white hidden md:block">Shadow Market</span>
         </Link>
-
-        <nav className="hidden lg:flex items-center gap-1">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) => `
-                px-4 py-2 text-sm font-bold uppercase tracking-widest transition-all rounded-sm
-                ${isActive 
-                  ? 'text-electric-blue bg-electric-blue/5' 
-                  : 'text-slate-500 hover:text-white hover:bg-white/5'}
-              `}
-            >
-              {item.name}
-            </NavLink>
-          ))}
-        </nav>
       </div>
 
       {/* Centered Search */}

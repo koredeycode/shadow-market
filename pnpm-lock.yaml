@@ -83,6 +83,36 @@ importers:
 
   api:
     dependencies:
+      '@midnight-ntwrk/compact-js':
+        specifier: ^2.5.0
+        version: 2.5.0
+      '@midnight-ntwrk/dapp-connector-api':
+        specifier: ^4.0.1
+        version: 4.0.1
+      '@midnight-ntwrk/ledger-v8':
+        specifier: npm:@midnight-ntwrk/ledger-v7@7.0.2
+        version: '@midnight-ntwrk/ledger-v7@7.0.2'
+      '@midnight-ntwrk/midnight-js-contracts':
+        specifier: ^4.0.2
+        version: 4.0.2
+      '@midnight-ntwrk/midnight-js-fetch-zk-config-provider':
+        specifier: 4.0.2
+        version: 4.0.2
+      '@midnight-ntwrk/midnight-js-http-client-proof-provider':
+        specifier: ^4.0.2
+        version: 4.0.2
+      '@midnight-ntwrk/midnight-js-indexer-public-data-provider':
+        specifier: ^4.0.2
+        version: 4.0.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@midnight-ntwrk/midnight-js-node-zk-config-provider':
+        specifier: ^4.0.2
+        version: 4.0.2
+      '@midnight-ntwrk/midnight-js-types':
+        specifier: ^4.0.2
+        version: 4.0.2
+      '@midnight-ntwrk/midnight-js-utils':
+        specifier: ^4.0.2
+        version: 4.0.2
       '@shadow-market/contracts':
         specifier: workspace:*
         version: link:../contracts

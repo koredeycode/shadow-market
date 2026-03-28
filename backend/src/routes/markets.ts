@@ -113,6 +113,24 @@ marketsRouter.get(
 );
 
 /**
+ * GET /api/markets/new
+ * Get newly created markets
+ */
+marketsRouter.get(
+  '/new',
+  asyncHandler(async (req, res) => {
+    const limit = parseInt(req.query.limit as string) || 10;
+    const markets = await marketService.getNewMarkets(limit);
+
+    res.json({
+      success: true,
+      data: markets,
+      timestamp: Date.now(),
+    });
+  })
+);
+
+/**
  * GET /api/markets/:id
  * Get single market details
  */
@@ -170,24 +188,6 @@ marketsRouter.get(
     res.json({
       success: true,
       data: stats,
-      timestamp: Date.now(),
-    });
-  })
-);
-
-/**
- * GET /api/markets/new
- * Get newly created markets
- */
-marketsRouter.get(
-  '/new',
-  asyncHandler(async (req, res) => {
-    const limit = parseInt(req.query.limit as string) || 10;
-    const markets = await marketService.getNewMarkets(limit);
-
-    res.json({
-      success: true,
-      data: markets,
       timestamp: Date.now(),
     });
   })

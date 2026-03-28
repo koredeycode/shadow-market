@@ -22,7 +22,11 @@ api.interceptors.request.use(config => {
 api.interceptors.response.use(
   response => response,
   error => {
-    if (error.response?.status === 401) {
+    // Check if the request explicitly wants to skip the global redirect
+    const skipRedirect = error.config?._skipRedirect;
+
+    if (error.response?.status === 401 && !skipRedirect) {
+      console.warn('⚠️ Unauthorized access detected, redirecting to home...');
       localStorage.removeItem('authToken');
       window.location.href = '/';
     }

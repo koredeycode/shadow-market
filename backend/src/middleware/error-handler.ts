@@ -80,6 +80,11 @@ export function errorHandler(err: Error, req: Request, res: Response, next: Next
   } else if (err.message?.includes('ECONNREFUSED')) {
     statusCode = 503;
     message = 'Service temporarily unavailable';
+  } else {
+    // For unexpected errors, use the actual error message in development
+    if (process.env.NODE_ENV === 'development') {
+      message = err.message || 'Internal server error';
+    }
   }
 
   // Send error response
@@ -89,7 +94,8 @@ export function errorHandler(err: Error, req: Request, res: Response, next: Next
     ...(errors && { errors }),
     ...(process.env.NODE_ENV === 'development' && {
       stack: err.stack,
-      details: err.message,
+      name: err.name,
+      originalMessage: err.message,
     }),
   });
 }

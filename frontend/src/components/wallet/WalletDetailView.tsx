@@ -4,10 +4,13 @@ import {
   ExternalLink, 
   RefreshCw, 
   ShieldCheck,
-  ChevronRight, Zap
+  ChevronRight, 
+  Zap,
+  Briefcase
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useWallet } from '../../hooks/useWallet';
+import { Link } from 'react-router-dom';
 
 interface WalletDetailViewProps {
   onClose: () => void;
@@ -82,6 +85,18 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
         </div>
 
         <div className="space-y-1 pt-2">
+          <Link 
+            to="/portfolio"
+            onClick={onClose}
+            className="w-full flex items-center justify-between p-2 hover:bg-white/5 rounded-sm transition-colors text-xs text-slate-400 hover:text-white group"
+          >
+            <div className="flex items-center gap-3">
+              <Briefcase className="w-4 h-4 text-electric-blue" />
+              <span>My Portfolio</span>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all" />
+          </Link>
+
           <button className="w-full flex items-center justify-between p-2 hover:bg-white/5 rounded-sm transition-colors text-xs text-slate-400 hover:text-white group">
             <div className="flex items-center gap-3">
               <ShieldCheck className="w-4 h-4 text-electric-blue" />

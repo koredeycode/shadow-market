@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { AlertTriangle, Info, TrendingDown, TrendingUp, Zap } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { z } from 'zod';
@@ -27,12 +27,29 @@ interface BettingTerminalProps {
 export function BettingTerminal({ market }: BettingTerminalProps) {
   const { isConnected, formattedBalance, setWalletModalOpen } = useWallet();
   const { placeBet, isInitialized } = useContract();
-  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Prevent any accidental navigation
+  useEffect(() => {
+    console.log('🎬 BettingTerminal mounted');
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isSubmitting) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      console.log('🛑 BettingTerminal unmounted');
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isSubmitting]);
 
   const {
     control,
-    handleSubmit,
     watch,
     setValue,
     formState: { errors },
@@ -74,55 +91,107 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
 
   const mutation = useMutation({
     mutationFn: async (data: BetFormData) => {
-      // Call smart contract first
-      if (isInitialized) {
-        try {
-          const txId = await placeBet(
-            market.onchainId || market.id,
-            data.side.toUpperCase() as 'YES' | 'NO',
-            parseFloat(data.amount)
+      try {
+        // ENFORCE on-chain transactions - no database fallback
+        if (!isInitialized) {
+          throw new Error(
+            'Wallet not connected. Please connect your Midnight wallet to place bets.'
           );
-
-          if (!txId) {
-            throw new Error('Failed to submit transaction to contract');
-          }
-
-          console.log('Contract bet placed, tx:', txId);
-        } catch (contractError) {
-          console.error('Contract transaction failed:', contractError);
-          // Continue with API call even if contract fails for now
         }
-      }
 
-      // Also update backend database
-      return wagersApi.placeBet({
-        marketId: market.id,
-        amount: data.amount,
-        side: data.side,
-        slippage: data.slippage,
-      });
+        console.log('🚀 Placing bet ON-CHAIN (enforced)...');
+
+        // Call smart contract - this is required, no fallback
+        // Errors will propagate with detailed integration instructions
+        const result = await placeBet(
+          market.onchainId || market.id,
+          data.side.toUpperCase() as 'YES' | 'NO',
+          parseFloat(data.amount)
+        );
+
+        const txId = result?.success ? 'SUCCESS' : null;
+        console.log('✅ Contract bet placed on-chain');
+
+        // After successful on-chain transaction, update backend database for caching/indexing
+        try {
+          const result = await wagersApi.placeBet({
+            marketId: market.id,
+            amount: data.amount,
+            side: data.side,
+            slippage: data.slippage,
+            skipRedirect: true,
+          });
+
+          return { ...result, txId, contractSuccess: true };
+        } catch (dbError) {
+          // On-chain succeeded but database update failed - this is acceptable
+          console.warn('Database update failed (on-chain transaction succeeded):', dbError);
+          return { positionId: market.id, txId, contractSuccess: true };
+        }
+      } catch (error: any) {
+        // Catch all errors and log them - don't let them bubble up to ErrorBoundary
+        console.error('❌ Mutation error caught:', error);
+        throw error; // Re-throw for onError handler
+      }
     },
     onSuccess: data => {
-      toast.success(`Position Secured: ${data.positionId.slice(0, 8)}...`);
-      queryClient.invalidateQueries({ queryKey: ['market', market.id] });
-      queryClient.invalidateQueries({ queryKey: ['positions'] });
-      setValue('amount', '');
+      try {
+        console.log('✅ Mutation onSuccess triggered, updating UI...');
+        console.log('Success data:', data);
+
+        // Show success toast
+        toast.success(
+          `✅ Position Secured On-Chain!\nTx: ${data.txId || data.positionId.slice(0, 16)}...`
+        );
+
+        // Clear form
+        setValue('amount', '');
+
+        console.log('✅ UI update complete - NOT invalidating queries to prevent navigation');
+      } catch (error) {
+        console.error('❌ Error in onSuccess handler:', error);
+        // Don't re-throw - just log it
+      }
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Execution Failed');
+      try {
+        console.error('On-chain bet placement failed:', error);
+        toast.error(error.message || 'Failed to place bet on-chain');
+      } catch (toastError) {
+        console.error('❌ Error showing error toast:', toastError);
+        // Don't re-throw
+      }
     },
   });
 
   const onSubmit = async (data: BetFormData) => {
-    if (!isConnected) {
-      setWalletModalOpen(true);
-      return;
-    }
-    setIsSubmitting(true);
     try {
-      await mutation.mutateAsync(data);
-    } finally {
+      console.log('📝 Form submitted with data:', data);
+
+      if (!isConnected) {
+        console.log('⚠️ Wallet not connected, opening modal');
+        setWalletModalOpen(true);
+        return;
+      }
+
+      console.log('▶️ Starting mutation...');
+      setIsSubmitting(true);
+      try {
+        await mutation.mutateAsync(data);
+        console.log('✅ Mutation completed successfully');
+      } catch (error) {
+        console.error('❌ Mutation failed:', error);
+        // Error is already handled by mutation.onError
+        // Don't re-throw - we've already shown the error toast
+      } finally {
+        setIsSubmitting(false);
+        console.log('🏁 Mutation finished');
+      }
+    } catch (error) {
+      console.error('❌ Unexpected error in onSubmit:', error);
       setIsSubmitting(false);
+      toast.error('An unexpected error occurred. Please try again.');
+      // Don't re-throw - prevents ErrorBoundary from catching it
     }
   };
 
@@ -130,6 +199,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
     <div className="bg-slate-900/60 border border-white/10 rounded-sm overflow-hidden flex flex-col h-full backdrop-blur-md">
       <div className="p-1 border-b border-white/10 bg-black/40 flex">
         <button
+          type="button"
           onClick={() => setValue('side', 'yes')}
           className={`flex-1 flex items-center justify-center gap-2 py-4 transition-all ${
             side === 'yes'
@@ -141,6 +211,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
           <span className="font-bold text-sm tracking-wider uppercase">Position: Yes</span>
         </button>
         <button
+          type="button"
           onClick={() => setValue('side', 'no')}
           className={`flex-1 flex items-center justify-center gap-2 py-4 transition-all ${
             side === 'no'
@@ -153,7 +224,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
+      <div className="p-6 space-y-6">
         <div className="space-y-2">
           <div className="flex justify-between items-end">
             <label className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">
@@ -170,6 +241,15 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
               type="number"
               step="any"
               placeholder="0.00"
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  // Trigger programmatic submit
+                  const formData = { amount, side, slippage: 1 };
+                  onSubmit(formData).catch(console.error);
+                }
+              }}
               className={`w-full bg-slate-950 border ${errors.amount ? 'border-red-500/50' : 'border-white/10 group-focus-within:border-electric-blue/50'} p-4 rounded-sm font-mono text-2xl text-white focus:outline-none transition-all`}
             />
             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 font-mono text-xs font-bold">
@@ -248,8 +328,31 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
         )}
 
         <button
-          type={isConnected ? 'submit' : 'button'}
-          onClick={!isConnected ? () => setWalletModalOpen(true) : undefined}
+          type="button"
+          onClick={e => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🎯 Button clicked');
+
+            if (!isConnected) {
+              console.log('Wallet not connected, opening modal');
+              setWalletModalOpen(true);
+              return;
+            }
+
+            if (!amount || parseFloat(amount) <= 0) {
+              console.log('Invalid amount, skipping submission');
+              return;
+            }
+
+            console.log('Calling onSubmit with form data');
+            const formData = { amount, side, slippage: 1 };
+
+            // Call onSubmit without await to prevent any async issues
+            onSubmit(formData).catch(err => {
+              console.error('❌ onSubmit error:', err);
+            });
+          }}
           disabled={isSubmitting || (isConnected && (!amount || parseFloat(amount) <= 0))}
           className={`w-full py-4 rounded-sm font-bold text-sm tracking-[0.2em] relative group overflow-hidden transition-all ${
             !isConnected
@@ -272,7 +375,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
 
           <div className="absolute inset-0 bg-white opacity-0 group-active:opacity-20 transition-opacity" />
         </button>
-      </form>
+      </div>
     </div>
   );
 }
