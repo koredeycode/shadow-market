@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm';
+import logger from '../utils/logger.js';
 import { broadcastToMarket, broadcastToUser } from '../websocket.js';
 import { db } from './client.js';
 import { markets, positions } from './schema.js';
@@ -27,9 +28,9 @@ export async function syncMarketPrices() {
       });
     }
 
-    console.log(`✅ Synced ${openMarkets.length} markets`);
+    logger.debug('Market prices synced', { count: openMarkets.length });
   } catch (error) {
-    console.error('❌ Market sync failed:', error);
+    logger.error('Market sync failed', { error });
   }
 }
 
@@ -58,9 +59,9 @@ export async function updatePositionValues() {
       }
     }
 
-    console.log(`✅ Updated ${activePositions.length} positions`);
+    logger.debug('Position values updated', { count: activePositions.length });
   } catch (error) {
-    console.error('❌ Position update failed:', error);
+    logger.error('Position update failed', { error });
   }
 }
 
@@ -74,5 +75,8 @@ export function startBackgroundJobs() {
   // Update position values every 30 seconds
   setInterval(updatePositionValues, 30000);
 
-  console.log('🔄 Background jobs started');
+  logger.info('Background jobs started', {
+    syncInterval: '10s',
+    positionUpdateInterval: '30s',
+  });
 }

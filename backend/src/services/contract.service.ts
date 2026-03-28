@@ -1,3 +1,5 @@
+import logger from '../utils/logger.js';
+
 // Contract service stub - awaiting contract compilation and SDK v4 integration
 // The unified contract integration will be implemented after:
 // 1. Contract is compiled (pnpm contracts:compile)
@@ -14,14 +16,14 @@
  */
 export class UnifiedContractService {
   constructor() {
-    console.log('⚠️  Contract service (STUB MODE) - awaiting contract compilation');
+    logger.warn('Contract service in STUB mode - awaiting contract compilation');
   }
 
   /**
    * Initialize contract connection
    */
   async initialize() {
-    console.log('Contract service stub initialized');
+    logger.info('Contract service stub initialized');
     // Will use api package once contract is compiled
   }
 
@@ -29,7 +31,7 @@ export class UnifiedContractService {
    * Lock a market (admin only)
    */
   async lockMarket(marketId: string): Promise<void> {
-    console.log(`Contract (stub): lockMarket(${marketId})`);
+    logger.debug('Contract stub method called', { method: 'lockMarket', marketId });
     throw new Error('Contract not compiled. Admin operations use database only.');
   }
 
@@ -37,7 +39,7 @@ export class UnifiedContractService {
    * Resolve a market with outcome (admin only)
    */
   async resolveMarket(marketId: string, outcome: boolean): Promise<void> {
-    console.log(`Contract (stub): resolveMarket(${marketId}, ${outcome})`);
+    logger.debug('Contract stub method called', { method: 'resolveMarket', marketId, outcome });
     throw new Error('Contract not compiled. Admin operations use database only.');
   }
 
@@ -56,7 +58,7 @@ export class UnifiedContractService {
     noTotal: bigint;
     betCount: bigint;
   } | null> {
-    console.log(`Contract (stub): getMarketStats(${marketId})`);
+    logger.debug('Contract stub method called', { method: 'getMarketStats', marketId });
     return null;
   }
 }

@@ -2,6 +2,8 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import { config } from './config.js';
+import { errorHandler } from './middleware/error-handler.js';
+import { httpLogger, responseTimeMiddleware } from './middleware/morgan-logger.js';
 import { adminRouter } from './routes/admin.js';
 import { marketsRouter } from './routes/markets.js';
 import { oraclesRouter } from './routes/oracles.js';
@@ -16,6 +18,10 @@ app.use(helmet());
 app.use(cors({ origin: config.corsOrigin, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Logging middleware
+app.use(responseTimeMiddleware);
+app.use(httpLogger);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -34,10 +40,5 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
 });
 
-// Error handler
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Error:', err);
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal server error',
-  });
-});
+// Global error handler
+app.use(errorHandler);

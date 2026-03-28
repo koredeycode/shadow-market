@@ -1,14 +1,15 @@
 import { NextFunction, Request, Response } from 'express';
 import { createClient } from 'redis';
 import { config } from '../config.js';
+import logger from '../utils/logger.js';
 
 // Redis client for rate limiting
 const redisClient = createClient({
   url: config.redisUrl,
 });
 
-redisClient.on('error', err => console.error('Redis Client Error:', err));
-redisClient.connect().catch(console.error);
+redisClient.on('error', err => logger.error('Redis client error', { error: err }));
+redisClient.connect().catch(err => logger.error('Redis connection failed', { error: err }));
 
 interface RateLimitOptions {
   windowMs: number; // Time window in milliseconds
@@ -60,7 +61,7 @@ export function rateLimit(options: RateLimitOptions) {
       next();
     } catch (error) {
       // If Redis fails, allow the request (fail open)
-      console.error('Rate limit error:', error);
+      logger.error('Rate limit error', { error });
       next();
     }
   };

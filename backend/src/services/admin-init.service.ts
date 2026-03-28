@@ -4,19 +4,20 @@ import { config } from '../config.js';
 import { db } from '../db/client.js';
 import { users } from '../db/schema.js';
 import { generateId } from '../utils/crypto.js';
+import logger from '../utils/logger.js';
 
 /**
  * Initialize admin user from environment variables
  * Creates admin user if it doesn't exist
  */
 export async function initializeAdmin() {
-  console.log('🔄 Initializing admin user...');
+  logger.info('Initializing admin user...');
 
   try {
     const { adminUsername, adminPassword, adminWalletAddress } = config;
 
     if (!adminUsername || !adminPassword) {
-      console.log('⚠️  Admin credentials not configured, skipping admin setup');
+      logger.warn('Admin credentials not configured, skipping admin setup');
       return;
     }
 
@@ -26,12 +27,15 @@ export async function initializeAdmin() {
     });
 
     if (existingAdmin) {
-      console.log(`✅ Admin user '${adminUsername}' already exists`);
+      logger.info('Admin user already exists', {
+        username: adminUsername,
+        userId: existingAdmin.id,
+      });
 
       // Ensure user has admin privileges
       if (!existingAdmin.isAdmin) {
         await db.update(users).set({ isAdmin: true }).where(eq(users.id, existingAdmin.id));
-        console.log(`  ✅ Updated '${adminUsername}' to admin role`);
+        logger.info('Updated user to admin role', { username: adminUsername });
       }
 
       return existingAdmin;
@@ -52,16 +56,19 @@ export async function initializeAdmin() {
       })
       .returning();
 
-    console.log(`✅ Created admin user: ${adminUsername}`);
-    console.log(`  📧 Username: ${adminUsername}`);
-    console.log(
-      `  🔑 Password: ${adminPassword === 'changeme' ? '⚠️  CHANGE DEFAULT PASSWORD!' : '✓'}`
-    );
-    console.log(`  👤 User ID: ${adminUser.id}`);
+    logger.info('Admin user created successfully', {
+      username: adminUsername,
+      userId: adminUser.id,
+      defaultPassword: adminPassword === 'changeme',
+    });
+
+    if (adminPassword === 'changeme') {
+      logger.warn('SECURITY WARNING: Admin using default password - CHANGE IMMEDIATELY!');
+    }
 
     return adminUser;
   } catch (error) {
-    console.error('❌ Failed to initialize admin:', error);
+    logger.error('Failed to initialize admin user', { error });
     throw error;
   }
 }
@@ -81,7 +88,7 @@ export async function verifyAdminPassword(username: string, password: string): P
 
     return await bcrypt.compare(password, user.encryptedSeed);
   } catch (error) {
-    console.error('Error verifying admin password:', error);
+    logger.error('Error verifying admin password', { error, username });
     return false;
   }
 }

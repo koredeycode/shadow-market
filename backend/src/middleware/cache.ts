@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { redisClient } from './rate-limit.js';
+import logger from '../utils/logger.js';
 
 interface CacheOptions {
   ttl: number; // Time to live in seconds
@@ -40,7 +41,7 @@ export function cacheMiddleware(options: CacheOptions) {
         // Cache the response
         redisClient
           .setEx(cacheKey, ttl, JSON.stringify(data))
-          .catch(err => console.error('Cache set error:', err));
+          .catch(err => logger.error('Cache set error', { error: err, cacheKey }));
 
         res.setHeader('X-Cache', 'MISS');
         return originalJson(data);
@@ -49,7 +50,7 @@ export function cacheMiddleware(options: CacheOptions) {
       next();
     } catch (error) {
       // If cache fails, continue without caching
-      console.error('Cache middleware error:', error);
+      logger.error('Cache middleware error', { error });
       next();
     }
   };
@@ -63,10 +64,10 @@ export async function invalidateCache(pattern: string) {
     const keys = await redisClient.keys(pattern);
     if (keys.length > 0) {
       await redisClient.del(keys);
-      console.log(`Invalidated ${keys.length} cache entries matching ${pattern}`);
+      logger.info('Cache invalidated', { pattern, count: keys.length });
     }
   } catch (error) {
-    console.error('Cache invalidation error:', error);
+    logger.error('Cache invalidation error', { error, pattern });
   }
 }
 

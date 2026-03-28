@@ -1,13 +1,14 @@
 import { sql } from 'drizzle-orm';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import logger from '../utils/logger.js';
 import { db } from './client.js';
 
 /**
  * Run database migrations from SQL files
  */
 export async function runMigrations() {
-  console.log('🔄 Running database migrations...');
+  logger.info('Running database migrations...');
 
   try {
     // Check if migrations table exists
@@ -35,11 +36,11 @@ export async function runMigrations() {
 
     for (const migration of migrations) {
       if (executedNames.has(migration.name)) {
-        console.log(`  ⏭️  Skipping ${migration.name} (already executed)`);
+        logger.debug('Skipping migration (already executed)', { migration: migration.name });
         continue;
       }
 
-      console.log(`  🔧 Running ${migration.name}...`);
+      logger.info('Running migration', { migration: migration.name });
 
       try {
         const migrationSQL = readFileSync(migration.path, 'utf-8');
@@ -50,23 +51,23 @@ export async function runMigrations() {
         // Record migration
         await db.execute(sql`INSERT INTO migrations (name) VALUES (${migration.name})`);
 
-        console.log(`  ✅ Completed ${migration.name}`);
+        logger.info('Migration completed successfully', { migration: migration.name });
         ranCount++;
       } catch (error) {
-        console.error(`  ❌ Failed ${migration.name}:`, error);
+        logger.error('Migration failed', { migration: migration.name, error });
         throw error;
       }
     }
 
     if (ranCount === 0) {
-      console.log('✅ All migrations up to date');
+      logger.info('All migrations up to date');
     } else {
-      console.log(`✅ Ran ${ranCount} migration(s) successfully`);
+      logger.info('Migrations completed', { count: ranCount });
     }
 
     return true;
   } catch (error) {
-    console.error('❌ Migration error:', error);
+    logger.error('Migration error', { error });
     return false;
   }
 }

@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
+import logger from '../utils/logger.js';
 import * as schema from './schema.js';
 
 const pool = new Pool({
@@ -22,10 +23,13 @@ export const testConnection = async () => {
   try {
     const client = await pool.connect();
     client.release();
-    console.log('✅ Database connection successful');
+    logger.info('Database connection successful', {
+      maxConnections: 20,
+      database: process.env.DATABASE_URL?.split('@')[1]?.split('/')[1] || 'unknown',
+    });
     return true;
   } catch (error) {
-    console.error('❌ Database connection failed:', error);
+    logger.error('Database connection failed', { error });
     return false;
   }
 };

@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
+import logger from '../utils/logger.js';
 
 // Custom error class
 export class AppError extends Error {
@@ -17,15 +18,32 @@ export class AppError extends Error {
  * Global error handler with improved error classification
  */
 export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
-  // Log error
-  console.error('Error occurred:', {
+  // Determine if this is an operational error or a programming error
+  const isOperational = err instanceof AppError && err.isOperational;
+
+  // Log error with appropriate level
+  const errorContext = {
     name: err.name,
     message: err.message,
     path: req.path,
     method: req.method,
+    ip: req.ip,
+    userId: (req as any).user?.id,
     timestamp: new Date().toISOString(),
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
-  });
+  };
+
+  // Log stack trace for 500 errors (programming errors), just message for operational errors
+  if (isOperational) {
+    logger.warn('Operational error occurred', errorContext);
+  } else {
+    logger.error('Server error occurred', {
+      ...errorContext,
+      stack: err.stack,
+      body: req.body,
+      query: req.query,
+      params: req.params,
+    });
+  }
 
   // Default error response
   let statusCode = 500;

@@ -2,6 +2,7 @@ import { and, desc, eq, gte, ilike, or, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { adminActivityLog, markets, positions, users, wagers } from '../db/schema.js';
 import { generateId } from '../utils/crypto.js';
+import logger from '../utils/logger.js';
 
 export interface AdminStats {
   totalMarkets: number;
@@ -271,11 +272,12 @@ export class AdminService {
     try {
       // const onchainMarketId = BigInt(market.onchainId);
       // await unifiedContract.lockMarket(onchainMarketId, adminPrivateState, adminWallet);
-      console.log(
-        `⚠️  Contract call for lockMarket not implemented - needs admin wallet connection`
-      );
+      logger.warn('Contract call not implemented - admin wallet connection required', {
+        action: 'lockMarket',
+        marketId,
+      });
     } catch (error) {
-      console.error('❌ Contract call failed:', error);
+      logger.error('Contract call failed', { action: 'lockMarket', marketId, error });
       // Don't fail the database update if contract call fails
     }
 
@@ -318,11 +320,13 @@ export class AdminService {
       // const onchainMarketId = BigInt(market.onchainId);
       // const onchainOutcome = BigInt(outcome);
       // await unifiedContract.resolveMarket(onchainMarketId, onchainOutcome, adminPrivateState, adminWallet);
-      console.log(
-        `⚠️  Contract call for resolveMarket not implemented - needs admin wallet connection`
-      );
+      logger.warn('Contract call not implemented - admin wallet connection required', {
+        action: 'resolveMarket',
+        marketId,
+        outcome,
+      });
     } catch (error) {
-      console.error('❌ Contract call failed:', error);
+      logger.error('Contract call failed', { action: 'resolveMarket', marketId, outcome, error });
       // Don't fail the database update if contract call fails
     }
 
