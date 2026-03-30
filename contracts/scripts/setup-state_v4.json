@@ -1,0 +1,30 @@
+{
+  "wallets": {
+    "admin": {
+      "address": "mn_addr_undeployed1862vea8nzh0uze0k60thtd2h6qp5a5zrr447zylelmjc6286v4estw8s45",
+      "seed": "009430bdb543727c537ed5aa3829729351d1c14f6f038f9c41c2e858e497e2d9"
+    },
+    "userA": {
+      "address": "mn_addr_undeployed1zhky5pkfqqzyv3aragmksnae9wp8ekd4hzsrrpmd0qhqm9rcsu5q3e8fhr",
+      "seed": "3b110d15cd0da741322d2c3c9296db1b0e19e9544766f45f3734f47c994e0284"
+    },
+    "userB": {
+      "address": "mn_addr_undeployed1cw2evt95nqxkkej2fshft7jvn9g3r4w60hzmctzr68gdpszcx26sztnv3p",
+      "seed": "1291b1fde1d9d93cb09c9060f6d4cc744878085eb9470cfe23b3b18cc7c0bb56"
+    },
+    "userC": {
+      "address": "mn_addr_undeployed1juv2mls0l6rmw9nh9s28djv3a2pndg6avthws778vqxt9gsmfsqs46kan5",
+      "seed": "fcfc1ad3dda649b13a42a58d27000aa2d6da37d96a48cdd390e0e5da6f8d6a09"
+    }
+  },
+  "dbResetDone": true,
+  "compiledDone": true,
+  "contractAddress": "8e9d94cd1dc7f5de8320f62c83128f508898a344b2d2d70e7aa04438c40afdd9",
+  "initializedDone": true,
+  "seedingMarketIndex": 10,
+  "activityMarketIndex": 1,
+  "activityUserIndex": 2,
+  "betsDone": false,
+  "wagersDone": false,
+  "activityDone": false
+}

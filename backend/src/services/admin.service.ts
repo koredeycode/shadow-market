@@ -2,6 +2,7 @@ import { and, desc, eq, gte, ilike, or, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { adminActivityLog, markets, positions, users, wagers } from '../db/schema.js';
 import { generateId } from '../utils/crypto.js';
+import { shadowMarketContract } from './contract.service.js';
 import logger from '../utils/logger.js';
 
 export interface AdminStats {
@@ -271,7 +272,7 @@ export class AdminService {
     // This is a simplified version - real implementation needs admin's private state provider
     try {
       // const onchainMarketId = BigInt(market.onchainId);
-      // await unifiedContract.lockMarket(onchainMarketId, adminPrivateState, adminWallet);
+      // await shadowMarketContract.lockMarket(onchainMarketId, adminPrivateState, adminWallet);
       logger.warn('Contract call not implemented - admin wallet connection required', {
         action: 'lockMarket',
         marketId,
@@ -319,7 +320,7 @@ export class AdminService {
     try {
       // const onchainMarketId = BigInt(market.onchainId);
       // const onchainOutcome = BigInt(outcome);
-      // await unifiedContract.resolveMarket(onchainMarketId, onchainOutcome, adminPrivateState, adminWallet);
+      // await shadowMarketContract.resolveMarket(onchainMarketId, onchainOutcome, adminPrivateState, adminWallet);
       logger.warn('Contract call not implemented - admin wallet connection required', {
         action: 'resolveMarket',
         marketId,

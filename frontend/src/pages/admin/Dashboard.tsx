@@ -16,6 +16,7 @@ import { authApi } from '../../api/auth';
 import type { AdminStats } from '../../types';
 import { useContract } from '../../hooks/useContract';
 import { contractManager } from '../../services/contract.service';
+import { useWalletStore } from '../../store/wallet.store';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -77,8 +78,17 @@ export function AdminDashboard() {
   const isForbidden = (statsError as any)?.response?.status === 403;
   const isLoading = isStatsLoading || isInitializing;
 
+  const { address: connectedAddress } = useWalletStore();
+  const adminAddress = import.meta.env.VITE_ADMIN_ADDRESS;
+  const isCorrectWallet = !adminAddress || connectedAddress === adminAddress;
+
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isCorrectWallet) {
+      toast.error('Unauthorized: Connect the correct admin wallet first');
+      return;
+    }
+    
     setIsAdminLoggingIn(true);
     const id = toast.loading('Verifying admin credentials...');
 
@@ -114,6 +124,28 @@ export function AdminDashboard() {
     }
   };
 
+  if (!isCorrectWallet) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24">
+        <div className="w-full max-w-md p-8 glass-shine border border-white/5 rounded-sm text-center">
+          <div className="w-16 h-16 bg-red-500/10 rounded-sm flex items-center justify-center mx-auto mb-6 border border-red-500/20">
+            <Shield className="w-8 h-8 text-red-500" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2 uppercase tracking-tight">Access Denied</h1>
+          <p className="text-slate-500 text-xs font-mono uppercase tracking-widest mb-8">
+            Admin wallet connection required
+          </p>
+          <div className="p-4 bg-white/[0.02] border border-white/5 rounded-sm font-mono text-[10px] text-slate-400 break-all mb-4">
+            REQUIRED: {adminAddress || 'NOT_CONFIGURED'}
+          </div>
+          <p className="text-[10px] text-slate-500 uppercase tracking-wider">
+            Please switch to the authorized admin wallet in your extension.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (isForbidden) {
     return (
       <div className="flex flex-col items-center justify-center py-24">
@@ -122,8 +154,8 @@ export function AdminDashboard() {
             <div className="w-16 h-16 bg-electric-blue/10 rounded-sm flex items-center justify-center mb-4 border border-electric-blue/20">
               <Shield className="w-8 h-8 text-electric-blue" />
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2 uppercase tracking-tight">Admin Access</h1>
-            <p className="text-slate-500 text-xs font-mono uppercase tracking-widest">Provide credentials to unlock dashboard</p>
+            <h1 className="text-2xl font-bold text-white mb-2 uppercase tracking-tight">Admin Terminal</h1>
+            <p className="text-slate-500 text-xs font-mono uppercase tracking-widest">Authorized wallet connected. Enter credentials.</p>
           </div>
 
           <form onSubmit={handleAdminLogin} className="space-y-6">

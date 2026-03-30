@@ -9,29 +9,32 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * Simple .env parser without external dependencies
  */
 export function loadEnvConfig(): Record<string, string> {
-  const envPath = path.resolve(__dirname, '..', '..', '.env');
-
-  if (!fs.existsSync(envPath)) {
-    console.warn('No .env file found. Using defaults.');
-    return {};
-  }
-
-  const envContent = fs.readFileSync(envPath, 'utf-8');
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  const envFiles = ['.env', `.env.${nodeEnv}`, '.env.local'];
   const config: Record<string, string> = {};
 
-  envContent.split('\n').forEach(line => {
-    // Skip comments and empty lines
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) return;
+  for (const file of envFiles) {
+    const envPath = path.resolve(__dirname, '..', '..', file);
 
-    // Parse KEY=VALUE
-    const match = trimmed.match(/^([^=]+)=(.*)$/);
-    if (match) {
-      const key = match[1].trim();
-      const value = match[2].trim();
-      config[key] = value;
+    if (fs.existsSync(envPath)) {
+      const envContent = fs.readFileSync(envPath, 'utf-8');
+      envContent.split('\n').forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) return;
+
+        const match = trimmed.match(/^([^=]+)=(.*)$/);
+        if (match) {
+          const key = match[1].trim();
+          const value = match[2].trim();
+          config[key] = value;
+        }
+      });
     }
-  });
+  }
+
+  if (Object.keys(config).length === 0) {
+    console.warn('No environment files found (.env, .env.local, etc.). Using process.env defaults.');
+  }
 
   return config;
 }
@@ -41,11 +44,10 @@ export function loadEnvConfig(): Record<string, string> {
  */
 export function getAdminWalletSeed(): string {
   const config = loadEnvConfig();
-  const seed = config.ADMIN_WALLET_SEED || process.env.ADMIN_WALLET_SEED;
+  const seed = config.ADMIN_SEED || config.ADMIN_WALLET_SEED || process.env.ADMIN_SEED || process.env.ADMIN_WALLET_SEED;
 
   if (!seed) {
-    console.warn('ADMIN_WALLET_SEED not set. Using genesis master wallet.');
-    return '0000000000000000000000000000000000000000000000000000000000000001';
+    throw new Error('ADMIN_SEED not set. Please configure in .env.local or .env.production.');
   }
 
   return seed;
@@ -53,14 +55,17 @@ export function getAdminWalletSeed(): string {
 
 /**
  * Get admin address for a specific contract
- * Returns empty if should be auto-derived from wallet
  */
-export function getAdminAddress(contractType: 'oracle' | 'factory'): string | null {
+export function getAdminAddress(contractType?: 'oracle' | 'factory'): string | null {
   const config = loadEnvConfig();
-  const envKey = contractType === 'oracle' ? 'ORACLE_ADMIN_ADDRESS' : 'FACTORY_ADMIN_ADDRESS';
-  const address = config[envKey] || process.env[envKey];
+  
+  if (contractType) {
+    const envKey = contractType === 'oracle' ? 'ORACLE_ADMIN_ADDRESS' : 'FACTORY_ADMIN_ADDRESS';
+    const address = config[envKey] || process.env[envKey];
+    if (address) return address;
+  }
 
-  return address || null;
+  return config.ADMIN_ADDRESS || process.env.ADMIN_ADDRESS || null;
 }
 
 /**
@@ -95,14 +100,15 @@ export function getNetworkConfig(): NetworkConfig {
   const config = loadEnvConfig();
 
   return {
-    network: config.MIDNIGHT_NETWORK || process.env.MIDNIGHT_NETWORK || 'local',
+    network: config.MIDNIGHT_NETWORK_ID || config.MIDNIGHT_NETWORK || process.env.MIDNIGHT_NETWORK_ID || process.env.MIDNIGHT_NETWORK || 'local',
     indexer:
       config.MIDNIGHT_INDEXER_URL ||
       process.env.MIDNIGHT_INDEXER_URL ||
       'http://127.0.0.1:8088/api/v3/graphql',
     indexerWS:
+      config.MIDNIGHT_INDEXER_WS ||
       config.MIDNIGHT_INDEXER_WS_URL ||
-      process.env.MIDNIGHT_INDEXER_WS_URL ||
+      process.env.MIDNIGHT_INDEXER_WS ||
       'ws://127.0.0.1:8088/api/v3/graphql/ws',
     proofServer:
       config.MIDNIGHT_PROOF_SERVER_URL ||

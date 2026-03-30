@@ -18,9 +18,16 @@ export class WagerService {
     const positionId = generateId();
 
     // Get market
-    const market = await db.query.markets.findFirst({
+    let market = await db.query.markets.findFirst({
       where: eq(markets.id, data.marketId),
     });
+
+    // Fallback to onchainId for scripts/integration
+    if (!market) {
+      market = await db.query.markets.findFirst({
+        where: eq(markets.onchainId, data.marketId),
+      });
+    }
 
     if (!market) throw new Error('Market not found');
     if (market.status !== 'OPEN') throw new Error('Market not open');
@@ -73,13 +80,27 @@ export class WagerService {
 
     const expiresAt = new Date(Date.now() + data.duration * 1000);
 
+    // Get market
+    let market = await db.query.markets.findFirst({
+      where: eq(markets.id, data.marketId),
+    });
+
+    // Fallback to onchainId
+    if (!market) {
+      market = await db.query.markets.findFirst({
+        where: eq(markets.onchainId, data.marketId),
+      });
+    }
+
+    if (!market) throw new Error('Market not found');
+
     const [wager] = await db
       .insert(wagers)
       .values({
         id: wagerId,
         onchainId,
         creatorId: userId,
-        marketId: data.marketId,
+        marketId: market.id, // Use correct internal ID
         amount: data.amount,
         odds: data.odds,
         creatorSide: data.side,

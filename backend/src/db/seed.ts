@@ -16,23 +16,27 @@ import {
 // Generate random ID
 const generateId = () => randomBytes(16).toString('hex');
 
+export async function clearDatabase() {
+  console.log('Clearing existing data...');
+  // Delete in order to satisfy FK constraints
+  await db.delete(lpPositions);
+  await db.delete(liquidityPools);
+  await db.delete(oracleReports);
+  await db.delete(pricePoints);
+  await db.delete(wagers);
+  await db.delete(positions);
+  await db.delete(markets);
+  await db.delete(oracles);
+  await db.delete(users);
+  console.log('Database cleared');
+}
+
 async function seed() {
   console.log('Seeding database...');
 
   try {
     // Clear existing data
-    console.log('Clearing existing data...');
-    // Delete in order to satisfy FK constraints
-    await db.delete(lpPositions);
-    await db.delete(liquidityPools);
-    await db.delete(oracleReports);
-    await db.delete(pricePoints);
-    await db.delete(wagers);
-    await db.delete(positions);
-    await db.delete(markets);
-    await db.delete(oracles);
-    await db.delete(users);
-    console.log('Database cleared');
+    await clearDatabase();
 
     // Create test users
     const [alice, bob, carol] = await db
@@ -477,15 +481,20 @@ async function seed() {
     await db.insert(markets).values(seedMarkets as any);
 
     console.log('Created test markets');
-
     console.log('Database seeding completed!');
   } catch (error) {
     console.error('Seeding failed:', error);
     throw error;
-  } finally {
-    process.exit(0);
   }
 }
 
-// Run seed
-seed();
+// Export for programmatic use
+export { seed };
+
+// Run if called directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  seed().catch(error => {
+    console.error('Seeding failed:', error);
+    process.exit(1);
+  });
+}

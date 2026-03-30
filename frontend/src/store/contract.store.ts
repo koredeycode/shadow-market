@@ -33,23 +33,28 @@ export const useContractStore = create<ContractState>(set => ({
     set({ isInitializing: true, error: null });
 
     try {
-      // Get contract address from env or use hardcoded fallback
+      // Get contract address from env
       const contractAddress =
-        import.meta.env.VITE_UNIFIED_CONTRACT_ADDRESS?.trim() ||
-        'c39a34cfb4509537207d70c4659cf68c5869079f1a36fd1b958721a87abdb429';
+        import.meta.env.VITE_MIDNIGHT_SHADOW_MARKET_CONTRACT_ADDRESS?.trim() ||
+        import.meta.env.VITE_MIDNIGHT_UNIFIED_CONTRACT_ADDRESS?.trim() ||
+        import.meta.env.VITE_UNIFIED_CONTRACT_ADDRESS?.trim();
+
+      if (!contractAddress) {
+        throw new Error('Contract address not configured. Please set VITE_MIDNIGHT_SHADOW_MARKET_CONTRACT_ADDRESS.');
+      }
 
       console.log('Contract configuration:');
       console.log('  Contract Address:', contractAddress);
-      console.log('  Network ID:', import.meta.env.VITE_NETWORK_ID || 'undeployed');
+      console.log('  Network ID:', import.meta.env.VITE_MIDNIGHT_NETWORK_ID || 'undeployed');
 
       // Configure the contract connection
       const config = {
-        indexerUri: import.meta.env.VITE_INDEXER_URL || 'http://localhost:8088/api/v3',
-        indexerWsUri: import.meta.env.VITE_INDEXER_WS || 'ws://localhost:8088/api/v3',
-        proverServerUri: import.meta.env.VITE_PROOF_SERVER_URL || 'http://localhost:6300',
+        indexerUri: import.meta.env.VITE_MIDNIGHT_INDEXER_URL || import.meta.env.VITE_INDEXER_URL || 'http://localhost:8088/api/v3',
+        indexerWsUri: import.meta.env.VITE_MIDNIGHT_INDEXER_WS || import.meta.env.VITE_MIDNIGHT_INDEXER_WS_URL || import.meta.env.VITE_INDEXER_URL || 'ws://localhost:8088/api/v3',
+        proverServerUri: import.meta.env.VITE_MIDNIGHT_PROOF_SERVER_URL || import.meta.env.VITE_PROOF_SERVER_URL || 'http://localhost:6300',
         zkConfigPath: `${window.location.origin}/zk-config`, // Local absolute URL for ZK artifacts
         contractAddress,
-        networkId: import.meta.env.VITE_NETWORK_ID || 'undeployed',
+        networkId: import.meta.env.VITE_MIDNIGHT_NETWORK_ID || import.meta.env.VITE_NETWORK_ID || 'undeployed',
         shieldedCoinPublicKey: shieldedKeys?.shieldedCoinPublicKey,
         shieldedEncryptionPublicKey: shieldedKeys?.shieldedEncryptionPublicKey,
       };

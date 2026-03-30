@@ -1,0 +1,22 @@
+{
+  "wallets": {
+    "admin": {
+      "address": "mn_addr_undeployed1esvltpyltdh3hz4kedp28davwtclxjsrss345paw2hqdwfpky7dq8ux442",
+      "seed": "1a0795da3dda54ede5cd40a536d8e6c228fe0ba250d183239a8913d781d3bd3a"
+    },
+    "userA": {
+      "address": "mn_addr_undeployed1z7dv7xh0e5afkqf0a0vjm77vtsmmrkqkyxvlurlnm3rcgk2up6zscva2ax",
+      "seed": "a75080b42aa031c6c69f9e9a69802a7f06781c82ff68b57d177d61031849b442"
+    },
+    "userB": {
+      "address": "mn_addr_undeployed1ns3vvv0q6f2rc5t4nlenwepl9p9dvwyza4ya6xtz7ks9ttd2rnus4wa7rh",
+      "seed": "852f770040998b4d1fca75baf13cf0ca6ac0e41ea48c53b97f4bda72b3f317c6"
+    },
+    "userC": {
+      "address": "mn_addr_undeployed1qzpwdvzxs383sq58tngehtu6ssh3rq62f92tmet7a53yr66akpss668a44",
+      "seed": "a04e3a298dc4bd6a2cb02454ed646040bb1c69516841e415717f12a2db576f76"
+    }
+  },
+  "dbResetDone": true,
+  "compiledDone": true
+}

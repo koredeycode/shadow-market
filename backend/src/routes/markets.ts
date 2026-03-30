@@ -18,6 +18,8 @@ const createMarketSchema = z.object({
   resolutionSource: z.string().min(1),
   minBet: z.string(),
   maxBet: z.string(),
+  onchainId: z.string().optional(),
+  contractAddress: z.string().optional(),
 });
 
 const marketFiltersSchema = z.object({

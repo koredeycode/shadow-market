@@ -9,6 +9,7 @@ import { verifyAdminPassword } from '../services/admin-init.service.js';
 import { db } from '../db/client.js';
 import { users } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
+import { config } from '../config.js';
 
 export const adminRouter = Router();
 const adminService = new AdminService();
@@ -27,6 +28,14 @@ adminRouter.post(
   asyncHandler(async (req: AuthRequest, res) => {
     const { username, password } = req.body;
     
+    // 0. Verify address matches ADMIN_ADDRESS if configured
+    if (config.adminAddress && req.user!.address !== config.adminAddress) {
+      return res.status(403).json({
+        success: false,
+        error: 'Unauthorized: Elevation only allowed from configured admin wallet',
+      });
+    }
+
     // 1. Verify credentials
     const isValid = await verifyAdminPassword(username, password);
     if (!isValid) {

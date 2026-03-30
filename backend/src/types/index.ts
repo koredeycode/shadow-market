@@ -18,6 +18,8 @@ export interface CreateMarketRequest {
   resolutionSource: string;
   minBet: string;
   maxBet: string;
+  onchainId?: string;
+  contractAddress?: string;
 }
 
 export interface PlaceBetRequest {

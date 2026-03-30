@@ -1,0 +1,30 @@
+{
+  "wallets": {
+    "admin": {
+      "address": "mn_addr_undeployed12ajcuqfg2jmzgx23m4aldxhw9gt7psx86rwccxu0fdc54urnaxws7vfwem",
+      "seed": "732b3e63faf60ec15b3494330343605dbaabffd29e5ed7fb40d9427159556a36"
+    },
+    "userA": {
+      "address": "mn_addr_undeployed1hhkn64fte9xyxejh2y595a85expfz9x2rjr8gjge5w6hunezqugsdra0p4",
+      "seed": "ccad43fc1397e35f7a4621c5de9d31cb1fe07437b2dca6343259e18825e2dd29"
+    },
+    "userB": {
+      "address": "mn_addr_undeployed1a7zshudsp3mgvmkekyrqw8pnt83jtqugpss7yrhlyaxwjdprpzmslczzd7",
+      "seed": "0762804498d270ecf7c0f6c8f8c47a3d7b2ff8a153e98bd32a1b62605205dad1"
+    },
+    "userC": {
+      "address": "mn_addr_undeployed1453g3acse8evfk7tp0jxpc9zk8pqnyrerj0nzxp8pmhvkyrghsxs7yw4gv",
+      "seed": "8ae0e90c30f2a0c2020a6842e676d5809d7ffbb509cf25c17589971b32cef30e"
+    }
+  },
+  "dbResetDone": true,
+  "compiledDone": true,
+  "contractAddress": "3899329391294afb4cd148d81e29602cc55b316ab6eb0287255281bbe4638f28",
+  "initializedDone": true,
+  "seedingMarketIndex": 10,
+  "activityMarketIndex": 1,
+  "activityUserIndex": 1,
+  "betsDone": false,
+  "wagersDone": false,
+  "activityDone": false
+}

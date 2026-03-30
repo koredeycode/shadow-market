@@ -7,14 +7,14 @@ import logger from '../utils/logger.js';
 // 3. Backend wallet integration is set up
 
 /**
- * Unified prediction market contract service for backend admin operations
+ * Shadow Market contract service for backend admin operations
  *
  * NOTE: This is a stub implementation. To enable:
  * - Compile contracts: pnpm contracts:compile
  * - Complete API wrapper in api/src/index.ts
  * - Set up admin wallet provider
  */
-export class UnifiedContractService {
+export class ShadowMarketContractService {
   constructor() {
     logger.warn('Contract service in STUB mode - awaiting contract compilation');
   }
@@ -64,4 +64,4 @@ export class UnifiedContractService {
 }
 
 // Export singleton instance
-export const unifiedContract = new UnifiedContractService();
+export const shadowMarketContract = new ShadowMarketContractService();

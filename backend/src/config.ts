@@ -1,6 +1,24 @@
 import dotenv from 'dotenv';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-dotenv.config();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const rootDir = path.resolve(__dirname, '..', '..');
+
+// Load environment files in priority order: .env.local > .env.NODE_ENV > .env
+const nodeEnv = process.env.NODE_ENV || 'development';
+const envFiles = [
+  path.join(rootDir, '.env'),
+  path.join(rootDir, `.env.${nodeEnv}`),
+  path.join(rootDir, '.env.local')
+];
+
+for (const file of envFiles) {
+  if (fs.existsSync(file)) {
+    dotenv.config({ path: file, override: true });
+  }
+}
 
 export const config = {
   // Server
@@ -28,21 +46,23 @@ export const config = {
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
 
   // Midnight Network
-  networkId: process.env.NETWORK_ID || 'undeployed',
-  nodeUrl: process.env.NODE_URL || 'http://localhost:9944',
-  indexerUrl: process.env.INDEXER_URL || 'http://localhost:8088/api/v3',
-  indexerWs: process.env.INDEXER_WS || 'ws://localhost:8088/api/v3',
-  proofServerUrl: process.env.PROOF_SERVER_URL || 'http://localhost:6300',
+  networkId: process.env.MIDNIGHT_NETWORK_ID || process.env.NETWORK_ID || 'undeployed',
+  nodeUrl: process.env.MIDNIGHT_NODE_URL || process.env.NODE_URL || 'http://localhost:9944',
+  indexerUrl: process.env.MIDNIGHT_INDEXER_URL || process.env.INDEXER_URL || 'http://localhost:8088/api/v3',
+  indexerWs: process.env.MIDNIGHT_INDEXER_WS || process.env.INDEXER_WS || 'ws://localhost:8088/api/v3',
+  proofServerUrl: process.env.MIDNIGHT_PROOF_SERVER_URL || process.env.PROOF_SERVER_URL || 'http://localhost:6300',
 
   // Contract addresses
-  unifiedContractAddress:
-    process.env.UNIFIED_CONTRACT_ADDRESS ||
-    'b0c23e45c990ae21a13848f824587434f6b6d2fc3f52cb930451c0238bcc61e5',
+  shadowMarketContractAddress:
+    process.env.MIDNIGHT_SHADOW_MARKET_CONTRACT_ADDRESS ||
+    process.env.MIDNIGHT_UNIFIED_CONTRACT_ADDRESS ||
+    process.env.UNIFIED_CONTRACT_ADDRESS,
 
-  // Admin user (created on startup)
+  // Admin Configuration
   adminUsername: process.env.ADMIN_USERNAME || 'admin',
   adminPassword: process.env.ADMIN_PASSWORD || 'changeme',
-  adminWalletAddress: process.env.ADMIN_WALLET_ADDRESS || '',
+  adminAddress: process.env.ADMIN_ADDRESS || process.env.ADMIN_WALLET_ADDRESS || '',
+  adminSeed: process.env.ADMIN_SEED || '',
 };
 
 // Validate required config

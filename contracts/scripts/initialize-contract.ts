@@ -40,6 +40,7 @@ async function main() {
     // Create wallet and providers
     console.log('🔧 Creating wallet and providers...');
     const seed = getAdminWalletSeed();
+    console.log('Using admin seed from environment...');
     const walletCtx = await createWallet(seed);
     const providers = await createProviders(walletCtx);
 

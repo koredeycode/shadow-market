@@ -15,14 +15,14 @@ export class MarketService {
    */
   async createMarket(userId: string, data: CreateMarketRequest) {
     const marketId = generateId();
-    const onchainId = Date.now().toString(); // Temporary - will be from contract
+    const onchainId = data.onchainId || Date.now().toString();
 
     const [market] = await db
       .insert(markets)
       .values({
         id: marketId,
         onchainId,
-        contractAddress: '0x' + generateId(20), // Temporary
+        contractAddress: data.contractAddress || ('0x' + generateId(20)),
         question: data.question,
         description: data.description,
         category: data.category,

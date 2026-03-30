@@ -124,6 +124,13 @@ export class ShadowMarketAPI {
     );
 
     try {
+      // Update witnesses context (mocked for now, but should be handled by providers)
+      // For node/script environment, we can set the context if our provider supports it
+      if ((this.providers as any).witnessContext) {
+        (this.providers as any).witnessContext.betAmount = betAmount;
+        (this.providers as any).witnessContext.betSide = betOutcome ? 1n : 0n;
+      }
+
       const txData = await (this.deployedContract.callTx.placeBet as any)(
         BigInt(marketId),
         betOutcome ? 1n : 0n
@@ -232,12 +239,17 @@ export class ShadowMarketAPI {
   async createWager(
     marketId: string,
     side: boolean,
+    amount: bigint,
     oddsNumerator: bigint,
     oddsDenominator: bigint
   ): Promise<void> {
-    console.log(`CREATING P2P WAGER ON-CHAIN: market=${marketId}`);
+    console.log(`CREATING P2P WAGER ON-CHAIN: market=${marketId}, amount=${amount}`);
 
     try {
+      if ((this.providers as any).witnessContext) {
+        (this.providers as any).witnessContext.wagerAmount = amount;
+      }
+
       const txData = await (this.deployedContract.callTx.createWager as any)(
         BigInt(marketId),
         side ? 1n : 0n,
@@ -317,45 +329,55 @@ export class ShadowMarketAPI {
   /**
    * Connect to an existing deployed contract
    */
+  /**
+   * Connect to a deployed contract using existing providers.
+   * Useful for Node.js/scripts where providers are already initialized.
+   */
+  static async connectWithProviders(
+    providers: MarketProviders,
+    contractAddress: ContractAddress
+  ): Promise<ShadowMarketAPI> {
+    console.log('Connecting to Shadow Market contract with existing providers...');
+    
+    // Set contract address on provider as it's required for scoped private state
+    if (typeof (providers.privateStateProvider as any).setContractAddress === 'function') {
+      (providers.privateStateProvider as any).setContractAddress(contractAddress);
+    }
+    
+    // Get or create private state
+    const privateState = await getOrCreatePrivateState(providers.privateStateProvider);
+
+    // Bind witnesses before finding the contract
+    const compiledWithWitnesses = (compiledShadowMarketContract as any).pipe(
+      (CompiledContract as any).withWitnesses((providers as any).witnesses)
+    );
+
+    const deployedContract = (await findDeployedContract(providers, {
+      compiledContract: compiledWithWitnesses,
+      contractAddress,
+      privateStateId: 'shadow-market-private-state',
+      initialPrivateState: privateState,
+    } as any)) as DeployedShadowMarketContract;
+
+    return new ShadowMarketAPI(deployedContract, providers, privateState);
+  }
+
   static async connect(
     wallet: ConnectedAPI,
     config: DeployedShadowMarketConfig
   ): Promise<ShadowMarketAPI> {
-    console.log('Connecting to Shadow Market contract...');
+    console.log('Connecting to Shadow Market contract via wallet...');
     setNetworkId(config.networkId); // Set global network ID for SDK v4
 
     try {
       // Create all SDK providers
       const providers = await createProvidersFromWallet(wallet, config);
 
-      // Get or create private state
-      const privateState = await getOrCreatePrivateState(providers.privateStateProvider);
-
-      console.log('Providers and private state initialized');
-
-      // Find the deployed contract
       if (!config.contractAddress) {
         throw new Error('Contract address required for connection');
       }
 
-      // Bind witnesses before finding the contract
-      const compiledWithWitnesses = (compiledShadowMarketContract as any).pipe(
-        (CompiledContract as any).withWitnesses((providers as any).witnesses)
-      );
-
-      const deployedContract = (await findDeployedContract(providers, {
-        compiledContract: compiledWithWitnesses,
-        contractAddress: config.contractAddress,
-        privateStateId: 'shadow-market-private-state',
-        initialPrivateState: privateState,
-      } as any)) as DeployedShadowMarketContract;
-
-      console.log(
-        'Found deployed contract at:',
-        deployedContract.deployTxData.public.contractAddress
-      );
-
-      return new ShadowMarketAPI(deployedContract, providers, privateState);
+      return await ShadowMarketAPI.connectWithProviders(providers, config.contractAddress);
     } catch (error: any) {
       console.error('Failed to connect to contract:', error);
       throw new Error(`Contract connection failed: ${error.message}`);
