@@ -57,7 +57,7 @@ function StatCard({ title, value, icon: Icon, trend, color }: StatCardProps) {
 
 export function AdminDashboard() {
   const queryClient = useQueryClient();
-  const { isInitialized, isInitializing } = useContract();
+  const { isInitialized, isInitializing, protocolInitialized } = useContract();
   const { 
     data: stats, 
     isLoading: isStatsLoading, 
@@ -313,7 +313,7 @@ export function AdminDashboard() {
             </h2>
             <p className="text-xs text-slate-500 mt-1">Global administrative operations</p>
           </div>
-          {!isInitialized && (
+          {!protocolInitialized && (
             <button
               onClick={handleInitialize}
               disabled={isInitializingContract}
@@ -327,7 +327,7 @@ export function AdminDashboard() {
               Initialize Protocol
             </button>
           )}
-          {isInitialized && (
+          {protocolInitialized && (
             <div className="flex items-center gap-2 px-3 py-1 bg-success-green/10 border border-success-green/20 rounded-sm">
               <CheckCircle className="w-3.5 h-3.5 text-success-green" />
               <span className="text-[10px] font-mono text-success-green uppercase tracking-wider">

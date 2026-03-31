@@ -8,6 +8,7 @@
 import type { ConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
 import { ShadowMarketAPI, type DeployedShadowMarketConfig } from '@shadow-market/api';
 import { Subscription } from 'rxjs';
+import { useContractStore } from '../store/contract.store';
 
 /**
  * Contract Manager - Singleton service for contract interactions
@@ -29,6 +30,7 @@ class ContractManager {
       // Subscribe to state changes
       this.stateSubscription = this.api.state$.subscribe((state: any) => {
         console.log('Contract state updated:', state);
+        useContractStore.getState().setProtocolInitialized(state.isInitialized);
       });
 
       console.log('Contract initialized successfully');

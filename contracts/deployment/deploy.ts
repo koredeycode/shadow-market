@@ -38,7 +38,7 @@ import { ShadowMarketAPI } from '../../api/src/index.js';
 globalThis.WebSocket = WebSocket;
 
 const NETWORK_CONFIG = getNetworkConfig();
-setNetworkId(NETWORK_CONFIG.network === 'local' ? 'undeployed' : 'testnet');
+setNetworkId(NETWORK_CONFIG.network === 'local' || NETWORK_CONFIG.network === 'undeployed' ? 'undeployed' : 'testnet');
 
 const CONFIG = {
   indexer: NETWORK_CONFIG.indexer,
@@ -114,7 +114,7 @@ const compiledContract = CompiledContract.make('shadow-market', ShadowMarket.Con
 // --- Wallet Functions ---
 
 const baseConfiguration = {
-  networkId: NETWORK_CONFIG.network === 'local' ? ('undeployed' as const) : ('testnet' as const),
+  networkId: (NETWORK_CONFIG.network === 'local' || NETWORK_CONFIG.network === 'undeployed') ? ('undeployed' as const) : ('testnet' as const),
   costParameters: {
     additionalFeeOverhead: 300_000_000_000_000n,
     feeBlocksMargin: 5,
@@ -381,7 +381,7 @@ async function main() {
         indexerWsUri: CONFIG.indexerWS,
         proverServerUri: CONFIG.proofServer,
         contractAddress: contractAddress as any,
-        networkId: NETWORK_CONFIG.network === 'local' ? 'undeployed' : 'testnet',
+        networkId: (NETWORK_CONFIG.network === 'local' || NETWORK_CONFIG.network === 'undeployed') ? 'undeployed' : 'testnet',
       }
     );
 

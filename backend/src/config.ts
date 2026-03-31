@@ -48,8 +48,8 @@ export const config = {
   // Midnight Network
   networkId: process.env.MIDNIGHT_NETWORK_ID || process.env.NETWORK_ID || 'undeployed',
   nodeUrl: process.env.MIDNIGHT_NODE_URL || process.env.NODE_URL || 'http://localhost:9944',
-  indexerUrl: process.env.MIDNIGHT_INDEXER_URL || process.env.INDEXER_URL || 'http://localhost:8088/api/v3',
-  indexerWs: process.env.MIDNIGHT_INDEXER_WS || process.env.INDEXER_WS || 'ws://localhost:8088/api/v3',
+  indexerUrl: process.env.MIDNIGHT_INDEXER_URL || process.env.INDEXER_URL || 'http://localhost:8088/api/v4/graphql',
+  indexerWs: process.env.MIDNIGHT_INDEXER_WS || process.env.INDEXER_WS || 'ws://localhost:8088/api/v4/graphql/ws',
   proofServerUrl: process.env.MIDNIGHT_PROOF_SERVER_URL || process.env.PROOF_SERVER_URL || 'http://localhost:6300',
 
   // Contract addresses

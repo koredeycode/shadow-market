@@ -124,7 +124,6 @@ export const createProvidersFromWallet = async (
   wallet: ConnectedAPI,
   config: ProviderConfig
 ): Promise<MarketProviders> => {
-  const walletConfig = await wallet.getConfiguration();
 
   // Derive endpoints (appending suffixes if missing)
   const graphqlUri = config.indexerUri.endsWith('/graphql')

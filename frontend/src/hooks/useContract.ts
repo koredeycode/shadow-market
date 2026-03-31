@@ -8,7 +8,7 @@ import { useContractStore } from '../store/contract.store';
  * Now using the BBoard-style API wrapper pattern
  */
 export function useContract() {
-  const { isInitialized, isInitializing, error } = useContractStore();
+  const { isInitialized, isInitializing, protocolInitialized, error } = useContractStore();
 
   // Place a bet on a market
   const placeBet = useCallback(
@@ -127,6 +127,7 @@ export function useContract() {
     // State
     isInitialized,
     isInitializing,
+    protocolInitialized,
     error,
 
     // Actions

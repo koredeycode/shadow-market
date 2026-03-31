@@ -4,6 +4,7 @@ import { contractManager } from '../services/contract.service';
 interface ContractState {
   isInitialized: boolean;
   isInitializing: boolean;
+  protocolInitialized: boolean;
   error: string | null;
 
   // Actions
@@ -15,12 +16,14 @@ interface ContractState {
     }
   ) => Promise<boolean>;
   cleanup: () => void;
+  setProtocolInitialized: (status: boolean) => void;
   setError: (error: string | null) => void;
 }
 
 export const useContractStore = create<ContractState>(set => ({
   isInitialized: false,
   isInitializing: false,
+  protocolInitialized: false,
   error: null,
 
   initialize: async (
@@ -88,6 +91,9 @@ export const useContractStore = create<ContractState>(set => ({
     set({ isInitialized: false, error: null });
   },
 
+  setProtocolInitialized: (status: boolean) => {
+    set({ protocolInitialized: status });
+  },
   setError: (error: string | null) => {
     set({ error });
   },
