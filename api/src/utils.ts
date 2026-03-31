@@ -24,6 +24,17 @@ export const randomBytes = (length: number): Uint8Array => {
 };
 
 /**
+ * Generate a 32-byte nonce that is safe for a Field range
+ * (uses 16 bytes of entropy padded with zeros)
+ */
+export const safeRandomNonce = (): Uint8Array => {
+  const nonce = new Uint8Array(32);
+  const entropy = randomBytes(16);
+  nonce.set(entropy, 0);
+  return nonce;
+};
+
+/**
  * Convert Uint8Array to hex string
  */
 export const toHex = (bytes: Uint8Array): string => {
@@ -41,4 +52,26 @@ export const fromHex = (hex: string): Uint8Array => {
     bytes[i / 2] = parseInt(hex.slice(i, i + 2), 16);
   }
   return bytes;
+};
+
+/**
+ * Convert string to Uint8Array of fixed length (32 bytes)
+ * Truncates if too long, pads with 0 if shorter
+ */
+export const stringToBytes32 = (str: string): Uint8Array => {
+  const bytes = new TextEncoder().encode(str);
+  const result = new Uint8Array(32);
+  result.set(bytes.slice(0, 32));
+  return result;
+};
+
+/**
+ * Converts Bytes<32> (Uint8Array) back to a readable string
+ * Trims null characters/padding from the end
+ */
+export const bytes32ToString = (bytes: Uint8Array): string => {
+  const decoder = new TextDecoder();
+  const rawString = decoder.decode(bytes);
+  // Remove null padding (\0) from the end
+  return rawString.replace(/\0+$/, '');
 };

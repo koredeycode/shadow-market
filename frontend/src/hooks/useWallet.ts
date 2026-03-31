@@ -39,15 +39,23 @@ export function useWallet() {
   const {
     isConnected,
     isConnecting,
-    address,
-    balance,
+    address: shieldedAddress,
+    unshieldedAddress,
+    addressDisplayMode,
+    nightBalance,
+    unshieldedNightBalance,
+    dustBalance,
     networkId,
     provider,
-    connect,
-    disconnect,
-    updateBalance,
+    autoConnect,
+    connect: storeConnect,
+    disconnect: storeDisconnect,
+    updateBalances,
     setConnecting,
+    setAddressDisplayMode,
   } = useWalletStore();
+
+  const currentAddress = addressDisplayMode === 'shielded' ? shieldedAddress : (unshieldedAddress || shieldedAddress);
 
   const { initialize: initializeContract, cleanup: cleanupContract } = useContractStore();
 
@@ -84,44 +92,108 @@ export function useWallet() {
       connectedAPIRef.current = connectedAPI;
 
       // Get connection status and configuration
-      const connectionStatus = await connectedAPI.getConnectionStatus();
-      console.log('Connection status:', connectionStatus);
-
+      const initialStatus = await connectedAPI.getConnectionStatus();
       const shieldedAddresses = await connectedAPI.getShieldedAddresses();
-      console.log('Shielded addresses:', shieldedAddresses);
+
+      // Helper to format hex to Bech32m if needed
+      const formatHexToBech32 = (hexAddr: string, type: 'shielded' | 'unshielded') => {
+        if (!hexAddr || hexAddr.startsWith('mn_')) return hexAddr;
+        
+        try {
+          if (type === 'shielded') {
+            const coinPublicKey = ShieldedCoinPublicKey.fromHexString(
+              shieldedAddresses.shieldedCoinPublicKey
+            );
+            const encryptionPublicKey = ShieldedEncryptionPublicKey.fromHexString(
+              shieldedAddresses.shieldedEncryptionPublicKey
+            );
+            const fullShieldedAddress = new ShieldedAddress(coinPublicKey, encryptionPublicKey);
+            return ShieldedAddress.codec.encode(NETWORK_ID, fullShieldedAddress).toString();
+          } else {
+            // For unshielded, we use the raw public key as the coin public key for encoding
+            const coinPublicKey = ShieldedCoinPublicKey.fromHexString(hexAddr);
+            // Use dummy encryption key for unshielded
+            const encryptionPublicKey = ShieldedEncryptionPublicKey.fromHexString('0000000000000000000000000000000000000000000000000000000000000000');
+            const fullUnshieldedAddress = new ShieldedAddress(coinPublicKey, encryptionPublicKey);
+            return ShieldedAddress.codec.encode(NETWORK_ID, fullUnshieldedAddress).toString().replace('mn_shield-addr_', 'mn_addr_');
+          }
+        } catch (e) {
+          console.error(`Failed to format ${type} address:`, e);
+          return hexAddr;
+        }
+      };
 
       // Convert hex public keys to Bech32m formatted address if they are returned as hex
-      let walletAddress = shieldedAddresses.shieldedAddress;
+      let shieldedAddressVal = formatHexToBech32(shieldedAddresses.shieldedAddress, 'shielded');
+      
+      // Attempt to get unshielded address using the correct method found in debug logs
+      let unshieldedAddressVal = (initialStatus as any).status?.unshieldedAddress;
 
-      // If shieldedAddress is identical to coinPublicKey, it's likely raw hex and needs formatting
-      if (walletAddress === shieldedAddresses.shieldedCoinPublicKey) {
-        console.log('Formatting hex address to Bech32m...');
+      if (!unshieldedAddressVal && typeof (connectedAPI as any).getUnshieldedAddress === 'function') {
         try {
-          const coinPublicKey = ShieldedCoinPublicKey.fromHexString(
-            shieldedAddresses.shieldedCoinPublicKey
-          );
-          const encryptionPublicKey = ShieldedEncryptionPublicKey.fromHexString(
-            shieldedAddresses.shieldedEncryptionPublicKey
-          );
-          const fullShieldedAddress = new ShieldedAddress(coinPublicKey, encryptionPublicKey);
-          walletAddress = ShieldedAddress.codec.encode(NETWORK_ID, fullShieldedAddress).toString();
-          console.log('Formatted address:', walletAddress);
+          const result = await (connectedAPI as any).getUnshieldedAddress();
+          unshieldedAddressVal = typeof result === 'object' && result !== null ? result.unshieldedAddress : result;
         } catch (e) {
-          console.error('Failed to format shielded address:', e);
-          // Fallback to what we have if formatting fails
+          console.error('getUnshieldedAddress() failed', e);
         }
       }
 
-      // Get balance (placeholder - might need different method)
-      const walletBalance = '0'; // TODO: Implement balance fetching
+      if (unshieldedAddressVal && typeof unshieldedAddressVal === 'string') {
+        unshieldedAddressVal = formatHexToBech32(unshieldedAddressVal, 'unshielded');
+      }
 
-      connect(connectedAPI, walletAddress, NETWORK_ID);
-      updateBalance(walletBalance);
+      // Get balances using specific methods if available
+      let unshieldedBalance = '0';
+      let dustBalance = '0';
+      let shieldedBalance = '0';
+
+      try {
+        if (typeof (connectedAPI as any).getUnshieldedBalances === 'function') {
+          const balances = await (connectedAPI as any).getUnshieldedBalances();
+          const keys = Object.keys(balances || {});
+          unshieldedBalance = balances?.['00']?.toString() || (keys.length > 0 ? balances[keys[0]].toString() : '0');
+        } else {
+          unshieldedBalance = (initialStatus as any).status?.balances?.['00']?.toString() || '0';
+        }
+
+        if (typeof (connectedAPI as any).getDustBalance === 'function') {
+          const dust = await (connectedAPI as any).getDustBalance();
+          if (typeof dust === 'object' && dust !== null && 'balance' in dust) {
+            dustBalance = (dust as any).balance.toString();
+          } else {
+            dustBalance = dust?.toString() || '0';
+          }
+        } else {
+          dustBalance = (initialStatus as any).status?.balances?.['dust']?.toString() || '0';
+        }
+
+        if (typeof (connectedAPI as any).getShieldedBalances === 'function') {
+          const balances = await (connectedAPI as any).getShieldedBalances();
+          shieldedBalance = balances?.['00']?.toString() || '0';
+        }
+      } catch (e) {
+        console.error('Failed to fetch balances:', e);
+      }
+
+      console.log('DEBUG: Initial Balances (Raw):', {
+        shielded: shieldedBalance,
+        unshielded: unshieldedBalance,
+        dust: dustBalance
+      });
+
+      updateBalances({
+        night: String(shieldedBalance),
+        unshieldedNight: String(unshieldedBalance),
+        dust: String(dustBalance),
+      });
+
+      storeConnect(connectedAPI, { shielded: shieldedAddressVal, unshielded: unshieldedAddressVal }, NETWORK_ID);
 
       // Authenticate user with backend (create account if doesn't exist)
       try {
-        console.log('Authenticating user with backend...');
-        const authResponse = await authApi.authenticate({ address: walletAddress });
+        const authAddress = unshieldedAddressVal || shieldedAddressVal;
+        console.log('Authenticating user with backend using address:', authAddress);
+        const authResponse = await authApi.authenticate({ address: authAddress });
 
         // Store JWT token in localStorage
         localStorage.setItem('authToken', authResponse.token);
@@ -170,34 +242,74 @@ export function useWallet() {
       toast.error(errorMessage);
       setConnecting(false);
     }
-  }, [isWalletInstalled, connect, updateBalance, setConnecting, isConnecting, isConnected]);
+  }, [isWalletInstalled, storeConnect, updateBalances, setConnecting, isConnecting, isConnected, initializeContract]);
 
   // Disconnect wallet
   const disconnectWallet = useCallback(() => {
     connectedAPIRef.current = null;
     cleanupContract();
-    disconnect();
+    storeDisconnect();
 
     // Clear auth token
     localStorage.removeItem('authToken');
     console.log('Auth token cleared');
 
     toast.success('Wallet disconnected');
-  }, [disconnect, cleanupContract]);
+  }, [storeDisconnect, cleanupContract]);
 
-  // Refresh balance
+  // Refresh balances
   const refreshBalance = useCallback(async () => {
-    if (!isConnected || !connectedAPIRef.current) return;
+    const connectedAPI = connectedAPIRef.current;
+    if (!connectedAPI) return;
 
     try {
-      // TODO: Implement balance refresh when API method is available
-      // The DApp Connector API might provide balance through getConfiguration()
-      const newBalance = '0';
-      updateBalance(newBalance);
-    } catch (error) {
-      console.error('Failed to refresh balance:', error);
+      let unshieldedNight = '0';
+      let dust = '0';
+      let night = '0';
+
+      if (typeof (connectedAPI as any).getUnshieldedBalances === 'function') {
+        const balances = await (connectedAPI as any).getUnshieldedBalances();
+        const keys = Object.keys(balances || {});
+        unshieldedNight = balances?.['00']?.toString() || (keys.length > 0 ? balances[keys[0]].toString() : '0');
+      } else {
+        const status = await connectedAPI.getConnectionStatus();
+        const balances = (status as any).status?.balances || {};
+        const keys = Object.keys(balances);
+        unshieldedNight = balances?.['00']?.toString() || (keys.length > 0 ? balances[keys[0]].toString() : '0');
+      }
+
+      if (typeof (connectedAPI as any).getDustBalance === 'function') {
+        const dustResult = await (connectedAPI as any).getDustBalance();
+        if (typeof dustResult === 'object' && dustResult !== null && 'balance' in dustResult) {
+          dust = (dustResult as any).balance.toString();
+        } else {
+          dust = dustResult?.toString() || '0';
+        }
+      } else {
+        const status = await connectedAPI.getConnectionStatus();
+        dust = (status as any).status?.balances?.['dust']?.toString() || '0';
+      }
+
+      if (typeof (connectedAPI as any).getShieldedBalances === 'function') {
+        const balances = await (connectedAPI as any).getShieldedBalances();
+        night = balances?.['00']?.toString() || '0';
+      }
+
+      console.log('DEBUG: Refreshed Balances:', {
+        night,
+        unshieldedNight,
+        dust
+      });
+
+      updateBalances({
+        night,
+        unshieldedNight,
+        dust,
+      });
+    } catch (e) {
+      console.error('Failed to refresh balances:', e);
     }
-  }, [isConnected, updateBalance]);
+  }, [updateBalances]);
 
   // Sign and submit transaction
   const signTransaction = useCallback(
@@ -218,21 +330,22 @@ export function useWallet() {
     [isConnected]
   );
 
-  // Format balance for display
-  const formattedBalance = useCallback(() => {
-    if (!balance) return '0';
-    const num = parseFloat(balance);
-    if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(2)}M`;
-    if (num >= 1_000) return `${(num / 1_000).toFixed(2)}K`;
-    return num.toFixed(2);
-  }, [balance]);
-
-  // Format address for display (first 8...last 6 chars)
+  // Format address for display (prefix...suffix)
   const formattedAddress = useCallback(() => {
-    if (!address) return '';
-    if (address.length <= 20) return address;
-    return `${address.slice(0, 8)}...${address.slice(-6)}`;
-  }, [address]);
+    const addr = currentAddress;
+    if (!addr) return '';
+    
+    // For Midnight addresses, preserve the prefix (mn_addr_ or mn_shield-addr_)
+    if (addr.startsWith('mn_shield-addr_')) {
+      return `${addr.slice(0, 15)}...${addr.slice(-6)}`;
+    }
+    if (addr.startsWith('mn_addr_')) {
+      return `${addr.slice(0, 8)}...${addr.slice(-6)}`;
+    }
+
+    if (addr.length <= 20) return addr;
+    return `${addr.slice(0, 8)}...${addr.slice(-6)}`;
+  }, [currentAddress]);
 
   // Setup event listeners for account/network changes
   useEffect(() => {
@@ -244,7 +357,7 @@ export function useWallet() {
     return () => {
       // Cleanup if needed
     };
-  }, [disconnect]);
+  }, [disconnectWallet]);
 
   // Auto-refresh balance every 30 seconds
   useEffect(() => {
@@ -256,19 +369,34 @@ export function useWallet() {
 
     return () => clearInterval(interval);
   }, [isConnected, refreshBalance]);
+  
+  // Auto-connect on mount if previously connected
+  useEffect(() => {
+    if (!isConnected && !isConnecting && autoConnect) {
+      console.log('DEBUG: Auto-connecting wallet...');
+      connectWallet();
+    }
+  }, []);
 
   return {
     // State
     isConnected,
     isConnecting,
-    address,
-    balance,
+    address: currentAddress,
+    shieldedAddress,
+    unshieldedAddress,
+    addressDisplayMode,
+    nightBalance,
+    unshieldedNightBalance,
+    dustBalance,
     networkId,
     provider,
     isWalletInstalled: isWalletInstalled(),
 
     // Computed
-    formattedBalance: formattedBalance(),
+    formattedNightBalance: (Number(String(nightBalance || '0').replace(/[^0-9.]/g, '')) / 1_000_000).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }),
+    formattedUnshieldedNightBalance: (Number(String(unshieldedNightBalance || '0').replace(/[^0-9.]/g, '')) / 1_000_000).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }),
+    formattedDustBalance: (Number(String(dustBalance || '0').replace(/[^0-9.]/g, '')) / 1_000_000_000_000_000).toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 }),
     formattedAddress: formattedAddress(),
 
     // Actions
@@ -276,6 +404,7 @@ export function useWallet() {
     disconnectWallet,
     refreshBalance,
     signTransaction,
+    setAddressDisplayMode,
     isWalletModalOpen: useWalletStore(s => s.isWalletModalOpen),
     setWalletModalOpen: useWalletStore(s => s.setWalletModalOpen),
   };

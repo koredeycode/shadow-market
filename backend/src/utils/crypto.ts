@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
+import { createCipheriv, createDecipheriv, createHash, randomBytes, scryptSync } from 'crypto';
 
 const ALGORITHM = 'aes-256-gcm';
 const SALT_LENGTH = 16;
@@ -66,6 +66,5 @@ export function generateId(length: number = 16): string {
  * Hash a value (for commitments)
  */
 export function hashValue(value: string): string {
-  const crypto = require('crypto');
-  return crypto.createHash('sha256').update(value).digest('hex');
+  return createHash('sha256').update(value).digest('hex');
 }

@@ -7,7 +7,13 @@ import { WalletDetailView } from '../wallet/WalletDetailView';
 import { useWalletStore } from '../../store/wallet.store';
 
 export function TopBar() {
-  const { isConnected, isConnecting, formattedAddress, formattedBalance } = useWallet();
+  const { 
+    isConnected, 
+    isConnecting, 
+    formattedAddress, 
+    formattedUnshieldedNightBalance, 
+    formattedDustBalance 
+  } = useWallet();
   const { isWalletModalOpen, setWalletModalOpen } = useWalletStore();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const detailRef = useRef<HTMLDivElement>(null);
@@ -80,13 +86,24 @@ export function TopBar() {
                     : 'border-white/10 hover:border-electric-blue/50'
                 }`}
               >
-                <div className="flex flex-col items-end mr-1">
-                  <span className="text-[10px] text-slate-500 font-mono leading-none mb-1 uppercase">
-                    Balance
-                  </span>
-                  <span className="text-[11px] text-white font-mono font-bold leading-none">
-                    {formattedBalance}
-                  </span>
+                <div className="flex items-center gap-4 mr-1">
+                  <div className="flex flex-col items-end">
+                    <span className="text-[8px] text-slate-500 font-mono leading-none mb-1 uppercase tracking-tighter">
+                      Night
+                    </span>
+                    <span className="text-[10px] text-white font-mono font-bold leading-none">
+                      {formattedUnshieldedNightBalance}
+                    </span>
+                  </div>
+                  <div className="w-[1px] h-6 bg-white/5" />
+                  <div className="flex flex-col items-end">
+                    <span className="text-[8px] text-slate-500 font-mono leading-none mb-1 uppercase tracking-tighter">
+                      Dust
+                    </span>
+                    <span className="text-[10px] text-white font-mono font-bold leading-none">
+                      {formattedDustBalance}
+                    </span>
+                  </div>
                 </div>
                 <div className="h-8 w-[1px] bg-white/10 mx-1" />
                 <div className="flex items-center gap-2">

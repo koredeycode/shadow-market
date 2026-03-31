@@ -28,7 +28,7 @@ interface PlaceBetModalProps {
 }
 
 export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
-  const { isConnected, balance, formattedBalance, connectWallet } = useWallet();
+  const { isConnected, unshieldedNightBalance, formattedUnshieldedNightBalance, connectWallet } = useWallet();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
@@ -79,11 +79,11 @@ export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
     const betAmount = parseFloat(amount);
     const minBet = parseFloat(market.minBet);
     const maxBet = parseFloat(market.maxBet);
-    const userBalance = parseFloat(balance || '0');
+    const userBalance = parseFloat(unshieldedNightBalance || '0');
 
     if (betAmount < minBet) return `Minimum bet is ${minBet}`;
     if (betAmount > maxBet) return `Maximum bet is ${maxBet}`;
-    if (betAmount > userBalance) return `Insufficient balance. You have ${formattedBalance}`;
+    if (betAmount > userBalance) return `Insufficient balance. You have ${formattedUnshieldedNightBalance}`;
     return null;
   };
 
@@ -225,7 +225,7 @@ export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
                     Trade Size
                   </label>
                   <span className="text-[10px] text-slate-600 font-mono italic font-bold">
-                    Avail: {formattedBalance}
+                    Avail: {formattedUnshieldedNightBalance}
                   </span>
                 </div>
                 <div className="relative">
@@ -247,7 +247,7 @@ export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
                     <span className="text-xs text-slate-600 font-bold tracking-widest uppercase">
-                      DUST
+                      NIGHT
                     </span>
                   </div>
                 </div>
@@ -257,7 +257,7 @@ export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
                       key={pct}
                       type="button"
                       onClick={() => {
-                        const bal = parseFloat(balance || '0');
+                        const bal = parseFloat(unshieldedNightBalance || '0');
                         setValue('amount', ((bal * pct) / 100).toFixed(2));
                       }}
                       className="py-1.5 bg-white/5 border border-white/5 rounded-sm text-[10px] font-mono text-slate-500 hover:bg-white/10 hover:text-white transition-all uppercase"
@@ -338,7 +338,7 @@ export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
                     <div className="flex justify-between text-[11px] font-mono pt-2 border-t border-white/[0.02]">
                       <span className="text-slate-500 uppercase">Expected Payout</span>
                       <span className="text-white font-bold underline decoration-electric-blue/40">
-                        {estimate.potentialPayout.toFixed(2)} DUST
+                        {estimate.potentialPayout.toFixed(2)} NIGHT
                       </span>
                     </div>
                   </div>

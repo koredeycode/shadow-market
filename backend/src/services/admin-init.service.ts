@@ -14,7 +14,7 @@ export async function initializeAdmin() {
   logger.info('Initializing admin user...');
 
   try {
-    const { adminUsername, adminPassword, adminWalletAddress } = config;
+    const { adminUsername, adminPassword, adminAddress } = config;
 
     if (!adminUsername || !adminPassword) {
       logger.warn('Admin credentials not configured, skipping admin setup');
@@ -38,6 +38,19 @@ export async function initializeAdmin() {
         logger.info('Updated user to admin role', { username: adminUsername });
       }
 
+      // Sync admin address if it differs from config (e.g. from shielded to unshielded)
+      if (adminAddress && existingAdmin.address !== adminAddress) {
+        await db
+          .update(users)
+          .set({ address: adminAddress, updatedAt: new Date() })
+          .where(eq(users.id, existingAdmin.id));
+        logger.info('Synchronized admin wallet address in database', {
+          username: adminUsername,
+          oldAddress: existingAdmin.address,
+          newAddress: adminAddress,
+        });
+      }
+
       return existingAdmin;
     }
 
@@ -48,7 +61,7 @@ export async function initializeAdmin() {
       .insert(users)
       .values({
         id: generateId(),
-        address: adminWalletAddress || `admin_${Date.now()}`,
+        address: adminAddress || `admin_${Date.now()}`,
         username: adminUsername,
         encryptedSeed: hashedPassword, // Store password hash in encryptedSeed field
         isAdmin: true,

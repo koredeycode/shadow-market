@@ -23,10 +23,6 @@ export const marketStatusEnum = pgEnum('market_status', [
 
 export const wagerStatusEnum = pgEnum('wager_status', ['OPEN', 'MATCHED', 'RESOLVED', 'CANCELLED']);
 
-export const reportStatusEnum = pgEnum('report_status', ['PENDING', 'DISPUTED', 'CONFIRMED']);
-
-export const oracleStatusEnum = pgEnum('oracle_status', ['ACTIVE', 'SUSPENDED', 'REMOVED']);
-
 export const kycStatusEnum = pgEnum('kyc_status', ['NONE', 'PENDING', 'APPROVED', 'REJECTED']);
 
 // Users table
@@ -72,7 +68,7 @@ export const markets = pgTable(
   {
     id: text('id').primaryKey(),
     onchainId: varchar('onchain_id', { length: 255 }).unique().notNull(),
-    contractAddress: varchar('contract_address', { length: 255 }).unique().notNull(),
+    txHash: varchar('tx_hash', { length: 255 }),
 
     // Market config
     question: text('question').notNull(),
@@ -131,6 +127,7 @@ export const positions = pgTable(
   'positions',
   {
     id: text('id').primaryKey(),
+    txHash: varchar('tx_hash', { length: 255 }),
 
     // Foreign keys
     userId: text('user_id')
@@ -174,6 +171,7 @@ export const wagers = pgTable(
   {
     id: text('id').primaryKey(),
     onchainId: varchar('onchain_id', { length: 255 }).unique().notNull(),
+    txHash: varchar('tx_hash', { length: 255 }),
 
     // P2P wager data
     creatorId: text('creator_id')
@@ -226,105 +224,23 @@ export const pricePoints = pgTable(
   })
 );
 
-// Oracle information
-export const oracles = pgTable(
-  'oracles',
+
+export const marketStats = pgTable(
+  'market_stats',
   {
     id: text('id').primaryKey(),
-    address: varchar('address', { length: 255 }).unique().notNull(),
-
-    // Oracle data
-    reputation: integer('reputation').default(500).notNull(),
-    totalSubmissions: integer('total_submissions').default(0).notNull(),
-    correctSubmissions: integer('correct_submissions').default(0).notNull(),
-    status: oracleStatusEnum('status').notNull(),
-    stake: decimal('stake', { precision: 20, scale: 0 }).notNull(),
-
-    registeredAt: timestamp('registered_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    addressIdx: index('oracles_address_idx').on(table.address),
-    statusIdx: index('oracles_status_idx').on(table.status),
-  })
-);
-
-// Oracle reports table
-export const oracleReports = pgTable(
-  'oracle_reports',
-  {
-    id: text('id').primaryKey(),
-
-    reporterId: text('reporter_id')
-      .references(() => oracles.id)
-      .notNull(),
     marketId: text('market_id')
       .references(() => markets.id, { onDelete: 'cascade' })
       .notNull(),
 
-    outcome: integer('outcome').notNull(),
-    confidence: integer('confidence').notNull(),
-    proofData: text('proof_data').notNull(),
+    totalVolume: decimal('total_volume', { precision: 20, scale: 0 }).default('0').notNull(),
+    totalBets: integer('total_bets').default(0).notNull(),
+    uniqueTraders: integer('unique_traders').default(0).notNull(),
 
-    status: reportStatusEnum('status').notNull(),
-    confirmations: integer('confirmations').default(1).notNull(),
-    disputes: integer('disputes').default(0).notNull(),
-
-    reportedAt: timestamp('reported_at').defaultNow().notNull(),
-    confirmedAt: timestamp('confirmed_at'),
-  },
-  table => ({
-    marketIdx: index('oracle_reports_market_idx').on(table.marketId),
-    reporterIdx: index('oracle_reports_reporter_idx').on(table.reporterId),
-    statusIdx: index('oracle_reports_status_idx').on(table.status),
-  })
-);
-
-// Liquidity pools
-export const liquidityPools = pgTable(
-  'liquidity_pools',
-  {
-    id: text('id').primaryKey(),
-    onchainId: varchar('onchain_id', { length: 255 }).unique().notNull(),
-    marketId: text('market_id')
-      .references(() => markets.id, { onDelete: 'cascade' })
-      .notNull(),
-
-    yesReserve: decimal('yes_reserve', { precision: 20, scale: 0 }).notNull(),
-    noReserve: decimal('no_reserve', { precision: 20, scale: 0 }).notNull(),
-    totalLiquidity: decimal('total_liquidity', { precision: 20, scale: 0 }).notNull(),
-    totalLpTokens: decimal('total_lp_tokens', { precision: 20, scale: 0 }).notNull(),
-    feeRate: integer('fee_rate').notNull(),
-
-    active: boolean('active').default(true).notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   table => ({
-    marketIdx: index('liquidity_pools_market_idx').on(table.marketId),
-  })
-);
-
-// LP positions
-export const lpPositions = pgTable(
-  'lp_positions',
-  {
-    id: text('id').primaryKey(),
-
-    userId: text('user_id')
-      .references(() => users.id)
-      .notNull(),
-    poolId: text('pool_id')
-      .references(() => liquidityPools.id, { onDelete: 'cascade' })
-      .notNull(),
-
-    lpTokens: decimal('lp_tokens', { precision: 20, scale: 0 }).notNull(),
-
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    userPoolIdx: index('lp_positions_user_pool_idx').on(table.userId, table.poolId),
+    marketIdx: index('market_stats_market_idx').on(table.marketId),
   })
 );
 
@@ -379,7 +295,6 @@ export const usersRelations = relations(users, ({ many }) => ({
   positions: many(positions),
   createdWagers: many(wagers, { relationName: 'creator' }),
   takenWagers: many(wagers, { relationName: 'taker' }),
-  lpPositions: many(lpPositions),
 }));
 
 export const marketsRelations = relations(markets, ({ one, many }) => ({
@@ -390,8 +305,6 @@ export const marketsRelations = relations(markets, ({ one, many }) => ({
   positions: many(positions),
   priceHistory: many(pricePoints),
   wagers: many(wagers),
-  reports: many(oracleReports),
-  liquidityPool: one(liquidityPools),
   upvotedBy: many(marketUpvotes),
 }));
 
@@ -427,40 +340,6 @@ export const pricePointsRelations = relations(pricePoints, ({ one }) => ({
   market: one(markets, {
     fields: [pricePoints.marketId],
     references: [markets.id],
-  }),
-}));
-
-export const oraclesRelations = relations(oracles, ({ many }) => ({
-  reports: many(oracleReports),
-}));
-
-export const oracleReportsRelations = relations(oracleReports, ({ one }) => ({
-  reporter: one(oracles, {
-    fields: [oracleReports.reporterId],
-    references: [oracles.id],
-  }),
-  market: one(markets, {
-    fields: [oracleReports.marketId],
-    references: [markets.id],
-  }),
-}));
-
-export const liquidityPoolsRelations = relations(liquidityPools, ({ one, many }) => ({
-  market: one(markets, {
-    fields: [liquidityPools.marketId],
-    references: [markets.id],
-  }),
-  lpPositions: many(lpPositions),
-}));
-
-export const lpPositionsRelations = relations(lpPositions, ({ one }) => ({
-  user: one(users, {
-    fields: [lpPositions.userId],
-    references: [users.id],
-  }),
-  pool: one(liquidityPools, {
-    fields: [lpPositions.poolId],
-    references: [liquidityPools.id],
   }),
 }));
 

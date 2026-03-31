@@ -23,6 +23,7 @@ import {
   type MarketPrivateState,
   type MarketProviders,
 } from './providers.js';
+import { stringToBytes32, safeRandomNonce } from './utils.js';
 
 /**
  * Configuration for connecting to a deployed contract
@@ -103,12 +104,13 @@ export class ShadowMarketAPI {
    * Initialize the contract (sets adminKey and marks as initialized)
    * This should be called once after deployment.
    */
-  async initialize(): Promise<void> {
+  async initialize(): Promise<string> {
     console.log('INITIALIZING CONTRACT ON-CHAIN');
 
     try {
       const txData = await (this.deployedContract.callTx.initialize as any)();
       console.log('Contract initialized! Transaction:', txData.public.txHash);
+      return txData.public.txHash;
     } catch (error: any) {
       console.error('initialize circuit execution failed:', error);
       throw new Error(`Failed to initialize contract: ${error.message}`);
@@ -118,7 +120,7 @@ export class ShadowMarketAPI {
   /**
    * Place a bet on a prediction market (AMM pool)
    */
-  async placeBet(marketId: string, betAmount: bigint, betOutcome: boolean): Promise<void> {
+  async placeBet(marketId: string, betAmount: bigint, betOutcome: boolean): Promise<string> {
     console.log(
       `PLACING BET ON-CHAIN: market=${marketId}, amount=${betAmount}, side=${betOutcome ? 'YES' : 'NO'}`
     );
@@ -129,6 +131,7 @@ export class ShadowMarketAPI {
       if ((this.providers as any).witnessContext) {
         (this.providers as any).witnessContext.betAmount = betAmount;
         (this.providers as any).witnessContext.betSide = betOutcome ? 1n : 0n;
+        (this.providers as any).witnessContext.betNonce = safeRandomNonce();
       }
 
       const txData = await (this.deployedContract.callTx.placeBet as any)(
@@ -137,6 +140,12 @@ export class ShadowMarketAPI {
       );
 
       console.log('Bet placed! Transaction:', txData.public.txHash);
+      
+      // Wait for state propagation (approx 15s to be safe in local node)
+      console.log('Waiting for state propagation...');
+      await new Promise(resolve => setTimeout(resolve, 15000));
+      
+      return txData.public.txHash;
     } catch (error: any) {
       console.error('placeBet circuit execution failed:', error);
       throw new Error(`Failed to place bet: ${error.message}`);
@@ -147,13 +156,14 @@ export class ShadowMarketAPI {
    * Claim winnings from a resolved market
    * @param betId The bet ID to claim winnings for
    */
-  async claimWinnings(betId: string): Promise<void> {
+  async claimWinnings(betId: string): Promise<string> {
     console.log(`CLAIMING POOL WINNINGS ON-CHAIN: betId=${betId}`);
 
     try {
       const txData = await (this.deployedContract.callTx.claimPoolWinnings as any)(BigInt(betId));
 
       console.log('Winnings claimed! Transaction:', txData.public.txHash);
+      return txData.public.txHash;
     } catch (error: any) {
       console.error('claimPoolWinnings circuit execution failed:', error);
       throw new Error(`Failed to claim winnings: ${error.message}`);
@@ -182,16 +192,24 @@ export class ShadowMarketAPI {
     resolutionTime: bigint,
     initialLiquidity: bigint,
     oracleAddress: string
-  ): Promise<void> {
+  ): Promise<string> {
     console.log(`CREATING MARKET ON-CHAIN: ${question}, endTime=${resolutionTime}`);
 
     try {
+      const titleBytes = stringToBytes32(question);
       const txData = await (this.deployedContract.callTx.createMarket as any)(
         resolutionTime,
-        initialLiquidity
+        initialLiquidity,
+        titleBytes
       );
 
       console.log('Market created! Transaction:', txData.public.txHash);
+      
+      // Wait for state propagation
+      console.log('Waiting for state propagation...');
+      await new Promise(resolve => setTimeout(resolve, 15000));
+      
+      return txData.public.txHash;
     } catch (error: any) {
       console.error('createMarket circuit execution failed:', error);
       throw new Error(`Failed to create market: ${error.message}`);
@@ -201,13 +219,14 @@ export class ShadowMarketAPI {
   /**
    * Lock a market (admin only)
    */
-  async lockMarket(marketId: string): Promise<void> {
+  async lockMarket(marketId: string): Promise<string> {
     console.log(`LOCKING MARKET ON-CHAIN: ${marketId}`);
 
     try {
       const txData = await (this.deployedContract.callTx.lockMarket as any)(BigInt(marketId));
 
       console.log('Market locked! Transaction:', txData.public.txHash);
+      return txData.public.txHash;
     } catch (error: any) {
       console.error('lockMarket circuit execution failed:', error);
       throw new Error(`Failed to lock market: ${error.message}`);
@@ -217,7 +236,7 @@ export class ShadowMarketAPI {
   /**
    * Resolve a market with the outcome
    */
-  async resolveMarket(marketId: string, outcome: boolean): Promise<void> {
+  async resolveMarket(marketId: string, outcome: boolean): Promise<string> {
     console.log(`RESOLVING MARKET ON-CHAIN: ${marketId}, outcome=${outcome ? 'YES' : 'NO'}`);
 
     try {
@@ -227,6 +246,7 @@ export class ShadowMarketAPI {
       );
 
       console.log('Market resolved! Transaction:', txData.public.txHash);
+      return txData.public.txHash;
     } catch (error: any) {
       console.error('resolveMarket circuit execution failed:', error);
       throw new Error(`Failed to resolve market: ${error.message}`);
@@ -242,7 +262,7 @@ export class ShadowMarketAPI {
     amount: bigint,
     oddsNumerator: bigint,
     oddsDenominator: bigint
-  ): Promise<void> {
+  ): Promise<string> {
     console.log(`CREATING P2P WAGER ON-CHAIN: market=${marketId}, amount=${amount}`);
 
     try {
@@ -258,6 +278,7 @@ export class ShadowMarketAPI {
       );
 
       console.log('Wager created! Transaction:', txData.public.txHash);
+      return txData.public.txHash;
     } catch (error: any) {
       console.error('createWager circuit execution failed:', error);
       throw new Error(`Failed to create wager: ${error.message}`);
@@ -267,13 +288,14 @@ export class ShadowMarketAPI {
   /**
    * Accept a P2P wager
    */
-  async acceptWager(wagerId: string): Promise<void> {
+  async acceptWager(wagerId: string): Promise<string> {
     console.log(`ACCEPTING WAGER ON-CHAIN: ${wagerId}`);
 
     try {
       const txData = await (this.deployedContract.callTx.acceptWager as any)(BigInt(wagerId));
 
       console.log('Wager accepted! Transaction:', txData.public.txHash);
+      return txData.public.txHash;
     } catch (error: any) {
       console.error('acceptWager circuit execution failed:', error);
       throw new Error(`Failed to accept wager: ${error.message}`);
@@ -283,13 +305,14 @@ export class ShadowMarketAPI {
   /**
    * Cancel a P2P wager
    */
-  async cancelWager(wagerId: string): Promise<void> {
+  async cancelWager(wagerId: string): Promise<string> {
     console.log(`CANCELING WAGER ON-CHAIN: ${wagerId}`);
 
     try {
       const txData = await (this.deployedContract.callTx.cancelWager as any)(BigInt(wagerId));
 
       console.log('Wager cancelled! Transaction:', txData.public.txHash);
+      return txData.public.txHash;
     } catch (error: any) {
       console.error('cancelWager circuit execution failed:', error);
       throw new Error(`Failed to cancel wager: ${error.message}`);
@@ -299,13 +322,14 @@ export class ShadowMarketAPI {
   /**
    * Claim winnings from a P2P wager
    */
-  async claimWagerWinnings(wagerId: string): Promise<void> {
+  async claimWagerWinnings(wagerId: string): Promise<string> {
     console.log(`CLAIMING WAGER WINNINGS ON-CHAIN: ${wagerId}`);
 
     try {
       const txData = await (this.deployedContract.callTx.claimWagerWinnings as any)(BigInt(wagerId));
 
       console.log('Wager winnings claimed! Transaction:', txData.public.txHash);
+      return txData.public.txHash;
     } catch (error: any) {
       console.error('claimWagerWinnings circuit execution failed:', error);
       throw new Error(`Failed to claim wager winnings: ${error.message}`);

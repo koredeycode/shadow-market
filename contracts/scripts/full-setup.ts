@@ -65,6 +65,7 @@ const CONFIG = {
 };
 
 const GENESIS_SEED = '0000000000000000000000000000000000000000000000000000000000000001';
+const ADMIN_PRESET_SEED = 'dad7b31a5abd2ed25856fdb0c00606f70ee67f3e21c511d175c44ee3675dd3747a86bf0edcdfa9d7c9ae996b2b2f3e2fcfeda57d97ab5e1f90feddac447ed7d2';
 
 // --- State Management ---
 const STATE_FILE = path.join(__dirname, 'setup-state.json');
@@ -110,6 +111,9 @@ async function runCommand(cmd: string, cwd: string) {
     throw err;
   }
 }
+
+// Helper for delays
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function promptStep(stepName: string, stateDone: boolean): Promise<'run' | 'skip' | 'force'> {
   const rl = createInterface({ input: stdin, output: stdout });
@@ -244,6 +248,9 @@ async function runWithRetry<T>(fn: () => Promise<T>, retries = 5, initialDelay =
       if (err.message.includes('expected a cell, received null')) {
         console.warn(`    ⏳  Indexer catch-up detected (null cell), waiting 10s...`);
         currentDelay = 10000;
+      } else if (err.message.includes('Custom error: 139')) {
+        console.warn(`    ⏳  Priority/Nonce issue (139) detected, waiting 15s for node cooldown...`);
+        currentDelay = 15000;
       }
       
       console.warn(`    ⚠️  Execution failed (Attempt ${i+1}/${retries}), retrying in ${currentDelay/1000}s... (${err.message.substring(0, 150)})`);
@@ -253,6 +260,7 @@ async function runWithRetry<T>(fn: () => Promise<T>, retries = 5, initialDelay =
   }
   throw new Error('Unreachable');
 }
+
 async function initWallet(seedHex: string) {
   const seed = fromHex(seedHex);
   const hdWallet = HDWallet.fromSeed(seed);
@@ -370,7 +378,12 @@ async function registerForDust(ctx: any) {
 }
 
 async function createProviders(ctx: any) {
-  const witnessContext = { betAmount: 0n, betSide: 0n, wagerAmount: 0n };
+  const witnessContext = { 
+    betAmount: 0n, 
+    betSide: 0n, 
+    betNonce: new Uint8Array(32).fill(0),
+    wagerAmount: 0n 
+  };
   const walletProvider = {
     getCoinPublicKey: () => ctx.shieldedSecretKeys.coinPublicKey,
     getEncryptionPublicKey: () => ctx.shieldedSecretKeys.encryptionPublicKey,
@@ -402,7 +415,7 @@ async function createProviders(ctx: any) {
       userSecretKey: ({ privateState }: any) => [privateState, privateState.userSecretKey],
       betAmount: ({ privateState }: any) => [privateState, witnessContext.betAmount],
       betSide: ({ privateState }: any) => [privateState, witnessContext.betSide],
-      betNonce: ({ privateState }: any) => [privateState, new Uint8Array(32).fill(0)],
+      betNonce: ({ privateState }: any) => [privateState, witnessContext.betNonce],
       wagerAmountInput: ({ privateState }: any) => [privateState, witnessContext.wagerAmount],
       callerAddress: ({ privateState }: any) => [privateState, new Uint8Array(32).fill(0)],
     },
@@ -454,12 +467,13 @@ async function main() {
 
     for (const role of roles) {
       if (!state.wallets[role]) {
-        const seed = toHex(generateRandomSeed());
+        const seed = role === 'admin' ? ADMIN_PRESET_SEED : toHex(generateRandomSeed());
         const ctx = await initWallet(seed);
         testWallets[role] = ctx;
         state.wallets[role] = { address: ctx.address, seed: ctx.seed };
         console.log(`  Generated ${role}: ${ctx.address} (Seed: ${ctx.seed})`);
         await fundWallet(genesis, ctx.userAddress, 100_000_000n);
+        await sleep(2000); // Wait for inclusion
         saveState(state);
       } else {
         console.log(`  Using existing ${role}: ${state.wallets[role].address}`);
@@ -492,10 +506,10 @@ async function main() {
   if (run4 !== 'skip') {
     console.log('\n─── Step 4: Deploy & Initialize ────────────────────────────────');
     
+    const adminCtx = testWallets.admin;
+    const providers = await createProviders(adminCtx);
+
     if (!contractAddress || run4 === 'force') {
-      const adminCtx = testWallets.admin;
-      const providers = await createProviders(adminCtx);
-      
       const contractPath = path.join(zkConfigPath, 'contract', 'index.js');
       const ShadowMarket = await import(pathToFileURL(contractPath).href);
       const compiledContract = CompiledContract.make('shadow-market', ShadowMarket.Contract).pipe(
@@ -523,18 +537,19 @@ async function main() {
       state.activityDone = false;
       saveState(state);
       console.log(`  Contract Deployed: ${contractAddress}`);
+      await sleep(3000); // Wait for deployment indexing
     }
 
     if (!state.initializedDone || run4 === 'force') {
       console.log('  Initializing API...');
-      const adminCtx = testWallets.admin;
-      const providers = await createProviders(adminCtx);
+      // Reuse the same providers instance to maintain nonce state
       const api = await ShadowMarketAPI.connectWithProviders(providers as any, contractAddress as any);
 
       await api.initialize();
       state.initializedDone = true;
       saveState(state);
       console.log('  Contract Initialized!');
+      await sleep(2000);
     }
   }
 
@@ -622,6 +637,7 @@ async function main() {
       const startUser = (!state.betsDone ? (state.activityUserIndex || 0) : 0);
       const activityRoles = ['userA', 'userB', 'userC'];
       const userApis: Record<string, ShadowMarketAPI> = {};
+      const userProvidersMap: Record<string, any> = {};
 
       if (!state.betsDone) {
         for (let i = startMarket; i < marketQuestions.length; i++) {
@@ -638,20 +654,30 @@ async function main() {
 
               try {
                 const userCtx = testWallets[role];
-                if (!userApis[role]) {
-                  const userProviders = await createProviders(userCtx);
-                  userApis[role] = await ShadowMarketAPI.connectWithProviders(userProviders as any, contractAddress as any);
-                }
-                const userApi = userApis[role];
+                
+                // ALWAYS re-connect and re-create providers for every action to ensure fresh ledger state
+                // and bypass stale state issues causing Error 139
+                console.log(`    Refreshing ledger state for ${role}...`);
+                const providers = await createProviders(userCtx);
+                const userApi = await ShadowMarketAPI.connectWithProviders(providers as any, contractAddress as any);
+                
                 const side = Math.random() > 0.5;
                 
+                // Rotate nonce for every bet to ensure uniqueness and bypass Error 139
+                if (providers && providers.witnessContext) {
+                  const safeNonce = new Uint8Array(32).fill(0);
+                  safeNonce.set(generateRandomSeed().slice(0, 16));
+                  providers.witnessContext.betNonce = safeNonce;
+                }
+                
                 console.log(`    ${userCtx.address} placing 25 bet on ${side ? 'YES' : 'NO'}...`);
-                await runWithRetry(async () => {
-                  await userApi.placeBet(marketId, 25n, side);
-                  await syncBetToBackend(userCtx.address, { marketId, amount: 25n, side });
-                });
-                console.log(`    Bet confirmed!`);
-                await new Promise(resolve => setTimeout(resolve, 6000));
+                 await runWithRetry(async () => {
+                   await userApi.placeBet(marketId, 25n, side);
+                   await syncBetToBackend(userCtx.address, { marketId, amount: 25n, side });
+                 });
+                 console.log(`    Bet confirmed!`);
+                 console.log(`    ⏳  Waiting 20s for node cooldown and block propagation...`);
+                 await new Promise(resolve => setTimeout(resolve, 20000));
               } catch (err: any) {
                 console.warn(`    ❌ Bet failed for ${role}: ${err.message}`);
               }
@@ -685,12 +711,20 @@ async function main() {
 
               try {
                 const userCtx = testWallets[role];
-                if (!userApis[role]) {
-                  const userProviders = await createProviders(userCtx);
-                  userApis[role] = await ShadowMarketAPI.connectWithProviders(userProviders as any, contractAddress as any);
-                }
-                const userApi = userApis[role];
                 
+                // ALWAYS re-connect and re-create providers for every action to ensure fresh ledger state
+                // and bypass stale state issues causing Error 139
+                console.log(`    Refreshing ledger state for ${role}...`);
+                const providers = await createProviders(userCtx);
+                const userApi = await ShadowMarketAPI.connectWithProviders(providers as any, contractAddress as any);
+                
+                // Rotate nonce for every transaction to ensure uniqueness (precautionary for wagers)
+                if (providers && providers.witnessContext) {
+                  const safeNonce = new Uint8Array(32).fill(0);
+                  safeNonce.set(generateRandomSeed().slice(0, 16));
+                  providers.witnessContext.betNonce = safeNonce;
+                }
+
                 console.log(`    ${userCtx.address} creating 15 wager on ${Math.random() > 0.5 ? 'YES' : 'NO'}...`);
                 await runWithRetry(async () => {
                   const wagerSide = Math.random() > 0.5;
@@ -700,7 +734,8 @@ async function main() {
                   });
                 });
                 console.log(`    Wager created!`);
-                await new Promise(resolve => setTimeout(resolve, 6000));
+                console.log(`    ⏳  Waiting 20s for node cooldown and block propagation...`);
+                await new Promise(resolve => setTimeout(resolve, 20000));
               } catch (err: any) {
                 console.warn(`    ❌ Wager failed for ${role}: ${err.message}`);
               }

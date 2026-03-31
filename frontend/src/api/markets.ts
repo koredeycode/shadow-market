@@ -63,4 +63,19 @@ export const marketsApi = {
     const { data } = await api.get<ApiResponse<any>>(`/markets/${id}/stats`);
     return data.data!;
   },
+
+  create: async (data: {
+    question: string;
+    description?: string;
+    category: string;
+    endTime: string;
+    resolutionSource: string;
+    minBet: string;
+    maxBet: string;
+    onchainId: string;
+    txHash: string;
+  }): Promise<Market> => {
+    const { data: response } = await api.post<ApiResponse<Market>>('/markets', data);
+    return response.data!;
+  },
 };

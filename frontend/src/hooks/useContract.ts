@@ -20,11 +20,10 @@ export function useContract() {
       const betAmount = BigInt(amount);
       const betOutcome = side === 'YES';
 
-      // Call contract - errors will propagate with detailed messages
-      await contractManager.placeBet(marketId, betAmount, betOutcome);
+      // Call contract - returns txHash
+      const txHash = await contractManager.placeBet(marketId, betAmount, betOutcome);
 
-      // Return transaction details (to be implemented with real SDK)
-      return { success: true };
+      return txHash;
     },
     [isInitialized]
   );
@@ -44,7 +43,7 @@ export function useContract() {
 
         toast.loading('Creating market...');
 
-        await contractManager.createMarket(
+        const txHash = await contractManager.createMarket(
           question,
           onchainEndTime,
           initialLiquidity,
@@ -52,8 +51,8 @@ export function useContract() {
         );
 
         toast.dismiss();
-        toast.success('Market created successfully!');
-        return true;
+        toast.success(`Market created successfully! Tx: ${txHash.slice(0, 10)}...`);
+        return txHash;
       } catch (error: any) {
         toast.dismiss();
         toast.error(error.message || 'Failed to create market');

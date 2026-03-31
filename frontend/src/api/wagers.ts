@@ -6,6 +6,7 @@ export interface PlaceBetRequest {
   side: 'yes' | 'no';
   slippage?: number;
   skipRedirect?: boolean;
+  txHash?: string;
 }
 
 export interface PlaceBetResponse {

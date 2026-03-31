@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { and, desc, eq, or, sql } from 'drizzle-orm';
 import { config } from '../config.js';
 import { db } from '../db/client.js';
@@ -37,9 +38,8 @@ export class WagerService {
     const sideEncrypted = encrypt(data.side, config.encryptionKey);
     const nonceEncrypted = encrypt(generateId(8), config.encryptionKey);
 
-    // Generate commitment (hash of amount + side + nonce)
     const commitmentInput = `${data.amount}:${data.side}:${nonceEncrypted}`;
-    const commitment = require('crypto').createHash('sha256').update(commitmentInput).digest('hex');
+    const commitment = createHash('sha256').update(commitmentInput).digest('hex');
 
     // Determine entry price
     const entryPrice = data.side === 'yes' ? market.yesPrice : market.noPrice;
@@ -49,8 +49,9 @@ export class WagerService {
       .insert(positions)
       .values({
         id: positionId,
+        txHash: data.txHash,
         userId,
-        marketId: data.marketId,
+        marketId: market.id,
         amountEncrypted,
         sideEncrypted,
         nonceEncrypted,
@@ -66,7 +67,7 @@ export class WagerService {
         totalVolume: sql`${markets.totalVolume} + ${data.amount}`,
         totalPositions: sql`${markets.totalPositions} + 1`,
       })
-      .where(eq(markets.id, data.marketId));
+      .where(eq(markets.id, market.id));
 
     return position;
   }
@@ -99,6 +100,7 @@ export class WagerService {
       .values({
         id: wagerId,
         onchainId,
+        txHash: data.txHash,
         creatorId: userId,
         marketId: market.id, // Use correct internal ID
         amount: data.amount,
@@ -306,8 +308,21 @@ export class WagerService {
    * Get open wagers for a market
    */
   async getMarketWagers(marketId: string) {
+    // Resolve market ID if onchainId is provided
+    let market = await db.query.markets.findFirst({
+      where: eq(markets.id, marketId),
+    });
+    
+    if (!market) {
+      market = await db.query.markets.findFirst({
+        where: eq(markets.onchainId, marketId),
+      });
+    }
+    
+    const resolvedId = market ? market.id : marketId;
+
     return await db.query.wagers.findMany({
-      where: and(eq(wagers.marketId, marketId), eq(wagers.status, 'OPEN')),
+      where: and(eq(wagers.marketId, resolvedId), eq(wagers.status, 'OPEN')),
       with: {
         creator: {
           columns: { id: true, username: true, reputation: true },

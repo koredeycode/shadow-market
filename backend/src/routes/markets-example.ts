@@ -106,7 +106,6 @@ marketsRouter.post(
       .values({
         id: `market_${Date.now()}`,
         onchainId: `onchain_${Date.now()}`,
-        contractAddress: `0x${Date.now().toString(16)}`,
         question,
         description,
         category,

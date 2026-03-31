@@ -2,11 +2,7 @@ import { randomBytes } from 'crypto';
 import 'dotenv/config';
 import { db } from './client.js';
 import {
-  liquidityPools,
-  lpPositions,
   markets,
-  oracleReports,
-  oracles,
   positions,
   pricePoints,
   users,
@@ -19,14 +15,10 @@ const generateId = () => randomBytes(16).toString('hex');
 export async function clearDatabase() {
   console.log('Clearing existing data...');
   // Delete in order to satisfy FK constraints
-  await db.delete(lpPositions);
-  await db.delete(liquidityPools);
-  await db.delete(oracleReports);
   await db.delete(pricePoints);
   await db.delete(wagers);
   await db.delete(positions);
   await db.delete(markets);
-  await db.delete(oracles);
   await db.delete(users);
   console.log('Database cleared');
 }
@@ -67,30 +59,6 @@ async function seed() {
       .returning();
 
     console.log('Created test users');
-
-    // Create test oracles
-    await db.insert(oracles).values([
-      {
-        id: generateId(),
-        address: '0xoracle1' + randomBytes(20).toString('hex'),
-        reputation: 900,
-        totalSubmissions: 50,
-        correctSubmissions: 48,
-        status: 'ACTIVE',
-        stake: '10000',
-      },
-      {
-        id: generateId(),
-        address: '0xoracle2' + randomBytes(20).toString('hex'),
-        reputation: 850,
-        totalSubmissions: 42,
-        correctSubmissions: 39,
-        status: 'ACTIVE',
-        stake: '8000',
-      },
-    ]);
-
-    console.log('Created test oracles');
 
     const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     const nextYear = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);

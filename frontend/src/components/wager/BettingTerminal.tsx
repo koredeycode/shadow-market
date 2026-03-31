@@ -25,7 +25,7 @@ interface BettingTerminalProps {
 }
 
 export function BettingTerminal({ market }: BettingTerminalProps) {
-  const { isConnected, formattedBalance, setWalletModalOpen } = useWallet();
+  const { isConnected, formattedUnshieldedNightBalance, setWalletModalOpen } = useWallet();
   const { placeBet, isInitialized } = useContract();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -108,14 +108,13 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
         console.log('Placing bet ON-CHAIN (required)...');
 
         // Step 1: REQUIRED - Execute on-chain transaction first
-        const result = await placeBet(
+        const txHash = await placeBet(
           market.onchainId || market.id,
           data.side.toUpperCase() as 'YES' | 'NO',
           parseFloat(data.amount)
         );
 
-        const txId = result?.success ? 'SUCCESS' : null;
-        console.log('On-chain transaction successful!');
+        console.log('On-chain transaction successful! Hash:', txHash);
 
         // Step 2: Update backend database for caching/indexing (after on-chain success)
         console.log('Syncing to database...');
@@ -125,16 +124,17 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
             amount: data.amount,
             side: data.side,
             slippage: data.slippage,
+            txHash,
             skipRedirect: true,
           });
 
           console.log('Database synced successfully');
-          return { ...dbResult, txId, contractSuccess: true };
+          return { ...dbResult, txId: txHash, contractSuccess: true };
         } catch (dbError) {
           // On-chain succeeded but database update failed - this is acceptable
           console.warn('Database sync failed (on-chain transaction succeeded):', dbError);
           toast('Bet placed on-chain but database sync failed. This is normal.', { icon: '!' });
-          return { positionId: market.id, txId, contractSuccess: true };
+          return { positionId: market.id, txId: txHash, contractSuccess: true };
         }
       } catch (error: any) {
         // Catch all errors and log them - don't let them bubble up to ErrorBoundary
@@ -239,8 +239,8 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
               Input Amount
             </label>
             <span className="text-[10px] font-mono text-slate-400">
-              Balance: <span className="text-white">{isConnected ? formattedBalance : '--'}</span>{' '}
-              DUST
+              Balance: <span className="text-white">{isConnected ? formattedUnshieldedNightBalance : '--'}</span>{' '}
+              NIGHT
             </span>
           </div>
           <div className="relative group">
@@ -261,7 +261,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
               className={`w-full bg-slate-950 border ${errors.amount ? 'border-red-500/50' : 'border-white/10 group-focus-within:border-electric-blue/50'} p-4 rounded-sm font-mono text-2xl text-white focus:outline-none transition-all`}
             />
             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 font-mono text-xs font-bold">
-              DUST
+              NIGHT
             </div>
           </div>
           {errors.amount && (
@@ -316,7 +316,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
             <div className="flex items-end justify-between">
               <div className="text-2xl font-mono text-success-green font-bold leading-none">
                 {estimate ? `+${estimate.potentialProfit.toFixed(2)}` : '0.00'}
-                <span className="text-xs ml-1 font-light opacity-50">DUST</span>
+                <span className="text-xs ml-1 font-light opacity-50">NIGHT</span>
               </div>
               <div className="text-[10px] font-mono bg-success-green/10 text-success-green px-2 py-0.5 rounded-sm border border-success-green/20">
                 {estimate ? `+${estimate.returnPercentage.toFixed(1)}%` : '--'}

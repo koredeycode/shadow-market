@@ -1,28 +1,28 @@
 {
   "wallets": {
     "admin": {
-      "address": "mn_addr_undeployed12ajcuqfg2jmzgx23m4aldxhw9gt7psx86rwccxu0fdc54urnaxws7vfwem",
-      "seed": "732b3e63faf60ec15b3494330343605dbaabffd29e5ed7fb40d9427159556a36"
+      "address": "mn_addr_undeployed14esq34gjrjzycwadu3z83dj726z5mmteek9ulc26fj9553fr4krqja6r04",
+      "seed": "dad7b31a5abd2ed25856fdb0c00606f70ee67f3e21c511d175c44ee3675dd3747a86bf0edcdfa9d7c9ae996b2b2f3e2fcfeda57d97ab5e1f90feddac447ed7d2"
     },
     "userA": {
-      "address": "mn_addr_undeployed1hhkn64fte9xyxejh2y595a85expfz9x2rjr8gjge5w6hunezqugsdra0p4",
-      "seed": "ccad43fc1397e35f7a4621c5de9d31cb1fe07437b2dca6343259e18825e2dd29"
+      "address": "mn_addr_undeployed1ceskjlyxq70zy3xd0v05k674nskrhs7f4fedpsahjmx7a9cqym8qdqe8pk",
+      "seed": "7d40e917ffb150913b1fb5b67aa42cd94cc11daea01cc6248d19f0455a21e279"
     },
     "userB": {
-      "address": "mn_addr_undeployed1a7zshudsp3mgvmkekyrqw8pnt83jtqugpss7yrhlyaxwjdprpzmslczzd7",
-      "seed": "0762804498d270ecf7c0f6c8f8c47a3d7b2ff8a153e98bd32a1b62605205dad1"
+      "address": "mn_addr_undeployed1rwyvewx2y60m4n90fzcwaqn4wlmlwwcklp0pla5rcpv8wsdstzrsv79mkz",
+      "seed": "a58b1da0dd56d755662984591f6fea44e4408028f60c1c2a5ed26b3ca3e9c1f9"
     },
     "userC": {
-      "address": "mn_addr_undeployed1453g3acse8evfk7tp0jxpc9zk8pqnyrerj0nzxp8pmhvkyrghsxs7yw4gv",
-      "seed": "8ae0e90c30f2a0c2020a6842e676d5809d7ffbb509cf25c17589971b32cef30e"
+      "address": "mn_addr_undeployed1dep5nu2elutjxrrtmh5p9evs7074a8sf9t72pzvdn60mdqr2uuuquu3knx",
+      "seed": "be5e3086d64df550ce9aee0ed5ac26a35fa3844bae38e44580f7fefe9bba8eef"
     }
   },
   "dbResetDone": true,
   "compiledDone": true,
-  "contractAddress": "3899329391294afb4cd148d81e29602cc55b316ab6eb0287255281bbe4638f28",
+  "contractAddress": "7a8ccb2d5a5204846be50be697385890198c52e65d1ff02aba65b2eb564734f0",
   "initializedDone": true,
   "seedingMarketIndex": 10,
-  "activityMarketIndex": 1,
+  "activityMarketIndex": 0,
   "activityUserIndex": 1,
   "betsDone": false,
   "wagersDone": false,

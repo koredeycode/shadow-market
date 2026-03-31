@@ -30,7 +30,7 @@ interface CreateP2PWagerModalProps {
 }
 
 export function CreateP2PWagerModal({ open, onClose, market }: CreateP2PWagerModalProps) {
-  const { isConnected, balance, formattedBalance, connectWallet } = useWallet();
+  const { isConnected, unshieldedNightBalance, formattedUnshieldedNightBalance, connectWallet } = useWallet();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
@@ -77,11 +77,11 @@ export function CreateP2PWagerModal({ open, onClose, market }: CreateP2PWagerMod
     const betAmount = parseFloat(amount);
     const minBet = parseFloat(market.minBet);
     const maxBet = parseFloat(market.maxBet);
-    const userBalance = parseFloat(balance || '0');
+    const userBalance = parseFloat(unshieldedNightBalance || '0');
 
     if (betAmount < minBet) return `Minimum bet is ${minBet}`;
     if (betAmount > maxBet) return `Maximum bet is ${maxBet}`;
-    if (betAmount > userBalance) return `Insufficient balance. You have ${formattedBalance}`;
+    if (betAmount > userBalance) return `Insufficient balance. You have ${formattedUnshieldedNightBalance}`;
     return null;
   };
 
@@ -227,7 +227,7 @@ export function CreateP2PWagerModal({ open, onClose, market }: CreateP2PWagerMod
                     Stake Amount
                   </label>
                   <span className="text-[10px] text-slate-600 font-mono italic font-bold">
-                    Balance: {formattedBalance}
+                    Balance: {formattedUnshieldedNightBalance}
                   </span>
                 </div>
                 <div className="relative">
@@ -249,7 +249,7 @@ export function CreateP2PWagerModal({ open, onClose, market }: CreateP2PWagerMod
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
                     <span className="text-xs text-slate-600 font-bold tracking-widest uppercase">
-                      DUST
+                      NIGHT
                     </span>
                   </div>
                 </div>

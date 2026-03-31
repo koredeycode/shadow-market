@@ -23,7 +23,7 @@ import type {
   EncPublicKey,
   TransactionId
 } from '@midnight-ntwrk/ledger-v8';
-import { randomBytes, toHex, fromHex } from './utils.js';
+import { randomBytes, toHex, fromHex, safeRandomNonce } from './utils.js';
 import { createWitnessProviders, type MarketWitnesses } from './witnesses.js';
 
 /**
@@ -109,6 +109,12 @@ export type MarketProviders = MidnightProviders<
   MarketPrivateState
 > & {
   witnesses: MarketWitnesses;
+  witnessContext: {
+    betAmount: bigint;
+    betSide: bigint;
+    betNonce: Uint8Array;
+    wagerAmount: bigint;
+  };
 };
 
 /**
@@ -200,6 +206,12 @@ export const createProvidersFromWallet = async (
     midnightProvider: midnightProvider as any,
     walletProvider: walletProvider as any,
     witnesses,
+    witnessContext: {
+      betAmount: 0n,
+      betSide: 0n,
+      betNonce: safeRandomNonce(),
+      wagerAmount: 0n,
+    }
   };
 };
 

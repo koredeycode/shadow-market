@@ -104,12 +104,12 @@ export function getNetworkConfig(): NetworkConfig {
     indexer:
       config.MIDNIGHT_INDEXER_URL ||
       process.env.MIDNIGHT_INDEXER_URL ||
-      'http://127.0.0.1:8088/api/v3/graphql',
+      'http://127.0.0.1:8088/api/v4/graphql',
     indexerWS:
       config.MIDNIGHT_INDEXER_WS ||
       config.MIDNIGHT_INDEXER_WS_URL ||
       process.env.MIDNIGHT_INDEXER_WS ||
-      'ws://127.0.0.1:8088/api/v3/graphql/ws',
+      'ws://127.0.0.1:8088/api/v4/graphql/ws',
     proofServer:
       config.MIDNIGHT_PROOF_SERVER_URL ||
       process.env.MIDNIGHT_PROOF_SERVER_URL ||

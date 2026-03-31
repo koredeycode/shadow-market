@@ -6,7 +6,7 @@ services:
   # ==============================================
 
   midnight-node:
-    image: midnightntwrk/midnight-node:0.21.0
+    image: midnightntwrk/midnight-node:0.22.3
     container_name: shadow-midnight-node
     ports:
       - '9944:9944'
@@ -21,7 +21,7 @@ services:
       - shadow-network
 
   midnight-indexer:
-    image: midnightntwrk/indexer-standalone:3.1.0
+    image: midnightntwrk/indexer-standalone:4.0.1
     container_name: shadow-midnight-indexer
     ports:
       - '8088:8088'
@@ -36,7 +36,7 @@ services:
       - shadow-network
 
   midnight-proof-server:
-    image: midnightntwrk/proof-server:7.0.0
+    image: midnightntwrk/proof-server:8.0.3
     container_name: shadow-midnight-proof-server
     ports:
       - '6300:6300'

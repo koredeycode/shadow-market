@@ -268,6 +268,9 @@ importers:
       '@midnight-ntwrk/wallet-sdk-unshielded-wallet':
         specifier: 2.0.0
         version: 2.0.0(ws@8.20.0)
+      '@scure/bip39':
+        specifier: ^2.0.1
+        version: 2.0.1
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2

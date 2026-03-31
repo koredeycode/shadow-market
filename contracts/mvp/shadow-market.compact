@@ -31,6 +31,7 @@ export ledger marketIds: Map<Field, Field>;          // marketId → marketId (f
 export ledger marketStatus: Map<Field, Field>;        // 0=pending, 1=open, 2=locked, 3=resolved
 export ledger marketEndTime: Map<Field, Field>;
 export ledger marketOutcome: Map<Field, Field>;       // 0=NO, 1=YES
+export ledger marketTitle: Map<Field, Bytes<32>>;      // marketId → title (max 32 chars)
 
 // Pool betting data (per marketId)
 export ledger poolYesTotal: Map<Field, Field>;
@@ -96,7 +97,8 @@ export circuit initialize(): [] {
 
 export circuit createMarket(
   endTime: Field,
-  minBet: Field
+  minBet: Field,
+  title: Bytes<32>
 ): [] {
   const userKey = disclose(persistentHash<Bytes<32>>(userSecretKey()));
   const disclosedEndTime = disclose(endTime);
@@ -111,6 +113,7 @@ export circuit createMarket(
   marketIds.insert(newMarketId, newMarketId);
   marketStatus.insert(newMarketId, 1); // 1 = OPEN
   marketEndTime.insert(newMarketId, disclosedEndTime);
+  marketTitle.insert(newMarketId, disclose(title));
   
   // Initialize pools for this market
   poolYesTotal.insert(newMarketId, 0);

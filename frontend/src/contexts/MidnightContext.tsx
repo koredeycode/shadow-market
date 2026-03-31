@@ -8,8 +8,10 @@ interface MidnightContextType {
   isConnected: boolean;
   isConnecting: boolean;
   address: string | null;
-  balance: string | null;
-  formattedBalance: string;
+  unshieldedNightBalance: string | null;
+  formattedUnshieldedNightBalance: string;
+  dustBalance: string | null;
+  formattedDustBalance: string;
   formattedAddress: string;
 
   // Contract State
@@ -23,13 +25,13 @@ interface MidnightContextType {
   refreshBalance: () => Promise<void>;
 
   // Contract Actions
-  placeBet: (marketId: string, side: 'YES' | 'NO', amount: number) => Promise<{ success: boolean }>;
+  placeBet: (marketId: string, side: 'YES' | 'NO', amount: number) => Promise<string>;
   createMarket: (
     marketId: string,
     question: string,
     resolverAddress: string,
     endTime: Date
-  ) => Promise<boolean | null>;
+  ) => Promise<string | null>;
   claimPoolWinnings: (betId: string) => Promise<boolean | null>;
 
   // UI Helpers
@@ -52,8 +54,10 @@ export const MidnightProvider: React.FC<{ children: ReactNode }> = ({ children }
     isConnected: wallet.isConnected,
     isConnecting: wallet.isConnecting,
     address: wallet.address,
-    balance: wallet.balance,
-    formattedBalance: wallet.formattedBalance,
+    unshieldedNightBalance: wallet.unshieldedNightBalance,
+    formattedUnshieldedNightBalance: wallet.formattedUnshieldedNightBalance,
+    dustBalance: wallet.dustBalance,
+    formattedDustBalance: wallet.formattedDustBalance,
     formattedAddress: wallet.formattedAddress,
     connectWallet: wallet.connectWallet,
     disconnectWallet: wallet.disconnectWallet,

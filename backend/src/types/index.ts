@@ -19,7 +19,7 @@ export interface CreateMarketRequest {
   minBet: string;
   maxBet: string;
   onchainId?: string;
-  contractAddress?: string;
+  txHash?: string;
 }
 
 export interface PlaceBetRequest {
@@ -27,6 +27,7 @@ export interface PlaceBetRequest {
   amount: string;
   side: 'yes' | 'no';
   slippage?: number;
+  txHash?: string;
 }
 
 export interface CreateP2PWagerRequest {
@@ -35,6 +36,7 @@ export interface CreateP2PWagerRequest {
   odds: [number, number];
   side: 'yes' | 'no';
   duration: number;
+  txHash?: string;
 }
 
 export interface SubmitOracleReportRequest {

@@ -20,7 +20,11 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
   const {
     address,
     formattedAddress,
-    formattedBalance,
+    addressDisplayMode,
+    setAddressDisplayMode,
+    formattedNightBalance,
+    formattedUnshieldedNightBalance,
+    formattedDustBalance,
     networkId,
     disconnectWallet,
     refreshBalance,
@@ -56,34 +60,91 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
           </button>
         </div>
 
-        <div className="space-y-1">
-          <div className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">
-            Wallet Balance
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <div className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">
+              Unshielded Night
+            </div>
+            <div className="text-xl font-mono font-bold text-white flex items-baseline gap-2">
+              {formattedUnshieldedNightBalance}
+              <span className="text-xs text-slate-500 font-light">NIGHT</span>
+            </div>
           </div>
-          <div className="text-2xl font-mono font-bold text-white flex items-baseline gap-2">
-            {formattedBalance}
-            <span className="text-xs text-slate-500 font-light">DUST</span>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <div className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">
+                Shielded
+              </div>
+              <div className="text-sm font-mono font-bold text-white flex items-baseline gap-1">
+                {formattedNightBalance}
+                <span className="text-[10px] text-slate-500 font-light">NIGHT</span>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">
+                Dust
+              </div>
+              <div className="text-sm font-mono font-bold text-white flex items-baseline gap-1">
+                {formattedDustBalance}
+                <span className="text-[10px] text-slate-500 font-light">DUST</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="p-4 space-y-4">
-        <div className="space-y-2">
-          <div className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">
-            Account Address
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">
+              Address Mode
+            </div>
+            <div className="flex bg-black/40 border border-white/10 rounded-sm p-0.5">
+              <button
+                onClick={() => setAddressDisplayMode('unshielded')}
+                className={`px-2 py-0.5 rounded-sm text-[9px] font-mono transition-all ${
+                  addressDisplayMode === 'unshielded'
+                    ? 'bg-electric-blue text-white shadow-[0_0_8px_rgba(59,130,246,0.3)]'
+                    : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                UNSHIELDED
+              </button>
+              <button
+                onClick={() => setAddressDisplayMode('shielded')}
+                className={`px-2 py-0.5 rounded-sm text-[9px] font-mono transition-all ${
+                  addressDisplayMode === 'shielded'
+                    ? 'bg-electric-blue text-white shadow-[0_0_8px_rgba(59,130,246,0.3)]'
+                    : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                SHIELDED
+              </button>
+            </div>
           </div>
-          <div className="flex items-center justify-between p-2 bg-black/20 border border-white/5 rounded-sm group">
-            <span className="text-xs text-slate-300 font-mono truncate mr-2">
-              {formattedAddress}
-            </span>
-            <div className="flex items-center gap-1">
+
+          <div className="flex items-center justify-between p-2 bg-black/20 border border-white/5 rounded-sm group transition-all hover:border-white/10">
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="text-[10px] text-white font-mono truncate">
+                {formattedAddress}
+              </span>
+              <span className="text-[8px] text-slate-500 font-mono uppercase tracking-tighter">
+                {addressDisplayMode === 'shielded' ? 'Shielded Private Address' : 'Public Network Address'}
+              </span>
+            </div>
+            <div className="flex items-center gap-1 ml-2">
               <button
                 onClick={handleCopy}
-                className="p-1 text-slate-600 hover:text-electric-blue transition-colors"
+                className="p-1.5 text-slate-600 hover:text-electric-blue transition-colors hover:bg-white/5 rounded-sm"
+                title="Copy Address"
               >
                 <Copy className="w-3.5 h-3.5" />
               </button>
-              <button className="p-1 text-slate-600 hover:text-electric-blue transition-colors">
+              <button 
+                className="p-1.5 text-slate-600 hover:text-electric-blue transition-colors hover:bg-white/5 rounded-sm"
+                title="View on Explorer"
+              >
                 <ExternalLink className="w-3.5 h-3.5" />
               </button>
             </div>

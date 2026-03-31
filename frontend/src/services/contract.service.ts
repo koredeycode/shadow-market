@@ -42,14 +42,15 @@ class ContractManager {
   /**
    * Place a bet on a prediction market
    */
-  async placeBet(marketId: string, betAmount: bigint, betOutcome: boolean): Promise<void> {
+  async placeBet(marketId: string, betAmount: bigint, betOutcome: boolean): Promise<string> {
     if (!this.api) {
       throw new Error('Contract not initialized');
     }
 
     try {
-      await this.api.placeBet(marketId, betAmount, betOutcome);
-      console.log(`Bet placed: ${betAmount} on ${betOutcome ? 'YES' : 'NO'}`);
+      const txHash = await this.api.placeBet(marketId, betAmount, betOutcome);
+      console.log(`Bet placed: ${betAmount} on ${betOutcome ? 'YES' : 'NO'}. Tx: ${txHash}`);
+      return txHash;
     } catch (error) {
       console.error('Failed to place bet:', error);
       throw error;
@@ -59,14 +60,15 @@ class ContractManager {
   /**
    * Claim winnings from a resolved market
    */
-  async claimWinnings(betId: string): Promise<void> {
+  async claimWinnings(betId: string): Promise<string> {
     if (!this.api) {
       throw new Error('Contract not initialized');
     }
 
     try {
-      await this.api.claimWinnings(betId);
-      console.log(`Winnings claimed from bet: ${betId}`);
+      const txHash = await this.api.claimWinnings(betId);
+      console.log(`Winnings claimed from bet: ${betId}. Tx: ${txHash}`);
+      return txHash;
     } catch (error) {
       console.error('Failed to claim winnings:', error);
       throw error;
@@ -81,14 +83,20 @@ class ContractManager {
     resolutionTime: bigint,
     initialLiquidity: bigint,
     oracleAddress: string
-  ): Promise<void> {
+  ): Promise<string> {
     if (!this.api) {
       throw new Error('Contract not initialized');
     }
 
     try {
-      await this.api.createMarket(question, resolutionTime, initialLiquidity, oracleAddress);
-      console.log(`Market created: ${question}`);
+      const txHash = await this.api.createMarket(
+        question,
+        resolutionTime,
+        initialLiquidity,
+        oracleAddress
+      );
+      console.log(`Market created: ${question}. Tx: ${txHash}`);
+      return txHash;
     } catch (error) {
       console.error('Failed to create market:', error);
       throw error;
@@ -98,16 +106,101 @@ class ContractManager {
   /**
    * Resolve a market with an outcome
    */
-  async resolveMarket(marketId: string, outcome: boolean): Promise<void> {
+  async resolveMarket(marketId: string, outcome: boolean): Promise<string> {
     if (!this.api) {
       throw new Error('Contract not initialized');
     }
 
     try {
-      await this.api.resolveMarket(marketId, outcome);
-      console.log(`Market resolved: ${marketId}, outcome: ${outcome ? 'YES' : 'NO'}`);
+      const txHash = await this.api.resolveMarket(marketId, outcome);
+      console.log(`Market resolved: ${marketId}, outcome: ${outcome ? 'YES' : 'NO'}. Tx: ${txHash}`);
+      return txHash;
     } catch (error) {
       console.error('Failed to resolve market:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new P2P wager
+   */
+  async createWager(
+    marketId: string,
+    side: boolean,
+    amount: bigint,
+    oddsNumerator: bigint,
+    oddsDenominator: bigint
+  ): Promise<string> {
+    if (!this.api) {
+      throw new Error('Contract not initialized');
+    }
+
+    try {
+      const txHash = await this.api.createWager(
+        marketId,
+        side,
+        amount,
+        oddsNumerator,
+        oddsDenominator
+      );
+      console.log(`Wager created on market ${marketId}. Tx: ${txHash}`);
+      return txHash;
+    } catch (error) {
+      console.error('Failed to create wager:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Accept an existing P2P wager
+   */
+  async acceptWager(wagerId: string): Promise<string> {
+    if (!this.api) {
+      throw new Error('Contract not initialized');
+    }
+
+    try {
+      const txHash = await this.api.acceptWager(wagerId);
+      console.log(`Wager accepted: ${wagerId}. Tx: ${txHash}`);
+      return txHash;
+    } catch (error) {
+      console.error('Failed to accept wager:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Cancel an open P2P wager
+   */
+  async cancelWager(wagerId: string): Promise<string> {
+    if (!this.api) {
+      throw new Error('Contract not initialized');
+    }
+
+    try {
+      const txHash = await this.api.cancelWager(wagerId);
+      console.log(`Wager cancelled: ${wagerId}. Tx: ${txHash}`);
+      return txHash;
+    } catch (error) {
+      console.error('Failed to cancel wager:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Claim winnings from a resolved P2P wager
+   */
+  async claimWagerWinnings(wagerId: string): Promise<string> {
+    if (!this.api) {
+      throw new Error('Contract not initialized');
+    }
+
+    try {
+      const txHash = await this.api.claimWagerWinnings(wagerId);
+      console.log(`Wager winnings claimed: ${wagerId}. Tx: ${txHash}`);
+      return txHash;
+    } catch (error) {
+      console.error('Failed to claim wager winnings:', error);
       throw error;
     }
   }

@@ -50,7 +50,7 @@ export const useContractStore = create<ContractState>(set => ({
       // Configure the contract connection
       const config = {
         indexerUri: import.meta.env.VITE_MIDNIGHT_INDEXER_URL || import.meta.env.VITE_INDEXER_URL || 'http://localhost:8088/api/v3',
-        indexerWsUri: import.meta.env.VITE_MIDNIGHT_INDEXER_WS || import.meta.env.VITE_MIDNIGHT_INDEXER_WS_URL || import.meta.env.VITE_INDEXER_URL || 'ws://localhost:8088/api/v3',
+        indexerWsUri: import.meta.env.VITE_MIDNIGHT_INDEXER_WS || import.meta.env.VITE_MIDNIGHT_INDEXER_WS_URL || import.meta.env.VITE_INDEXER_WS || 'ws://localhost:8088/api/v3',
         proverServerUri: import.meta.env.VITE_MIDNIGHT_PROOF_SERVER_URL || import.meta.env.VITE_PROOF_SERVER_URL || 'http://localhost:6300',
         zkConfigPath: `${window.location.origin}/zk-config`, // Local absolute URL for ZK artifacts
         contractAddress,

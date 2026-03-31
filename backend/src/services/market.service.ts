@@ -22,13 +22,13 @@ export class MarketService {
       .values({
         id: marketId,
         onchainId,
-        contractAddress: data.contractAddress || ('0x' + generateId(20)),
+        txHash: data.txHash,
         question: data.question,
         description: data.description,
         category: data.category,
         tags: data.tags || [],
         endTime: data.endTime,
-        status: 'PENDING',
+        status: 'OPEN',
         resolutionSource: data.resolutionSource,
         minBet: data.minBet,
         maxBet: data.maxBet,
@@ -109,7 +109,6 @@ export class MarketService {
             reputation: true,
           },
         },
-        liquidityPool: true,
       },
     });
 
