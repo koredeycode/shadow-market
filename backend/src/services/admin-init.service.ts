@@ -40,6 +40,28 @@ export async function initializeAdmin() {
 
       // Sync admin address if it differs from config (e.g. from shielded to unshielded)
       if (adminAddress && existingAdmin.address !== adminAddress) {
+        // Check if another user already has this address
+        const userWithAddress = await db.query.users.findFirst({
+          where: eq(users.address, adminAddress),
+        });
+
+        if (userWithAddress && userWithAddress.id !== existingAdmin.id) {
+          if (!userWithAddress.username) {
+            logger.info('Deleting anonymous user record with admin address', {
+              userId: userWithAddress.id,
+              address: adminAddress,
+            });
+            await db.delete(users).where(eq(users.id, userWithAddress.id));
+          } else {
+            logger.warn('Admin address conflict: address is already in use by another user with username', {
+              adminUsername,
+              conflictingUsername: userWithAddress.username,
+              address: adminAddress,
+            });
+            return existingAdmin; // Stop here to avoid unique constraint violation
+          }
+        }
+
         await db
           .update(users)
           .set({ address: adminAddress, updatedAt: new Date() })
@@ -56,6 +78,42 @@ export async function initializeAdmin() {
 
     // Create new admin user
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
+
+    // Check if another user already has the admin address
+    if (adminAddress) {
+      const userWithAddress = await db.query.users.findFirst({
+        where: eq(users.address, adminAddress),
+      });
+
+      if (userWithAddress) {
+        if (!userWithAddress.username) {
+          logger.info('Promoting anonymous user with admin address to admin role', {
+            username: adminUsername,
+            userId: userWithAddress.id,
+          });
+
+          const [updatedUser] = await db
+            .update(users)
+            .set({
+              username: adminUsername,
+              encryptedSeed: hashedPassword,
+              isAdmin: true,
+              reputation: 1000,
+              updatedAt: new Date(),
+            })
+            .where(eq(users.id, userWithAddress.id))
+            .returning();
+
+          return updatedUser;
+        } else {
+          logger.warn('Admin address conflict: address is already in use by another user. Creating admin with unique address prefix.', {
+            adminUsername,
+            conflictingUsername: userWithAddress.username,
+          });
+          // Fall through to creating a new user with a unique dummy address
+        }
+      }
+    }
 
     const [adminUser] = await db
       .insert(users)

@@ -16,22 +16,20 @@ import { Wager } from '../../types';
 
 interface P2PWagersListProps {
   marketId: string;
+  selectedWagerId?: string;
+  onSelectWager: (wager: Wager) => void;
 }
 
 function WagerCard({
   wager,
-  onAccept,
-  onCancel,
+  isSelected,
+  onSelect,
   isUserCreator,
-  isAccepting,
-  isCanceling,
 }: {
   wager: Wager;
-  onAccept?: () => void;
-  onCancel?: () => void;
+  isSelected: boolean;
+  onSelect: () => void;
   isUserCreator: boolean;
-  isAccepting: boolean;
-  isCanceling: boolean;
 }) {
   const { isConnected } = useWallet();
 
@@ -60,10 +58,13 @@ function WagerCard({
 
   return (
     <div
-      className={`p-4 bg-slate-900/40 border rounded-sm transition-all backdrop-blur-sm ${
-        isUserCreator
-          ? 'border-white/5'
-          : 'border-white/10 hover:border-electric-blue/30 hover:shadow-[0_0_20px_rgba(59,130,246,0.1)]'
+      onClick={onSelect}
+      className={`p-4 bg-slate-900/40 border rounded-sm transition-all backdrop-blur-sm cursor-pointer ${
+        isSelected
+          ? 'border-electric-blue bg-electric-blue/5 shadow-[0_0_20px_rgba(59,130,246,0.15)] ring-1 ring-electric-blue/30'
+          : isUserCreator
+          ? 'border-white/5 hover:border-white/20'
+          : 'border-white/10 hover:border-electric-blue/30'
       }`}
     >
       <div className="flex flex-col md:flex-row gap-6 md:items-center">
@@ -154,40 +155,14 @@ function WagerCard({
         </div>
 
         <div className="flex gap-2">
-          {isUserCreator ? (
-            <button
-              onClick={onCancel}
-              disabled={isCanceling}
-              className="flex items-center gap-2 px-4 py-1.5 bg-red-500/10 text-red-500 border border-red-500/20 rounded-sm text-[11px] font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
-            >
-              {isCanceling ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <X className="w-3.5 h-3.5" />
-              )}
-              Cancel
-            </button>
-          ) : (
-            <button
-              onClick={onAccept}
-              disabled={!isConnected || isAccepting}
-              className="flex items-center gap-2 px-4 py-1.5 bg-electric-blue text-white rounded-sm text-[11px] font-bold uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-50 disabled:bg-slate-800 disabled:text-slate-500"
-            >
-              {isAccepting ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Zap className="w-3.5 h-3.5" />
-              )}
-              {isAccepting ? 'ACCEPTING...' : 'Accept Wager'}
-            </button>
-          )}
+           <Zap className={`w-4 h-4 ${isSelected ? 'text-electric-blue animate-pulse' : 'text-slate-700'}`} />
         </div>
       </div>
     </div>
   );
 }
 
-export function P2PWagersList({ marketId }: P2PWagersListProps) {
+export function P2PWagersList({ marketId, selectedWagerId, onSelectWager }: P2PWagersListProps) {
   const { address } = useWallet();
   const queryClient = useQueryClient();
 
@@ -204,32 +179,7 @@ export function P2PWagersList({ marketId }: P2PWagersListProps) {
     refetchInterval: 10000,
   });
 
-  const acceptMutation = useMutation({
-    mutationFn: async (wagerId: string) => {
-      return await wagersApi.acceptWager(wagerId, { wagerId });
-    },
-    onSuccess: () => {
-      toast.success('Wager accepted! Good luck!');
-      queryClient.invalidateQueries({ queryKey: ['p2p-wagers', marketId] });
-      queryClient.invalidateQueries({ queryKey: ['market', marketId] });
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to accept wager');
-    },
-  });
-
-  const cancelMutation = useMutation({
-    mutationFn: async (wagerId: string) => {
-      return await wagersApi.cancelWager(wagerId);
-    },
-    onSuccess: () => {
-      toast.success('Wager cancelled');
-      queryClient.invalidateQueries({ queryKey: ['p2p-wagers', marketId] });
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to cancel wager');
-    },
-  });
+  // Logic removed here as it lives in P2PActionTerminal now
 
   if (isLoading) {
     return (
@@ -277,15 +227,14 @@ export function P2PWagersList({ marketId }: P2PWagersListProps) {
       <div className="flex flex-col gap-4">
         {wagers.map(wager => {
           const isUserCreator = address === wager.creatorId;
+          const isSelected = selectedWagerId === wager.id;
           return (
             <WagerCard
               key={wager.id}
               wager={wager}
+              isSelected={isSelected}
+              onSelect={() => onSelectWager(wager)}
               isUserCreator={isUserCreator}
-              onAccept={() => acceptMutation.mutate(wager.id)}
-              onCancel={() => cancelMutation.mutate(wager.id)}
-              isAccepting={acceptMutation.isPending && acceptMutation.variables === wager.id}
-              isCanceling={cancelMutation.isPending && cancelMutation.variables === wager.id}
             />
           );
         })}

@@ -17,6 +17,7 @@ export interface Position {
   profitLoss?: string;
 
   // Market info
+  marketSlug: string;
   marketStatus: 'open' | 'locked' | 'resolved' | 'cancelled';
   marketEndTime: string;
   marketOutcome?: number;

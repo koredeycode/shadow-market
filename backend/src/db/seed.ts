@@ -7,6 +7,9 @@ import {
   pricePoints,
   users,
   wagers,
+  adminActivityLog,
+  marketStats,
+  marketUpvotes,
 } from './schema.js';
 
 // Generate random ID
@@ -18,10 +21,23 @@ export async function clearDatabase() {
   await db.delete(pricePoints);
   await db.delete(wagers);
   await db.delete(positions);
+  await db.delete(marketStats);
+  await db.delete(marketUpvotes);
+  await db.delete(adminActivityLog);
   await db.delete(markets);
   await db.delete(users);
   console.log('Database cleared');
 }
+
+// Slug generation utility
+const slugify = (text: string) =>
+  text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-');
 
 async function seed() {
   console.log('Seeding database...');
@@ -29,6 +45,23 @@ async function seed() {
   try {
     // Clear existing data
     await clearDatabase();
+
+    const usedSlugs = new Set<string>();
+    const generateUniqueSlug = (text: string) => {
+      let slug = slugify(text);
+      if (!usedSlugs.has(slug)) {
+        usedSlugs.add(slug);
+        return slug;
+      }
+      let counter = 1;
+      let newSlug = `${slug}-${counter}`;
+      while (usedSlugs.has(newSlug)) {
+        counter++;
+        newSlug = `${slug}-${counter}`;
+      }
+      usedSlugs.add(newSlug);
+      return newSlug;
+    };
 
     // Create test users
     const [alice, bob, carol] = await db
@@ -63,388 +96,60 @@ async function seed() {
     const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     const nextYear = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
 
-    const seedMarkets = [
-      {
-        id: generateId(),
-        onchainId: '1',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'Will Bitcoin hit $100k by end of 2026?',
-        description: 'Resolves YES if BTC/USD price is >= $100,000 on any major CEX.',
-        category: 'Crypto',
-        tags: ['crypto', 'bitcoin'],
-        endTime: nextYear,
-        status: 'OPEN',
-        resolutionSource: 'CoinBase Oracle',
-        minBet: '1000',
-        maxBet: '10000000',
-        totalVolume: '12450000',
-        totalLiquidity: '4500000',
-        yesPrice: '0.64',
-        noPrice: '0.36',
-        creatorId: alice.id,
-      },
-      {
-        id: generateId(),
-        onchainId: '2',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'US Presidential Election 2028: Will the Republican candidate win?',
-        description: 'Resolves YES if the Republican nominee wins the presidency.',
-        category: 'Politics',
-        tags: ['politics', 'usa'],
-        endTime: nextYear,
-        status: 'OPEN',
-        resolutionSource: 'Associated Press',
-        minBet: '1000',
-        maxBet: '50000000',
-        totalVolume: '89000000',
-        totalLiquidity: '15000000',
-        yesPrice: '0.52',
-        noPrice: '0.48',
-        creatorId: bob.id,
-      },
-      {
-        id: generateId(),
-        onchainId: '3',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'Will SpaceX land humans on Mars before 2030?',
-        description: 'Resolves YES if humans set foot on Mars by Dec 31, 2029.',
-        category: 'Tech',
-        tags: ['space', 'tech'],
-        endTime: nextYear,
-        status: 'OPEN',
-        resolutionSource: 'NASA/SpaceX',
-        minBet: '500',
-        maxBet: '1000000',
-        totalVolume: '4500000',
-        totalLiquidity: '1200000',
-        yesPrice: '0.12',
-        noPrice: '0.88',
-        creatorId: carol.id,
-      },
-      {
-        id: generateId(),
-        onchainId: '4',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'Will Crude Oil hit $100 per barrel in Q2 2026?',
-        description: 'Resolves YES if WTI Crude hits $100.',
-        category: 'Finance',
-        tags: ['finance', 'oil'],
-        endTime: nextMonth,
-        status: 'OPEN',
-        resolutionSource: 'NYMEX',
-        minBet: '1000',
-        maxBet: '5000000',
-        totalVolume: '32000000',
-        totalLiquidity: '8500000',
-        yesPrice: '0.33',
-        noPrice: '0.67',
-        creatorId: alice.id,
-      },
-      {
-        id: generateId(),
-        onchainId: '5',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'Will OpenAI release GPT-5 before July 2026?',
-        description: 'Resolves YES if GPT-5 is officially announced/released.',
-        category: 'Tech',
-        tags: ['ai', 'tech'],
-        endTime: nextMonth,
-        status: 'OPEN',
-        resolutionSource: 'OpenAI Blog',
-        minBet: '1000',
-        maxBet: '2000000',
-        totalVolume: '15600000',
-        totalLiquidity: '4200000',
-        yesPrice: '0.48',
-        noPrice: '0.52',
-        creatorId: bob.id,
-      },
-      {
-        id: generateId(),
-        onchainId: '6',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'Will the Lakers win the 2026 NBA Championship?',
-        description: 'Resolves YES if Lakers win the title.',
-        category: 'Sports',
-        tags: ['sports', 'nba'],
-        endTime: nextMonth,
-        status: 'OPEN',
-        resolutionSource: 'NBA.com',
-        minBet: '100',
-        maxBet: '500000',
-        totalVolume: '5400000',
-        totalLiquidity: '1100000',
-        yesPrice: '0.15',
-        noPrice: '0.85',
-        creatorId: alice.id,
-      },
-      {
-        id: generateId(),
-        onchainId: '7',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'Will interest rates stay above 4% until 2027?',
-        description: 'Resolves YES if Fed maintains rates > 4%.',
-        category: 'Finance',
-        tags: ['finance', 'fed'],
-        endTime: nextYear,
-        status: 'OPEN',
-        resolutionSource: 'Federal Reserve',
-        minBet: '1000',
-        maxBet: '10000000',
-        totalVolume: '42000000',
-        totalLiquidity: '9500000',
-        yesPrice: '0.72',
-        noPrice: '0.28',
-        creatorId: carol.id,
-      },
-      {
-        id: generateId(),
-        onchainId: '8',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'Will a human colony be established on the Moon by 2030?',
-        description: 'Resolves YES if 10+ people reside on the Moon for 30+ days.',
-        category: 'Science',
-        tags: ['space', 'science'],
-        endTime: nextYear,
-        status: 'OPEN',
-        resolutionSource: 'SpaceX/BlueOrigin',
-        minBet: '100',
-        maxBet: '1000000',
-        totalVolume: '1200000',
-        totalLiquidity: '450000',
-        yesPrice: '0.08',
-        noPrice: '0.92',
-        creatorId: alice.id,
-      },
-      {
-        id: generateId(),
-        onchainId: '9',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'Will Ethereum achieve a $1 Trillion market cap in 2026?',
-        description: 'Resolves YES if ETH cap hits $1T.',
-        category: 'Crypto',
-        tags: ['crypto', 'ethereum'],
-        endTime: nextYear,
-        status: 'OPEN',
-        resolutionSource: 'CoinMarketCap',
-        minBet: '500',
-        maxBet: '5000000',
-        totalVolume: '28000000',
-        totalLiquidity: '6500000',
-        yesPrice: '0.38',
-        noPrice: '0.62',
-        creatorId: bob.id,
-      },
-      {
-        id: generateId(),
-        onchainId: '10',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'Will the 2026 FIFA World Cup Final go to penalties?',
-        description: 'Resolves YES if the final is decided by PKs.',
-        category: 'Sports',
-        tags: ['sports', 'soccer'],
-        endTime: nextMonth,
-        status: 'OPEN',
-        resolutionSource: 'FIFA',
-        minBet: '100',
-        maxBet: '1000000',
-        totalVolume: '18500000',
-        totalLiquidity: '3200000',
-        yesPrice: '0.22',
-        noPrice: '0.78',
-        creatorId: carol.id,
-      },
-      {
-        id: generateId(),
-        onchainId: '11',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'Will Apple announce a foldable iPhone in 2026?',
-        description: 'Resolves YES if Apple officially unveils a foldable.',
-        category: 'Tech',
-        tags: ['apple', 'tech'],
-        endTime: nextYear,
-        status: 'OPEN',
-        resolutionSource: 'Apple Event',
-        minBet: '1000',
-        maxBet: '2500000',
-        totalVolume: '9400000',
-        totalLiquidity: '2100000',
-        yesPrice: '0.55',
-        noPrice: '0.45',
-        creatorId: alice.id,
-      },
-      {
-        id: generateId(),
-        onchainId: '12',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'Will Taylor Swift win Album of the Year at 2027 Grammys?',
-        description: 'Resolves YES if Taylor Swift wins AOTY.',
-        category: 'Culture',
-        tags: ['music', 'grammys'],
-        endTime: nextYear,
-        status: 'OPEN',
-        resolutionSource: 'Recording Academy',
-        minBet: '100',
-        maxBet: '500000',
-        totalVolume: '12500000',
-        totalLiquidity: '1800000',
-        yesPrice: '0.42',
-        noPrice: '0.58',
-        creatorId: bob.id,
-      },
-      {
-        id: generateId(),
-        onchainId: '13',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'Will AI-generated content exceed 50% of the internet by 2027?',
-        description: 'Resolves YES if studies confirm >50% of public web data is AI-generated.',
-        category: 'Tech',
-        tags: ['ai', 'internet'],
-        endTime: nextYear,
-        status: 'OPEN',
-        resolutionSource: 'Common Crawl / Nature',
-        minBet: '100',
-        maxBet: '2000000',
-        totalVolume: '4500000',
-        totalLiquidity: '1100000',
-        yesPrice: '0.75',
-        noPrice: '0.25',
-        creatorId: carol.id,
-      },
-      {
-        id: generateId(),
-        onchainId: '14',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'Will 2026 be the hottest year on record?',
-        description: 'Resolves YES if global average temperature exceeds all previous years.',
-        category: 'Science',
-        tags: ['climate', 'science'],
-        endTime: nextYear,
-        status: 'OPEN',
-        resolutionSource: 'NOAA / NASA',
-        minBet: '100',
-        maxBet: '5000000',
-        totalVolume: '12800000',
-        totalLiquidity: '3400000',
-        yesPrice: '0.82',
-        noPrice: '0.18',
-        creatorId: alice.id,
-      },
-      {
-        id: generateId(),
-        onchainId: '15',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'Will a Neuralink human trial achieve FDA approval in 2026?',
-        description: 'Resolves YES if FDA grants full commercial approval.',
-        category: 'BioTech',
-        tags: ['tech', 'health'],
-        endTime: nextYear,
-        status: 'OPEN',
-        resolutionSource: 'FDA Website',
-        minBet: '500',
-        maxBet: '1000000',
-        totalVolume: '2100000',
-        totalLiquidity: '850000',
-        yesPrice: '0.28',
-        noPrice: '0.72',
-        creatorId: bob.id,
-      },
-      {
-        id: generateId(),
-        onchainId: '16',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'Will the S&P 500 cross 6,500 points in 2026?',
-        description: 'Resolves YES if S&P 500 index hits 6,500.',
-        category: 'Finance',
-        tags: ['finance', 'stocks'],
-        endTime: nextYear,
-        status: 'OPEN',
-        resolutionSource: 'S&P Global',
-        minBet: '1000',
-        maxBet: '10000000',
-        totalVolume: '56400000',
-        totalLiquidity: '12500000',
-        yesPrice: '0.45',
-        noPrice: '0.55',
-        creatorId: carol.id,
-      },
-      {
-        id: generateId(),
-        onchainId: '17',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'Will France win the 2026 FIFA World Cup?',
-        description: 'Resolves YES if France wins the trophy.',
-        category: 'Sports',
-        tags: ['sports', 'soccer'],
-        endTime: nextMonth,
-        status: 'OPEN',
-        resolutionSource: 'FIFA.com',
-        minBet: '100',
-        maxBet: '2000000',
-        totalVolume: '24500000',
-        totalLiquidity: '5600000',
-        yesPrice: '0.18',
-        noPrice: '0.82',
-        creatorId: alice.id,
-      },
-      {
-        id: generateId(),
-        onchainId: '18',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'Will Cardano (ADA) reach $2.00 by July 2026?',
-        description: 'Resolves YES if ADA/USD hits $2.00.',
-        category: 'Crypto',
-        tags: ['crypto', 'cardano'],
-        endTime: nextMonth,
-        status: 'OPEN',
-        resolutionSource: 'Binance / CoinGecko',
-        minBet: '500',
-        maxBet: '5000000',
-        totalVolume: '18200000',
-        totalLiquidity: '4500000',
-        yesPrice: '0.31',
-        noPrice: '0.69',
-        creatorId: bob.id,
-      },
-      {
-        id: generateId(),
-        onchainId: '19',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'Will a private space station launch and host humans in 2026?',
-        description: 'Resolves YES if Axiom Station or similar hosts 1+ human.',
-        category: 'Tech',
-        tags: ['space', 'tech'],
-        endTime: nextYear,
-        status: 'OPEN',
-        resolutionSource: 'SpaceNews / NASA',
-        minBet: '100',
-        maxBet: '1000000',
-        totalVolume: '850000',
-        totalLiquidity: '250000',
-        yesPrice: '0.15',
-        noPrice: '0.85',
-        creatorId: carol.id,
-      },
-      {
-        id: generateId(),
-        onchainId: '20',
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
-        question: 'Will the 2026 Nobel Peace Prize be awarded for AI Ethics?',
-        description: 'Resolves YES if the Nobel committee cites AI ethics in the award.',
-        category: 'Politics',
-        tags: ['politics', 'nobel', 'ai'],
-        endTime: nextYear,
-        status: 'OPEN',
-        resolutionSource: 'NobelPrize.org',
-        minBet: '100',
-        maxBet: '500000',
-        totalVolume: '1500000',
-        totalLiquidity: '400000',
-        yesPrice: '0.22',
-        noPrice: '0.78',
-        creatorId: alice.id,
-      },
+    const categories = ['Crypto', 'Politics', 'Tech', 'Finance', 'Sports', 'Science', 'Culture', 'BioTech'];
+    const tagsMap: Record<string, string[]> = {
+      'Crypto': ['bitcoin', 'ethereum', 'cardano', 'solana', 'defi'],
+      'Politics': ['election', 'usa', 'policy', 'geopolitics'],
+      'Tech': ['ai', 'apple', 'space', 'robotics', 'software'],
+      'Finance': ['fed', 'stocks', 'oil', 'macro'],
+      'Sports': ['nba', 'soccer', 'nfl', 'tennis'],
+      'Science': ['climate', 'astronomy', 'biology'],
+      'Culture': ['music', 'movies', 'art'],
+      'BioTech': ['health', 'genetics', 'pharmaceuticals']
+    };
+
+    const marketTemplates = [
+      'Will {item} reach {value} by {date}?',
+      'Who will win the {event} {year}?',
+      'Will {company} release {product} in {year}?',
+      'Will {topic} be {status} before {date}?',
+      'Predict the outcome of {event} on {date}.'
     ];
+
+    const items = ['Bitcoin', 'Ethereum', 'Cardano', 'OpenAI', 'Apple', 'Tesla', 'SpaceX', 'Federal Reserve', 'S&P 500', 'Crude Oil'];
+    const values = ['$100k', '$10k', '$5.00', 'GPT-6', 'Vision Pro 2', 'Mars Mission', 'Rate Cut', 'New Highs', 'FDA Approval'];
+
+    const seedMarkets = [];
+    for (let i = 1; i <= 50; i++) {
+      const category = categories[Math.floor(Math.random() * categories.length)];
+      const item = items[Math.floor(Math.random() * items.length)];
+      const value = values[Math.floor(Math.random() * values.length)];
+      const question = `Market Question #${i}: Will ${item} hit ${value} in 2026?`;
+      
+      seedMarkets.push({
+        id: generateId(),
+        onchainId: i.toString(),
+        slug: generateUniqueSlug(question),
+        contractAddress: '0x' + randomBytes(20).toString('hex'),
+        question: question,
+        description: `This is a detailed description for market #${i}. It resolves based on public data.`,
+        category: category,
+        tags: tagsMap[category] || ['general'],
+        endTime: i % 2 === 0 ? nextMonth : nextYear,
+        status: 'OPEN',
+        resolutionSource: 'Public Data Oracle',
+        minBet: '1000',
+        maxBet: '10000000',
+        totalVolume: (Math.random() * 50000000).toFixed(0),
+        totalLiquidity: (Math.random() * 10000000).toFixed(0),
+        yesPrice: (0.1 + Math.random() * 0.8).toFixed(2),
+        noPrice: '0.00', // Will be calculated
+        creatorId: [alice.id, bob.id, carol.id][i % 3],
+      });
+      
+      // Fix noPrice
+      seedMarkets[seedMarkets.length - 1].noPrice = (1 - parseFloat(seedMarkets[seedMarkets.length - 1].yesPrice)).toFixed(2);
+    }
 
     await db.insert(markets).values(seedMarkets as any);
 

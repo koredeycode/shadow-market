@@ -140,7 +140,12 @@ marketsRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const market = await marketService.getMarketById(id);
+    let market = await marketService.getMarketById(id);
+
+    if (!market) {
+      // Try fetching by slug if not found by ID
+      market = await marketService.getMarketBySlug(id);
+    }
 
     if (!market) {
       return res.status(404).json({

@@ -9,6 +9,9 @@ import type { ConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
 import { ShadowMarketAPI, type DeployedShadowMarketConfig } from '@shadow-market/api';
 import { Subscription } from 'rxjs';
 import { useContractStore } from '../store/contract.store';
+import toast, { Toast } from 'react-hot-toast';
+import React from 'react';
+import { TxToast } from '../components/common/TxToast';
 
 /**
  * Contract Manager - Singleton service for contract interactions
@@ -21,23 +24,83 @@ class ContractManager {
    * Initialize the contract connection
    */
   async initialize(wallet: ConnectedAPI, config: DeployedShadowMarketConfig): Promise<boolean> {
-    console.log('Initializing contract connection...');
+    const initToast = toast.loading('Establishing secure terminal connection...');
 
     try {
-      // Connect to the contract using the new .connect() pattern
       this.api = await ShadowMarketAPI.connect(wallet, config);
 
-      // Subscribe to state changes
       this.stateSubscription = this.api.state$.subscribe((state: any) => {
-        console.log('Contract state updated:', state);
         useContractStore.getState().setProtocolInitialized(state.isInitialized);
       });
 
-      console.log('Contract initialized successfully');
+      toast.success('Terminal synchronized', { id: initToast });
       return true;
-    } catch (error) {
-      console.error('Failed to initialize contract:', error);
+    } catch (error: any) {
+      toast.error(`Synchronization failed: ${error.message}`, { id: initToast });
       return false;
+    }
+  }
+
+  /**
+   * Wait for a specific contract state change
+   */
+  private async waitForStateUpdate(
+    predicate: (state: any) => boolean,
+    timeoutMs = 60000
+  ): Promise<void> {
+    const api = this.api;
+    if (!api) return;
+
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        subscription.unsubscribe();
+        reject(new Error('State update synchronization timed out'));
+      }, timeoutMs);
+
+      const subscription = api.state$.subscribe((state) => {
+        if (predicate(state)) {
+          clearTimeout(timeout);
+          subscription.unsubscribe();
+          resolve();
+        }
+      });
+    });
+  }
+
+  /**
+   * Internal helper to wrap contract calls with toasts
+   */
+  private async executeTx(
+    promise: Promise<string>,
+    loadingMsg: string,
+    successMsg: string,
+    waitForUpdate?: (state: any) => boolean
+  ): Promise<string> {
+    if (!this.api) throw new Error('Contract not initialized');
+    const txToast = toast.loading(loadingMsg);
+    try {
+      const txHash = await promise;
+      
+      // Update toast to 'Finalizing' state
+      toast.loading('Validating on-chain finalization...', { id: txToast });
+
+      if (waitForUpdate) {
+        await this.waitForStateUpdate(waitForUpdate);
+      } else {
+        // Fallback for actions without explicit state wait
+        await new Promise(resolve => setTimeout(resolve, 5000));
+      }
+      
+      // Final success
+      toast.success(
+        (t: Toast) => React.createElement(TxToast, { t, txHash, successMsg }),
+        { id: txToast, duration: 6000 }
+      );
+      
+      return txHash;
+    } catch (error: any) {
+      toast.error(`Execution failed: ${error.message}`, { id: txToast });
+      throw error;
     }
   }
 
@@ -45,36 +108,22 @@ class ContractManager {
    * Place a bet on a prediction market
    */
   async placeBet(marketId: string, betAmount: bigint, betOutcome: boolean): Promise<string> {
-    if (!this.api) {
-      throw new Error('Contract not initialized');
-    }
-
-    try {
-      const txHash = await this.api.placeBet(marketId, betAmount, betOutcome);
-      console.log(`Bet placed: ${betAmount} on ${betOutcome ? 'YES' : 'NO'}. Tx: ${txHash}`);
-      return txHash;
-    } catch (error) {
-      console.error('Failed to place bet:', error);
-      throw error;
-    }
+    return this.executeTx(
+      this.api!.placeBet(marketId, betAmount, betOutcome),
+      'Transmitting bet proof...',
+      'Bet finalized on-chain'
+    );
   }
 
   /**
    * Claim winnings from a resolved market
    */
   async claimWinnings(betId: string): Promise<string> {
-    if (!this.api) {
-      throw new Error('Contract not initialized');
-    }
-
-    try {
-      const txHash = await this.api.claimWinnings(betId);
-      console.log(`Winnings claimed from bet: ${betId}. Tx: ${txHash}`);
-      return txHash;
-    } catch (error) {
-      console.error('Failed to claim winnings:', error);
-      throw error;
-    }
+    return this.executeTx(
+      this.api!.claimWinnings(betId),
+      'Verifying winning proof...',
+      'Winnings claimed'
+    );
   }
 
   /**
@@ -86,41 +135,30 @@ class ContractManager {
     initialLiquidity: bigint,
     oracleAddress: string
   ): Promise<string> {
-    if (!this.api) {
-      throw new Error('Contract not initialized');
+    let previousCount = 0n;
+    if (this.api) {
+        // We'll use the protocol state to wait for marketCount increment
+        const sub = this.api.state$.subscribe(s => { previousCount = s.marketCount; });
+        sub.unsubscribe();
     }
 
-    try {
-      const txHash = await this.api.createMarket(
-        question,
-        resolutionTime,
-        initialLiquidity,
-        oracleAddress
-      );
-      console.log(`Market created: ${question}. Tx: ${txHash}`);
-      return txHash;
-    } catch (error) {
-      console.error('Failed to create market:', error);
-      throw error;
-    }
+    return this.executeTx(
+      this.api!.createMarket(question, resolutionTime, initialLiquidity, oracleAddress),
+      'Generating market circuit...',
+      'Market deployed successfully',
+      (state) => state.marketCount > previousCount
+    );
   }
 
   /**
    * Resolve a market with an outcome
    */
   async resolveMarket(marketId: string, outcome: boolean): Promise<string> {
-    if (!this.api) {
-      throw new Error('Contract not initialized');
-    }
-
-    try {
-      const txHash = await this.api.resolveMarket(marketId, outcome);
-      console.log(`Market resolved: ${marketId}, outcome: ${outcome ? 'YES' : 'NO'}. Tx: ${txHash}`);
-      return txHash;
-    } catch (error) {
-      console.error('Failed to resolve market:', error);
-      throw error;
-    }
+    return this.executeTx(
+      this.api!.resolveMarket(marketId, outcome),
+      'Transmitting resolution proof...',
+      'Market resolved'
+    );
   }
 
   /**
@@ -133,78 +171,51 @@ class ContractManager {
     oddsNumerator: bigint,
     oddsDenominator: bigint
   ): Promise<string> {
-    if (!this.api) {
-      throw new Error('Contract not initialized');
+    let previousCount = 0n;
+    if (this.api) {
+        const sub = this.api.state$.subscribe(s => { previousCount = s.wagerCount; });
+        sub.unsubscribe();
     }
 
-    try {
-      const txHash = await this.api.createWager(
-        marketId,
-        side,
-        amount,
-        oddsNumerator,
-        oddsDenominator
-      );
-      console.log(`Wager created on market ${marketId}. Tx: ${txHash}`);
-      return txHash;
-    } catch (error) {
-      console.error('Failed to create wager:', error);
-      throw error;
-    }
+    return this.executeTx(
+      this.api!.createWager(marketId, side, amount, oddsNumerator, oddsDenominator),
+      'Publishing P2P wager...',
+      'Wager offering active',
+      (state) => state.wagerCount > previousCount
+    );
   }
 
   /**
    * Accept an existing P2P wager
    */
   async acceptWager(wagerId: string): Promise<string> {
-    if (!this.api) {
-      throw new Error('Contract not initialized');
-    }
-
-    try {
-      const txHash = await this.api.acceptWager(wagerId);
-      console.log(`Wager accepted: ${wagerId}. Tx: ${txHash}`);
-      return txHash;
-    } catch (error) {
-      console.error('Failed to accept wager:', error);
-      throw error;
-    }
+    return this.executeTx(
+      this.api!.acceptWager(wagerId),
+      'Accepting wager offer...',
+      'Wager matched'
+    );
   }
 
   /**
    * Cancel an open P2P wager
    */
   async cancelWager(wagerId: string): Promise<string> {
-    if (!this.api) {
-      throw new Error('Contract not initialized');
-    }
-
-    try {
-      const txHash = await this.api.cancelWager(wagerId);
-      console.log(`Wager cancelled: ${wagerId}. Tx: ${txHash}`);
-      return txHash;
-    } catch (error) {
-      console.error('Failed to cancel wager:', error);
-      throw error;
-    }
+    return this.executeTx(
+      this.api!.cancelWager(wagerId),
+      'Processing cancellation...',
+      'Wager offer withdrawn'
+    );
   }
 
   /**
    * Claim winnings from a resolved P2P wager
    */
   async claimWagerWinnings(wagerId: string): Promise<string> {
-    if (!this.api) {
-      throw new Error('Contract not initialized');
-    }
-
-    try {
-      const txHash = await this.api.claimWagerWinnings(wagerId);
-      console.log(`Wager winnings claimed: ${wagerId}. Tx: ${txHash}`);
-      return txHash;
-    } catch (error) {
-      console.error('Failed to claim wager winnings:', error);
-      throw error;
-    }
+    return this.executeTx(
+      this.api!.claimWagerWinnings(wagerId),
+      'Finalizing payout...',
+      'Payout received'
+    );
   }
 
   /**

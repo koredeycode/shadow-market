@@ -88,7 +88,7 @@ export function MarketCard({ market }: MarketCardProps) {
       {/* Action Footer */}
       <div className="p-4 bg-black/20 border-t border-white/5">
         <Link
-          to={`/markets/${market.id}`}
+          to={`/markets/${market.slug || market.id}`}
           className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 text-white font-bold text-xs uppercase tracking-[0.2em] transition-all hover:bg-electric-blue hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] group/btn"
         >
           ANALYZE_MARKET

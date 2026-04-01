@@ -23,7 +23,7 @@ import {
   type MarketPrivateState,
   type MarketProviders,
 } from './providers.js';
-import { stringToBytes32, safeRandomNonce } from './utils.js';
+import { stringToBytes32, safeRandomNonce, fromHex } from './utils.js';
 
 /**
  * Configuration for connecting to a deployed contract
@@ -108,7 +108,8 @@ export class ShadowMarketAPI {
     console.log('INITIALIZING CONTRACT ON-CHAIN');
 
     try {
-      const txData = await (this.deployedContract.callTx.initialize as any)();
+      const initializeFn = this.deployedContract.callTx.initialize;
+      const txData = await (initializeFn as any)();
       console.log('Contract initialized! Transaction:', txData.public.txHash);
       return txData.public.txHash;
     } catch (error: any) {
@@ -197,17 +198,20 @@ export class ShadowMarketAPI {
 
     try {
       const titleBytes = stringToBytes32(question);
-      const txData = await (this.deployedContract.callTx.createMarket as any)(
+      const oracleBytes = fromHex(oracleAddress.replace('mn_shield-addr_', '').slice(0, 64)); // Simplified conversion
+      const createMarketFn = this.deployedContract.callTx.createMarket;
+      const txData = await (createMarketFn as any)(
         resolutionTime,
         initialLiquidity,
-        titleBytes
+        titleBytes,
+        oracleBytes
       );
 
       console.log('Market created! Transaction:', txData.public.txHash);
       
       // Wait for state propagation
       console.log('Waiting for state propagation...');
-      await new Promise(resolve => setTimeout(resolve, 15000));
+      await new Promise(resolve => setTimeout(resolve, 18000));
       
       return txData.public.txHash;
     } catch (error: any) {

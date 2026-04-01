@@ -85,7 +85,7 @@ function PositionRow({ position, isActive: _isActive, onClaimSuccess }: Position
 
   return (
     <div className="group border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-      <Link to={`/markets/${position.marketId}`} className="block">
+      <Link to={`/markets/${position.marketSlug || position.marketId}`} className="block">
         {/* Desktop View */}
         <div className="hidden lg:grid grid-cols-12 gap-4 items-center px-6 py-4">
           <div className="col-span-4 space-y-1">

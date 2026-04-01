@@ -1,30 +1,30 @@
 {
   "wallets": {
     "admin": {
-      "address": "mn_addr_undeployed14esq34gjrjzycwadu3z83dj726z5mmteek9ulc26fj9553fr4krqja6r04",
-      "seed": "dad7b31a5abd2ed25856fdb0c00606f70ee67f3e21c511d175c44ee3675dd3747a86bf0edcdfa9d7c9ae996b2b2f3e2fcfeda57d97ab5e1f90feddac447ed7d2"
+      "address": "mn_addr_undeployed1mfet0q66wr7h3jat5da2zhwffy0t7dsaz7qagvshvqdh6lwx7gkqg5qdcc",
+      "seed": "087e854c0e7406e2f155a38bb0552bc99e3071ef6f4066b5228ed6f9e24d197709e398b143aa5903116809f922a5a74f1c6d68ea6384b715b3b4354d38025602",
+      "mnemonic": "glide brick panic scatter various letter stuff blood royal mouse humble employ salute beach album motion famous harbor source sell issue unaware vacant harvest"
     },
     "userA": {
-      "address": "mn_addr_undeployed1ceskjlyxq70zy3xd0v05k674nskrhs7f4fedpsahjmx7a9cqym8qdqe8pk",
-      "seed": "7d40e917ffb150913b1fb5b67aa42cd94cc11daea01cc6248d19f0455a21e279"
+      "address": "mn_addr_undeployed1z4pqpj0s2342x8626239yl82y78uldk6tg2ykydd5535xg8ar29supvjlj",
+      "seed": "bb89bd7c4a0cd71da6af8b5d358788c1149d6ab2e746a64d0c9d5286f80af11149b65e12ae251cb54147520f64f6fb071a3211ea5db32504fded9415b3a55246",
+      "mnemonic": "ginger gloom meat again brave dance approve pencil right chief metal fringe physical image gown repair stand play canal pottery obvious reopen film hotel"
     },
     "userB": {
-      "address": "mn_addr_undeployed1rwyvewx2y60m4n90fzcwaqn4wlmlwwcklp0pla5rcpv8wsdstzrsv79mkz",
-      "seed": "a58b1da0dd56d755662984591f6fea44e4408028f60c1c2a5ed26b3ca3e9c1f9"
+      "address": "mn_addr_undeployed1cx8utgjv84gzucthezmnv60u74tyqzvyt6mq3683sqhvk39tj47s492yxe",
+      "seed": "a52f8c5e97e2549b9199236bd6ac067291603329155954d098fec83cd674baaa347e46d0550dc71d7e3d4d0b984f0d145dfa58d1511201c9dc760df8a9062779",
+      "mnemonic": "weird behave audit direct hazard viable benefit fox head vital legal note connect same seed diary joke wisdom post become impose donate crack avoid"
     },
     "userC": {
-      "address": "mn_addr_undeployed1dep5nu2elutjxrrtmh5p9evs7074a8sf9t72pzvdn60mdqr2uuuquu3knx",
-      "seed": "be5e3086d64df550ce9aee0ed5ac26a35fa3844bae38e44580f7fefe9bba8eef"
+      "address": "mn_addr_undeployed1h9n58xrrc3j3a8mrzry06wsfau30macntjagyx6lqn8w6d69sres8gsnme",
+      "seed": "8810735c23ede0141ef2c725db1f9096a1e8f51a646ee33524a3b6e80d79ae3d6f1dfae94708b9c6e3a497f6596604b7bc1cc9bb2344085e44439a1ea379437f",
+      "mnemonic": "ketchup check bulk describe credit dwarf whisper skirt since romance document decade champion clip robot news sponsor guard swim test embrace bird jeans run"
     }
   },
   "dbResetDone": true,
   "compiledDone": true,
-  "contractAddress": "7a8ccb2d5a5204846be50be697385890198c52e65d1ff02aba65b2eb564734f0",
+  "contractAddress": "2da1be39bb388f1efc86bbfe25fb93cb33cb4a27cebda9304ea0f9694305458a",
   "initializedDone": true,
   "seedingMarketIndex": 10,
-  "activityMarketIndex": 0,
-  "activityUserIndex": 1,
-  "betsDone": false,
-  "wagersDone": false,
   "activityDone": false
 }

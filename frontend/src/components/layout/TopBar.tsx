@@ -59,14 +59,14 @@ export function TopBar() {
 
       {/* Actions & Profile */}
       <div className="flex items-center gap-4">
-        <div className="hidden sm:flex items-center gap-2 mr-2">
+        {/* <div className="hidden sm:flex items-center gap-2 mr-2">
           <button className="p-2 text-slate-500 hover:text-white transition-colors">
             <Bell className="w-5 h-5" />
           </button>
           <button className="p-2 text-slate-500 hover:text-white transition-colors">
             <Settings className="w-5 h-5" />
           </button>
-        </div>
+        </div> */}
 
         <div className="flex items-center gap-3 relative" ref={detailRef}>
           {isConnected ? (

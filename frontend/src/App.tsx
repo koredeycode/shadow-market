@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { Layout } from './components/layout/Layout';
+import { Toaster } from 'react-hot-toast';
 
 // Lazy load pages for code splitting
 const Home = lazy(() => import('./pages/Home'));
@@ -31,7 +32,7 @@ function App() {
             <Route path="/" element={<Layout />}>
               <Route index element={<Home />} />
               <Route path="markets" element={<Markets />} />
-              <Route path="markets/:id" element={<MarketDetail />} />
+              <Route path="markets/:slug" element={<MarketDetail />} />
               <Route path="markets/create" element={<CreateMarket />} />
               <Route path="portfolio" element={<Portfolio />} />
               <Route path="analytics" element={<Analytics />} />
@@ -42,6 +43,32 @@ function App() {
             </Route>
           </Routes>
         </Suspense>
+        <Toaster 
+          position="bottom-right"
+          toastOptions={{
+            duration: 5000,
+            style: {
+              background: '#0F172A',
+              color: '#F1F5F9',
+              border: '1px solid rgba(255, 255, 255, 0.05)',
+              borderRadius: '2px',
+              fontSize: '12px',
+              fontFamily: 'monospace',
+            },
+            success: {
+              iconTheme: {
+                primary: '#10B981',
+                secondary: '#0F172A',
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: '#EF4444',
+                secondary: '#0F172A',
+              },
+            },
+          }}
+        />
       </div>
     </ErrorBoundary>
   );

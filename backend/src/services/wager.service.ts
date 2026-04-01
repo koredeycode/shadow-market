@@ -191,6 +191,8 @@ export class WagerService {
       return {
         id: pos.id,
         marketId: pos.marketId,
+        marketSlug: pos.market.slug,
+        marketQuestion: pos.market.question,
         amount,
         side: side as 'yes' | 'no',
         entryPrice: pos.entryPrice,

@@ -2,6 +2,7 @@ import { MarketStatus } from '@/types';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, BarChart3, Clock, Info, Share2, Shield, Zap } from 'lucide-react';
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { marketsApi } from '../api/markets';
 import { MarketChart } from '../components/market/MarketChart';
@@ -10,27 +11,54 @@ import { OrderBook } from '../components/market/OrderBook';
 import { RecentTrades } from '../components/market/RecentTrades';
 import { BettingTerminal } from '../components/wager/BettingTerminal';
 import { P2PWagersList } from '../components/wager/P2PWagersList';
+import { P2PActionTerminal } from '../components/wager/P2PActionTerminal';
+import { Wager } from '@/types';
 
 export function MarketDetail() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'overview' | 'chart' | 'p2p' | 'orders' | 'trades'>(
     'chart'
   );
   const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d' | '30d' | 'all'>('24h');
+  const [selectedWager, setSelectedWager] = useState<Wager | null>(null);
 
   const {
     data: market,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['market', id],
-    queryFn: () => marketsApi.getById(id!),
-    enabled: !!id,
+    queryKey: ['market', slug],
+    queryFn: () => marketsApi.getById(slug!),
+    enabled: !!slug,
     // Disable auto-refetch - only refetch on manual refresh or navigation
     refetchInterval: false,
     refetchOnWindowFocus: false,
   });
+
+  const handleShare = async () => {
+    if (!market) return;
+    
+    const shareData = {
+      title: `Shadow Market | ${market.question}`,
+      text: market.description || `Check out this prediction market on Shadow Market: ${market.question}`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        toast.success('Shared successfully');
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Link copied to clipboard');
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name !== 'AbortError') {
+        toast.error('Could not share market');
+      }
+    }
+  };
 
   if (isLoading) {
     return (
@@ -85,7 +113,11 @@ export function MarketDetail() {
         </button>
 
         <div className="flex items-center gap-3">
-          <button className="p-2 text-slate-500 hover:text-white transition-colors border border-white/5 bg-white/[0.02] rounded-sm">
+          <button
+            onClick={handleShare}
+            className="p-2 text-slate-500 hover:text-white transition-colors border border-white/5 bg-white/[0.02] rounded-sm group/share relative"
+            title="Share Market"
+          >
             <Share2 className="w-4 h-4" />
           </button>
           <div className="h-6 w-[1px] bg-white/10 mx-1" />
@@ -106,7 +138,7 @@ export function MarketDetail() {
                 {market.category}
               </span>
               <span className="text-[10px] text-slate-600 font-mono tracking-widest uppercase">
-                ID: {market.id.slice(0, 8)}
+                ID: {market.id}
               </span>
             </div>
 
@@ -189,7 +221,30 @@ export function MarketDetail() {
               )}
               {activeTab === 'orders' && <OrderBook marketId={market.id} />}
               {activeTab === 'trades' && <RecentTrades marketId={market.id} />}
-              {activeTab === 'p2p' && <P2PWagersList marketId={market.id} />}
+              {activeTab === 'p2p' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center bg-electric-blue/5 border border-electric-blue/20 p-4 rounded-sm">
+                    <div className="space-y-1">
+                        <h3 className="text-[10px] font-mono font-bold text-electric-blue uppercase tracking-widest leading-none">
+                        Wager Protocol Interface
+                        </h3>
+                        <p className="text-[9px] text-slate-500 font-mono uppercase">Manage or initialize p2p contracts</p>
+                    </div>
+                    <button
+                      onClick={() => setSelectedWager(null)}
+                      className="px-6 py-2.5 bg-electric-blue text-white rounded-sm text-[10px] font-mono font-bold uppercase tracking-[0.2em] hover:brightness-110 transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] flex items-center gap-2"
+                    >
+                      <Zap className="w-3.5 h-3.5" />
+                      Initialize_New_Protocol
+                    </button>
+                  </div>
+                  <P2PWagersList 
+                    marketId={market.id} 
+                    selectedWagerId={selectedWager?.id}
+                    onSelectWager={setSelectedWager}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -245,9 +300,17 @@ export function MarketDetail() {
           <div className="space-y-4">
             <h2 className="text-white font-bold text-xs uppercase tracking-[0.25em] flex items-center gap-2">
               <Zap className="w-3.5 h-3.5 text-electric-blue" />
-              Execution_Terminal
+              {activeTab === 'p2p' ? 'P2P_PROTOCOL_TERMINAL' : 'EXECUTION_TERMINAL'}
             </h2>
-            <BettingTerminal market={market} />
+            {activeTab === 'p2p' ? (
+              <P2PActionTerminal 
+                market={market} 
+                selectedWager={selectedWager}
+                onClearSelection={() => setSelectedWager(null)}
+              />
+            ) : (
+              <BettingTerminal market={market} />
+            )}
           </div>
 
           <div className="bg-white/[0.02] border border-white/5 p-6 rounded-sm space-y-6">

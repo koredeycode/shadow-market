@@ -128,7 +128,7 @@ export function Home() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                     <Link
-                      to={`/markets/${currentFeatured.id}`}
+                      to={`/markets/${currentFeatured.slug || currentFeatured.id}`}
                       className="flex flex-col items-center justify-center p-6 bg-success-green/5 border border-success-green/20 rounded-sm group/btn hover:bg-success-green/10 transition-all"
                     >
                       <span className="text-[9px] font-mono text-success-green uppercase mb-2 tracking-widest">
@@ -139,7 +139,7 @@ export function Home() {
                       </span>
                     </Link>
                     <Link
-                      to={`/markets/${currentFeatured.id}`}
+                      to={`/markets/${currentFeatured.slug || currentFeatured.id}`}
                       className="flex flex-col items-center justify-center p-6 bg-red-500/5 border border-red-500/20 rounded-sm group/btn hover:bg-red-500/10 transition-all"
                     >
                       <span className="text-[9px] font-mono text-red-400 uppercase mb-2 tracking-widest">
@@ -153,7 +153,7 @@ export function Home() {
 
                   <div className="pt-4">
                     <Link
-                      to={`/markets/${currentFeatured.id}`}
+                      to={`/markets/${currentFeatured.slug || currentFeatured.id}`}
                       className="inline-flex items-center gap-2 px-8 py-4 bg-electric-blue text-white rounded-sm font-bold tracking-[0.1em] uppercase text-xs hover:brightness-110 transition-all shadow-[0_0_30px_rgba(59,130,246,0.2)]"
                     >
                       TRADE THIS MARKET
@@ -200,7 +200,7 @@ export function Home() {
               {trendingMarkets?.map((market, idx) => (
                 <Link
                   key={market.id}
-                  to={`/markets/${market.id}`}
+                  to={`/markets/${market.slug || market.id}`}
                   className={`flex items-center gap-4 p-4 hover:bg-white/5 transition-colors group ${
                     idx !== trendingMarkets.length - 1 ? 'border-b border-white/[0.02]' : ''
                   }`}
@@ -241,7 +241,7 @@ export function Home() {
               {newMarkets?.slice(0, 3).map(market => (
                 <Link
                   key={market.id}
-                  to={`/markets/${market.id}`}
+                  to={`/markets/${market.slug || market.id}`}
                   className="block p-3 border border-transparent hover:border-white/5 hover:bg-white/[0.01] rounded-sm transition-all"
                 >
                   <p className="text-xs font-bold text-slate-400 line-clamp-2 mb-2 group-hover:text-slate-200">

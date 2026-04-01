@@ -16,12 +16,14 @@ export class MarketService {
   async createMarket(userId: string, data: CreateMarketRequest) {
     const marketId = generateId();
     const onchainId = data.onchainId || Date.now().toString();
+    const slug = await this.generateUniqueSlug(data.question);
 
     const [market] = await db
       .insert(markets)
       .values({
         id: marketId,
         onchainId,
+        slug,
         txHash: data.txHash,
         question: data.question,
         description: data.description,
@@ -100,6 +102,27 @@ export class MarketService {
   async getMarketById(marketId: string) {
     const result = await db.query.markets.findFirst({
       where: eq(markets.id, marketId),
+      with: {
+        creator: {
+          columns: {
+            id: true,
+            username: true,
+            address: true,
+            reputation: true,
+          },
+        },
+      },
+    });
+
+    return result;
+  }
+
+  /**
+   * Get single market by Slug
+   */
+  async getMarketBySlug(slug: string) {
+    const result = await db.query.markets.findFirst({
+      where: eq(markets.slug, slug),
       with: {
         creator: {
           columns: {
@@ -353,5 +376,32 @@ export class MarketService {
       noPrice: market.noPrice,
       status: market.status,
     };
+  }
+  /**
+   * Generates a unique slug for a given question, handling collisions by appending numeric suffixes.
+   */
+  private async generateUniqueSlug(question: string): Promise<string> {
+    const baseSlug = question
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    let slug = baseSlug;
+    let counter = 1;
+
+    while (true) {
+      const existing = await db.query.markets.findFirst({
+        where: eq(markets.slug, slug),
+      });
+
+      if (!existing) {
+        return slug;
+      }
+
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
   }
 }

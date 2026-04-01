@@ -68,6 +68,7 @@ export const markets = pgTable(
   {
     id: text('id').primaryKey(),
     onchainId: varchar('onchain_id', { length: 255 }).unique().notNull(),
+    slug: varchar('slug', { length: 255 }).unique().notNull(),
     txHash: varchar('tx_hash', { length: 255 }),
 
     // Market config
@@ -117,6 +118,7 @@ export const markets = pgTable(
   table => ({
     statusIdx: index('markets_status_idx').on(table.status),
     categoryIdx: index('markets_category_idx').on(table.category),
+    slugIdx: index('markets_slug_idx').on(table.slug),
     endTimeIdx: index('markets_end_time_idx').on(table.endTime),
     creatorIdx: index('markets_creator_idx').on(table.creatorId),
   })

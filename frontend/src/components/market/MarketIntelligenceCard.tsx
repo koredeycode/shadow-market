@@ -57,7 +57,7 @@ export function MarketIntelligenceCard({ market }: MarketIntelligenceCardProps) 
         </div>
 
         <Link
-          to={`/markets/${market.id}`}
+          to={`/markets/${market.slug || market.id}`}
           className="block group-hover:text-electric-blue transition-colors"
         >
           <h3 className="text-lg font-bold leading-tight mb-2 line-clamp-2">{market.question}</h3>
@@ -103,7 +103,7 @@ export function MarketIntelligenceCard({ market }: MarketIntelligenceCardProps) 
         </div>
 
         <Link
-          to={`/markets/${market.id}`}
+          to={`/markets/${market.slug || market.id}`}
           className="w-full flex items-center justify-center gap-2 py-3 bg-electric-blue/5 hover:bg-electric-blue text-electric-blue hover:text-white border border-electric-blue/20 hover:border-electric-blue rounded-sm text-xs font-bold transition-all duration-300 group/btn shadow-[0_4px_12px_rgba(59,130,246,0.1)] hover:shadow-[0_4px_20px_rgba(59,130,246,0.3)]"
         >
           <span className="tracking-[0.1em]">VIEW MARKET</span>

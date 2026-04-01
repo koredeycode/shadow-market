@@ -3,6 +3,7 @@ export type MarketStatus = 'PENDING' | 'OPEN' | 'LOCKED' | 'RESOLVED' | 'CANCELL
 export interface Market {
   id: string;
   onchainId: string;
+  slug: string;
   contractAddress: string;
   question: string;
   description?: string;

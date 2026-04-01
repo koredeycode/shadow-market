@@ -75,6 +75,8 @@ export interface PricePoint {
 export interface DecryptedPosition {
   id: string;
   marketId: string;
+  marketSlug: string;
+  marketQuestion: string;
   amount: string;
   side: 'yes' | 'no';
   entryPrice: string;

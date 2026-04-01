@@ -6,7 +6,7 @@
  * 2. Contract Compilation
  * 3. Multi-Wallet Generation & Funding (Admin + User A, B, C)
  * 4. Contract Deployment & Initialization
- * 5. Complex Data Seeding (10 Markets, Bets, P2P Wagers)
+ * 5. Complex Data Seeding (50 Markets, Slugs, No activity)
  * 6. Environment Update (.env.local)
  */
 import { createInterface } from 'node:readline/promises';
@@ -18,6 +18,8 @@ import { WebSocket } from 'ws';
 import * as Rx from 'rxjs';
 import { Buffer } from 'buffer';
 import { execSync } from 'node:child_process';
+import * as bip39 from '@scure/bip39';
+import { wordlist as english } from '@scure/bip39/wordlists/english.js';
 
 // Midnight SDK imports
 import { deployContract } from '@midnight-ntwrk/midnight-js-contracts';
@@ -44,6 +46,7 @@ import { CompiledContract } from '@midnight-ntwrk/compact-js';
 // Shared config
 import { getNetworkConfig } from '../deployment/config.js';
 import { ShadowMarketAPI } from '../../api/src/index.js';
+import { createWitnessProviders, type MarketPrivateState } from '../../api/src/witnesses.js';
 
 // Enable WebSocket
 // @ts-expect-error Required for wallet sync
@@ -73,6 +76,7 @@ const STATE_FILE = path.join(__dirname, 'setup-state.json');
 interface WalletInfo {
   address: string;
   seed: string;
+  mnemonic: string;
 }
 
 interface SetupState {
@@ -82,10 +86,6 @@ interface SetupState {
   contractAddress?: string;
   initializedDone?: boolean;
   seedingMarketIndex?: number;
-  activityMarketIndex?: number;
-  activityUserIndex?: number;
-  betsDone?: boolean;
-  wagersDone?: boolean;
   activityDone?: boolean;
 }
 
@@ -192,73 +192,9 @@ async function syncMarketToBackend(marketData: any) {
         maxBet: '10000000',
       }),
     });
-  } catch (err: any) {}
-}
-
-async function syncBetToBackend(address: string, betData: any) {
-  const token = await getTokenForUser(address);
-  if (!token) return;
-  
-  try {
-    await fetch(`${BACKEND_URL}/wagers`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        marketId: betData.marketId,
-        amount: betData.amount.toString(),
-        side: betData.side ? 'yes' : 'no',
-      }),
-    });
-  } catch (err: any) {}
-}
-
-async function syncWagerToBackend(address: string, wagerData: any) {
-  const token = await getTokenForUser(address);
-  if (!token) return;
-  
-  try {
-    await fetch(`${BACKEND_URL}/wagers/p2p`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        marketId: wagerData.marketId,
-        amount: wagerData.amount.toString(),
-        odds: [Number(wagerData.numerator), Number(wagerData.denominator)],
-        side: wagerData.side ? 'yes' : 'no',
-        duration: 3600, // 1 hour
-      }),
-    });
-  } catch (err: any) {}
-}
-
-async function runWithRetry<T>(fn: () => Promise<T>, retries = 5, initialDelay = 5000): Promise<T> {
-  let currentDelay = initialDelay;
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await fn();
-    } catch (err: any) {
-      if (i === retries - 1) throw err;
-      
-      if (err.message.includes('expected a cell, received null')) {
-        console.warn(`    ⏳  Indexer catch-up detected (null cell), waiting 10s...`);
-        currentDelay = 10000;
-      } else if (err.message.includes('Custom error: 139')) {
-        console.warn(`    ⏳  Priority/Nonce issue (139) detected, waiting 15s for node cooldown...`);
-        currentDelay = 15000;
-      }
-      
-      console.warn(`    ⚠️  Execution failed (Attempt ${i+1}/${retries}), retrying in ${currentDelay/1000}s... (${err.message.substring(0, 150)})`);
-      await new Promise(resolve => setTimeout(resolve, currentDelay));
-      currentDelay *= 1.5; 
-    }
+  } catch (err: any) {
+    console.error(`  ❌ Failed to sync market to backend: ${err.message}`);
   }
-  throw new Error('Unreachable');
 }
 
 async function initWallet(seedHex: string) {
@@ -292,7 +228,6 @@ async function initWallet(seedHex: string) {
 
   const shieldedWallet = ShieldedWallet(baseConfiguration).startWithSecretKeys(shieldedSecretKeys);
   const dustWallet = DustWallet(baseConfiguration).startWithSecretKey(dustSecretKey, ledger.LedgerParameters.initialParameters().dust);
-  // BACK TO BASICS: UnshieldedWallet only has startWithPublicKey
   const unshieldedWallet = UnshieldedWallet(baseConfiguration).startWithPublicKey(unshieldedPublicKey);
 
   const facade = await WalletFacade.init({
@@ -304,7 +239,6 @@ async function initWallet(seedHex: string) {
 
   await facade.start(shieldedSecretKeys, dustSecretKey);
   
-  // Wait for sync
   await Rx.firstValueFrom(facade.state().pipe(Rx.filter((s: any) => s.isSynced)));
   
   return { 
@@ -313,22 +247,29 @@ async function initWallet(seedHex: string) {
     dustSecretKey, 
     unshieldedKeystore,
     address: unshieldedKeystore.getBech32Address().toString(),
-    userAddress: unshieldedKeystore.getAddress(),
-    seed: seedHex
+    hexAddress: unshieldedKeystore.getAddress(),
+    seed: seedHex,
+    zswapKey: derivationResult.keys[Roles.Zswap],
+    mnemonic: '' // Passed back if needed
   };
+}
+
+async function initWalletByMnemonic(mnemonic: string) {
+  const seed = bip39.mnemonicToSeedSync(mnemonic);
+  const seedHex = toHex(seed);
+  const ctx = await initWallet(seedHex);
+  return { ...ctx, mnemonic };
 }
 
 async function fundWallet(fromCtx: any, toUserAddress: any, amount: bigint) {
   const stateBefore = await Rx.firstValueFrom(fromCtx.wallet.state()) as any;
   const balance = stateBefore.unshielded.balances[unshieldedToken().raw] ?? 0n;
   console.log(`  Source Balance: ${balance.toLocaleString()} tNight`);
-  console.log(`  Funding wallet with ${amount.toLocaleString()} tNight...`);
   
-  if (balance < amount + 10_000_000_000n) { // include fee buffer
-    throw new Error(`Insufficient funds in source wallet: ${balance.toLocaleString()} < ${amount.toLocaleString()} + fees`);
+  if (balance < amount + 10_000_000_000n) {
+    throw new Error(`Insufficient funds in source wallet`);
   }
 
-  // Use facade.transferTransaction which handles the combined state
   const recipe = await fromCtx.wallet.transferTransaction(
     [
       {
@@ -349,9 +290,7 @@ async function fundWallet(fromCtx: any, toUserAddress: any, amount: bigint) {
     { ttl: new Date(Date.now() + 30 * 60 * 1000) }
   );
 
-  // Sign the recipe using the built-in facade method
   const signedRecipe = await fromCtx.wallet.signRecipe(recipe, (payload: Uint8Array) => fromCtx.unshieldedKeystore.signData(payload));
-
   await fromCtx.wallet.submitTransaction(await fromCtx.wallet.finalizeRecipe(signedRecipe));
   console.log(`  Transfer submitted.`);
 }
@@ -369,7 +308,6 @@ async function registerForDust(ctx: any) {
       );
       await ctx.wallet.submitTransaction(await ctx.wallet.finalizeRecipe(recipe));
     }
-    // Wait for DUST (at least 1000n)
     await Rx.firstValueFrom(ctx.wallet.state().pipe(
       Rx.filter((state: any) => state.isSynced && state.dust.balance(new Date()) >= 1000n)
     ));
@@ -378,12 +316,12 @@ async function registerForDust(ctx: any) {
 }
 
 async function createProviders(ctx: any) {
-  const witnessContext = { 
-    betAmount: 0n, 
-    betSide: 0n, 
-    betNonce: new Uint8Array(32).fill(0),
-    wagerAmount: 0n 
+  const privateState: MarketPrivateState = {
+    userSecretKey: ctx.zswapKey,
   };
+  
+  const witnesses = createWitnessProviders(privateState);
+  
   const walletProvider = {
     getCoinPublicKey: () => ctx.shieldedSecretKeys.coinPublicKey,
     getEncryptionPublicKey: () => ctx.shieldedSecretKeys.encryptionPublicKey,
@@ -411,19 +349,9 @@ async function createProviders(ctx: any) {
     proofProvider: httpClientProofProvider(CONFIG.proofServer, zkConfigProvider),
     walletProvider,
     midnightProvider: walletProvider,
-    witnesses: {
-      userSecretKey: ({ privateState }: any) => [privateState, privateState.userSecretKey],
-      betAmount: ({ privateState }: any) => [privateState, witnessContext.betAmount],
-      betSide: ({ privateState }: any) => [privateState, witnessContext.betSide],
-      betNonce: ({ privateState }: any) => [privateState, witnessContext.betNonce],
-      wagerAmountInput: ({ privateState }: any) => [privateState, witnessContext.wagerAmount],
-      callerAddress: ({ privateState }: any) => [privateState, new Uint8Array(32).fill(0)],
-    },
-    witnessContext
+    witnesses
   };
 }
-
-// --- Main ---
 
 async function main() {
   console.log('\n🔥 SHADOW MARKET ALL-IN-ONE SETUP 🚀\n');
@@ -463,37 +391,35 @@ async function main() {
     if (run3 === 'force') state.wallets = {};
     
     const genesis = await initWallet(GENESIS_SEED);
-    console.log(`  Genesis Wallet: ${genesis.address}`);
-
     for (const role of roles) {
       if (!state.wallets[role]) {
-        const seed = role === 'admin' ? ADMIN_PRESET_SEED : toHex(generateRandomSeed());
-        const ctx = await initWallet(seed);
+        let mnemonic: string;
+        if (role === 'admin' && process.env.ADMIN_MNEMONIC) {
+           mnemonic = process.env.ADMIN_MNEMONIC;
+        } else {
+           mnemonic = bip39.generateMnemonic(english, 256);
+        }
+        
+        const ctx = await initWalletByMnemonic(mnemonic);
         testWallets[role] = ctx;
-        state.wallets[role] = { address: ctx.address, seed: ctx.seed };
-        console.log(`  Generated ${role}: ${ctx.address} (Seed: ${ctx.seed})`);
-        await fundWallet(genesis, ctx.userAddress, 100_000_000n);
-        await sleep(2000); // Wait for inclusion
+        state.wallets[role] = { address: ctx.address, seed: ctx.seed, mnemonic: ctx.mnemonic };
+        console.log(`  Generated ${role}: ${ctx.address}`);
+        console.log(`  Mnemonic: ${ctx.mnemonic}`);
+        await fundWallet(genesis, ctx.hexAddress, 2_000_000_000n);
+        await sleep(2000);
         saveState(state);
       } else {
-        console.log(`  Using existing ${role}: ${state.wallets[role].address}`);
-        testWallets[role] = await initWallet(state.wallets[role].seed);
+        testWallets[role] = await initWalletByMnemonic(state.wallets[role].mnemonic);
       }
     }
-
-    console.log('\n  Ensuring all wallets are ready (Sync, Dust & Backend Registration)...');
     for (const role of roles) {
       await registerForDust(testWallets[role]);
-      console.log(`    Registering ${role} in backend: ${testWallets[role].address}`);
       await getTokenForUser(testWallets[role].address, role);
     }
   } else {
-    // Load existing wallets
     for (const role of roles) {
       if (state.wallets[role]) {
-        console.log(`  Loading existing ${role}: ${state.wallets[role].address}`);
-        testWallets[role] = await initWallet(state.wallets[role].seed);
-        // Ensure they are registered in backend too
+        testWallets[role] = await initWalletByMnemonic(state.wallets[role].mnemonic);
         await getTokenForUser(testWallets[role].address, role);
       }
     }
@@ -505,7 +431,6 @@ async function main() {
 
   if (run4 !== 'skip') {
     console.log('\n─── Step 4: Deploy & Initialize ────────────────────────────────');
-    
     const adminCtx = testWallets.admin;
     const providers = await createProviders(adminCtx);
 
@@ -530,21 +455,14 @@ async function main() {
       state.contractAddress = contractAddress;
       state.initializedDone = false;
       state.seedingMarketIndex = 0;
-      state.activityMarketIndex = 0;
-      state.activityUserIndex = 0;
-      state.betsDone = false;
-      state.wagersDone = false;
       state.activityDone = false;
       saveState(state);
       console.log(`  Contract Deployed: ${contractAddress}`);
-      await sleep(3000); // Wait for deployment indexing
+      await sleep(3000);
     }
 
     if (!state.initializedDone || run4 === 'force') {
-      console.log('  Initializing API...');
-      // Reuse the same providers instance to maintain nonce state
       const api = await ShadowMarketAPI.connectWithProviders(providers as any, contractAddress as any);
-
       await api.initialize();
       state.initializedDone = true;
       saveState(state);
@@ -556,59 +474,35 @@ async function main() {
   // 5. Seeding
   const run5 = await promptStep('Complex Seeding', !!state.activityDone);
   if (run5 !== 'skip') {
-    console.log('\n─── Step 5: Complex Seeding ────────────────────────────────────');
+    console.log('\n─── Step 5: Seeding 50 Markets ─────────────────────────────────');
     
     if (run5 === 'force') {
       state.seedingMarketIndex = 0;
-      state.activityMarketIndex = 0;
-      state.activityUserIndex = 0;
-      state.betsDone = false;
-      state.wagersDone = false;
       state.activityDone = false;
       saveState(state);
     }
 
-    const marketQuestions = [
-      'Will Bitcoin hit $100k in 2026?',
-      'Will SpaceX reach Mars by 2030?',
-      'Will AI achieve AGI before 2028?',
-      'Will Apple release a VR ring?',
-      'Will Tesla launch a flying car?',
-      'Will local teams win the championship?',
-      'Will Crude Oil hit $150 per barrel?',
-      'Will interest rates drop below 3%?',
-      'Will a human colony form on Moon?',
-      'Will Midnight Mainnet launch in Q4?'
-    ];
+    const marketQuestions: string[] = [];
+    const items = ['Bitcoin', 'Ethereum', 'Cardano', 'OpenAI', 'Apple', 'Tesla', 'SpaceX', 'Federal Reserve', 'S&P 500', 'Crude Oil', 'Midnight Mainnet', 'Solana', 'Polkadot', 'Polygon', 'Chainlink', 'Uniswap', 'Aave', 'Compound', 'MakerDAO', 'Lido'];
+    const values = ['$100k', '$10k', '$5.00', 'GPT-6', 'Vision Pro 2', 'Mars Mission', 'Rate Cut', 'New Highs', 'FDA Approval', 'Mainnet Launch', '$200', '$50', '$5', 'V4 Release', 'Q3 Launch'];
+
+    for (let i = 1; i <= 50; i++) {
+        const item = items[Math.floor(Math.random() * items.length)];
+        const value = values[Math.floor(Math.random() * values.length)];
+        marketQuestions.push(`Market #${i}: Will ${item} hit ${value} in 2026?`);
+    }
 
     const adminCtx = testWallets.admin;
     const providers = await createProviders(adminCtx);
     const api = await ShadowMarketAPI.connectWithProviders(providers as any, contractAddress as any);
 
-    // Verify on-chain state vs local state
-    const onchainState = await Rx.firstValueFrom(api.state$);
-    const onchainCount = Number(onchainState.marketCount);
     let startIndex = state.seedingMarketIndex || 0;
-
-    if (onchainCount === 0 && startIndex > 0) {
-      console.log('  ⚠️  On-chain contract is empty but local state suggests seeding was done. Resetting indices...');
-      startIndex = 0;
-      state.seedingMarketIndex = 0;
-      state.activityMarketIndex = 0;
-      state.activityUserIndex = 0;
-      state.activityDone = false;
-      saveState(state);
-    }
-
     if (startIndex < marketQuestions.length) {
-      console.log(`  Syncing markets with backend...`);
-
       for (let i = startIndex; i < marketQuestions.length; i++) {
           console.log(`  Creating Market ${i+1}/${marketQuestions.length}: ${marketQuestions[i]}`);
           const endTime = BigInt(Date.now() + 1000000000);
           await api.createMarket(marketQuestions[i], endTime, 1000n, adminCtx.address);
           
-          // Sync to backend
           await syncMarketToBackend({
             question: marketQuestions[i],
             endTime: new Date(Number(endTime)).toISOString(),
@@ -618,137 +512,15 @@ async function main() {
             contractAddress: contractAddress
           });
 
-          await Rx.firstValueFrom(api.state$.pipe(
-            Rx.filter(s => s.marketCount > BigInt(i)),
-            Rx.take(1)
-          ));
-          
           state.seedingMarketIndex = i + 1;
           saveState(state);
       }
       console.log('  All markets created and synced to backend.');
-      console.log('  Waiting 5s for state propagation...');
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      await sleep(5000);
     }
 
-    if (!state.activityDone) {
-      console.log('\n  Simulating User Activity (AMM Pool Bets)...');
-      const startMarket = (!state.betsDone ? (state.activityMarketIndex || 0) : 0);
-      const startUser = (!state.betsDone ? (state.activityUserIndex || 0) : 0);
-      const activityRoles = ['userA', 'userB', 'userC'];
-      const userApis: Record<string, ShadowMarketAPI> = {};
-      const userProvidersMap: Record<string, any> = {};
-
-      if (!state.betsDone) {
-        for (let i = startMarket; i < marketQuestions.length; i++) {
-            const marketId = (i + 1).toString();
-            state.activityMarketIndex = i;
-            saveState(state);
-            
-            console.log(`  Market ${marketId} betting...`);
-            
-            for (let j = (i === startMarket ? startUser : 0); j < activityRoles.length; j++) {
-              const role = activityRoles[j];
-              state.activityUserIndex = j;
-              saveState(state);
-
-              try {
-                const userCtx = testWallets[role];
-                
-                // ALWAYS re-connect and re-create providers for every action to ensure fresh ledger state
-                // and bypass stale state issues causing Error 139
-                console.log(`    Refreshing ledger state for ${role}...`);
-                const providers = await createProviders(userCtx);
-                const userApi = await ShadowMarketAPI.connectWithProviders(providers as any, contractAddress as any);
-                
-                const side = Math.random() > 0.5;
-                
-                // Rotate nonce for every bet to ensure uniqueness and bypass Error 139
-                if (providers && providers.witnessContext) {
-                  const safeNonce = new Uint8Array(32).fill(0);
-                  safeNonce.set(generateRandomSeed().slice(0, 16));
-                  providers.witnessContext.betNonce = safeNonce;
-                }
-                
-                console.log(`    ${userCtx.address} placing 25 bet on ${side ? 'YES' : 'NO'}...`);
-                 await runWithRetry(async () => {
-                   await userApi.placeBet(marketId, 25n, side);
-                   await syncBetToBackend(userCtx.address, { marketId, amount: 25n, side });
-                 });
-                 console.log(`    Bet confirmed!`);
-                 console.log(`    ⏳  Waiting 20s for node cooldown and block propagation...`);
-                 await new Promise(resolve => setTimeout(resolve, 20000));
-              } catch (err: any) {
-                console.warn(`    ❌ Bet failed for ${role}: ${err.message}`);
-              }
-            }
-        }
-        state.betsDone = true;
-        state.activityMarketIndex = 0;
-        state.activityUserIndex = 0;
-        saveState(state);
-        console.log('  AMM betting phase complete.');
-        console.log('  Waiting 5s for state settling...');
-        await new Promise(resolve => setTimeout(resolve, 5000));
-      }
-
-      console.log('\n  Simulating User Activity (P2P Wagers)...');
-      if (!state.wagersDone) {
-        const wStartMarket = state.activityMarketIndex || 0;
-        const wStartUser = state.activityUserIndex || 0;
-
-        for (let i = wStartMarket; i < marketQuestions.length; i++) {
-            const marketId = (i + 1).toString();
-            state.activityMarketIndex = i;
-            saveState(state);
-            
-            console.log(`  Market ${marketId} wagers...`);
-            
-            for (let j = (i === wStartMarket ? wStartUser : 0); j < activityRoles.length; j++) {
-              const role = activityRoles[j];
-              state.activityUserIndex = j;
-              saveState(state);
-
-              try {
-                const userCtx = testWallets[role];
-                
-                // ALWAYS re-connect and re-create providers for every action to ensure fresh ledger state
-                // and bypass stale state issues causing Error 139
-                console.log(`    Refreshing ledger state for ${role}...`);
-                const providers = await createProviders(userCtx);
-                const userApi = await ShadowMarketAPI.connectWithProviders(providers as any, contractAddress as any);
-                
-                // Rotate nonce for every transaction to ensure uniqueness (precautionary for wagers)
-                if (providers && providers.witnessContext) {
-                  const safeNonce = new Uint8Array(32).fill(0);
-                  safeNonce.set(generateRandomSeed().slice(0, 16));
-                  providers.witnessContext.betNonce = safeNonce;
-                }
-
-                console.log(`    ${userCtx.address} creating 15 wager on ${Math.random() > 0.5 ? 'YES' : 'NO'}...`);
-                await runWithRetry(async () => {
-                  const wagerSide = Math.random() > 0.5;
-                  await userApi.createWager(marketId, wagerSide, 15n, 1n, 1n);
-                  await syncWagerToBackend(userCtx.address, { 
-                    marketId, amount: 15n, side: wagerSide, numerator: 1n, denominator: 1n 
-                  });
-                });
-                console.log(`    Wager created!`);
-                console.log(`    ⏳  Waiting 20s for node cooldown and block propagation...`);
-                await new Promise(resolve => setTimeout(resolve, 20000));
-              } catch (err: any) {
-                console.warn(`    ❌ Wager failed for ${role}: ${err.message}`);
-              }
-            }
-        }
-        state.wagersDone = true;
-        saveState(state);
-      }
-
-      state.activityDone = true;
-      saveState(state);
-      console.log('  User activity simulation complete.');
-    }
+    state.activityDone = true;
+    saveState(state);
   }
 
   // 6. Update .env.local
@@ -759,7 +531,8 @@ async function main() {
   const updates = [
     { key: 'MIDNIGHT_SHADOW_MARKET_CONTRACT_ADDRESS', value: contractAddress },
     { key: 'ADMIN_ADDRESS', value: testWallets.admin.address },
-    { key: 'ADMIN_SEED', value: testWallets.admin.seed }
+    { key: 'ADMIN_SEED', value: testWallets.admin.seed },
+    { key: 'ADMIN_MNEMONIC', value: testWallets.admin.mnemonic }
   ];
 
   for (const { key, value } of updates) {
@@ -772,19 +545,7 @@ async function main() {
   fs.writeFileSync(envPath, envContent);
   console.log('  .env.local updated.');
 
-  // Final Report
   console.log('\n💎 SETUP SUCCESSFUL 💎\n');
-  console.log(`Contract: ${contractAddress}`);
-  console.log(`Admin Wallet: ${testWallets.admin.address}`);
-  console.log(`Admin Seed:   ${testWallets.admin.seed}`);
-  
-  console.log('\nTest User Wallets:');
-  for (const role of ['userA', 'userB', 'userC']) {
-    const u = testWallets[role];
-    console.log(`  ${role}: ${u.address}`);
-    console.log(`    Seed: ${u.seed}`);
-  }
-  
   process.exit(0);
 }
 

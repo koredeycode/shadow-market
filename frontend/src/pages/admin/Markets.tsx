@@ -122,7 +122,7 @@ export function AdminMarkets() {
               <tr key={market.id} className="hover:bg-white/[0.02] transition-colors">
                 <td className="px-6 py-4">
                   <Link
-                    to={`/markets/${market.id}`}
+                    to={`/markets/${market.slug || market.id}`}
                     className="text-white font-medium hover:text-electric-blue"
                   >
                     {market.question}
