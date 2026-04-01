@@ -11,6 +11,9 @@ const MarketDetail = lazy(() => import('./pages/MarketDetail'));
 const CreateMarket = lazy(() => import('./pages/CreateMarket'));
 const Portfolio = lazy(() => import('./pages/Portfolio'));
 const Analytics = lazy(() => import('./pages/Analytics'));
+const Privacy = lazy(() => import('./pages/Privacy'));
+const Terms = lazy(() => import('./pages/Terms'));
+const HowItWorks = lazy(() => import('./pages/HowItWorks'));
 
 // Admin pages
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
@@ -36,6 +39,9 @@ function App() {
               <Route path="markets/create" element={<CreateMarket />} />
               <Route path="portfolio" element={<Portfolio />} />
               <Route path="analytics" element={<Analytics />} />
+              <Route path="privacy" element={<Privacy />} />
+              <Route path="terms" element={<Terms />} />
+              <Route path="how-it-works" element={<HowItWorks />} />
 
               {/* Admin Routes */}
               <Route path="admin" element={<AdminDashboard />} />
