@@ -46,7 +46,7 @@
     "clean:all": "pnpm clean && rm -rf **/node_modules **/dist **/.turbo",
     "setup": "pnpm install && pnpm network:start && pnpm contracts:compile && pnpm db:migrate",
     "generate:accounts": "tsx scripts/generate-accounts.ts",
-    "copy-zkconfig": "mkdir -p frontend/public/zk-config && cp -r contracts/dist/managed/* frontend/public/zk-config/"
+    "copy-zkconfig": "mkdir -p frontend/public/zk-config && rm -rf frontend/public/zk-config/* && cp -r contracts/src/managed/shadow-market/* frontend/public/zk-config/"
   },
   "dependencies": {
     "@midnight-ntwrk/compact-runtime": "0.15.0",

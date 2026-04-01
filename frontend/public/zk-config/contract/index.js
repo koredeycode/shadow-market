@@ -84,7 +84,7 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('initialize',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 86 char 1',
+                                     'shadow-market.compact line 87 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
@@ -100,46 +100,54 @@ export class Contract {
         return { result: result_0, context: context, proofData: partialProofData, gasCost: context.gasCost };
       },
       createMarket: (...args_1) => {
-        if (args_1.length !== 4) {
-          throw new __compactRuntime.CompactError(`createMarket: expected 4 arguments (as invoked from Typescript), received ${args_1.length}`);
+        if (args_1.length !== 5) {
+          throw new __compactRuntime.CompactError(`createMarket: expected 5 arguments (as invoked from Typescript), received ${args_1.length}`);
         }
         const contextOrig_0 = args_1[0];
         const endTime_0 = args_1[1];
         const minBet_0 = args_1[2];
         const title_0 = args_1[3];
+        const oracle_0 = args_1[4];
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('createMarket',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 98 char 1',
+                                     'shadow-market.compact line 99 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(endTime_0) === 'bigint' && endTime_0 >= 0 && endTime_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('createMarket',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 98 char 1',
+                                     'shadow-market.compact line 99 char 1',
                                      'Field',
                                      endTime_0)
         }
         if (!(typeof(minBet_0) === 'bigint' && minBet_0 >= 0 && minBet_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('createMarket',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'shadow-market.compact line 98 char 1',
+                                     'shadow-market.compact line 99 char 1',
                                      'Field',
                                      minBet_0)
         }
         if (!(title_0.buffer instanceof ArrayBuffer && title_0.BYTES_PER_ELEMENT === 1 && title_0.length === 32)) {
           __compactRuntime.typeError('createMarket',
                                      'argument 3 (argument 4 as invoked from Typescript)',
-                                     'shadow-market.compact line 98 char 1',
+                                     'shadow-market.compact line 99 char 1',
                                      'Bytes<32>',
                                      title_0)
+        }
+        if (!(oracle_0.buffer instanceof ArrayBuffer && oracle_0.BYTES_PER_ELEMENT === 1 && oracle_0.length === 32)) {
+          __compactRuntime.typeError('createMarket',
+                                     'argument 4 (argument 5 as invoked from Typescript)',
+                                     'shadow-market.compact line 99 char 1',
+                                     'Bytes<32>',
+                                     oracle_0)
         }
         const context = { ...contextOrig_0, gasCost: __compactRuntime.emptyRunningCost() };
         const partialProofData = {
           input: {
-            value: _descriptor_0.toValue(endTime_0).concat(_descriptor_0.toValue(minBet_0).concat(_descriptor_1.toValue(title_0))),
-            alignment: _descriptor_0.alignment().concat(_descriptor_0.alignment().concat(_descriptor_1.alignment()))
+            value: _descriptor_0.toValue(endTime_0).concat(_descriptor_0.toValue(minBet_0).concat(_descriptor_1.toValue(title_0).concat(_descriptor_1.toValue(oracle_0)))),
+            alignment: _descriptor_0.alignment().concat(_descriptor_0.alignment().concat(_descriptor_1.alignment().concat(_descriptor_1.alignment())))
           },
           output: undefined,
           publicTranscript: [],
@@ -149,7 +157,8 @@ export class Contract {
                                               partialProofData,
                                               endTime_0,
                                               minBet_0,
-                                              title_0);
+                                              title_0,
+                                              oracle_0);
         partialProofData.output = { value: [], alignment: [] };
         return { result: result_0, context: context, proofData: partialProofData, gasCost: context.gasCost };
       },
@@ -163,21 +172,21 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('placeBet',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 131 char 1',
+                                     'shadow-market.compact line 134 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(marketId_0) === 'bigint' && marketId_0 >= 0 && marketId_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('placeBet',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 131 char 1',
+                                     'shadow-market.compact line 134 char 1',
                                      'Field',
                                      marketId_0)
         }
         if (!(typeof(side_0) === 'bigint' && side_0 >= 0 && side_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('placeBet',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'shadow-market.compact line 131 char 1',
+                                     'shadow-market.compact line 134 char 1',
                                      'Field',
                                      side_0)
         }
@@ -210,35 +219,35 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('createWager',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 175 char 1',
+                                     'shadow-market.compact line 178 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(marketId_0) === 'bigint' && marketId_0 >= 0 && marketId_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('createWager',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 175 char 1',
+                                     'shadow-market.compact line 178 char 1',
                                      'Field',
                                      marketId_0)
         }
         if (!(typeof(side_0) === 'bigint' && side_0 >= 0 && side_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('createWager',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'shadow-market.compact line 175 char 1',
+                                     'shadow-market.compact line 178 char 1',
                                      'Field',
                                      side_0)
         }
         if (!(typeof(oddsNumerator_0) === 'bigint' && oddsNumerator_0 >= 0 && oddsNumerator_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('createWager',
                                      'argument 3 (argument 4 as invoked from Typescript)',
-                                     'shadow-market.compact line 175 char 1',
+                                     'shadow-market.compact line 178 char 1',
                                      'Field',
                                      oddsNumerator_0)
         }
         if (!(typeof(oddsDenominator_0) === 'bigint' && oddsDenominator_0 >= 0 && oddsDenominator_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('createWager',
                                      'argument 4 (argument 5 as invoked from Typescript)',
-                                     'shadow-market.compact line 175 char 1',
+                                     'shadow-market.compact line 178 char 1',
                                      'Field',
                                      oddsDenominator_0)
         }
@@ -270,14 +279,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('acceptWager',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 206 char 1',
+                                     'shadow-market.compact line 209 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(wagerId_0) === 'bigint' && wagerId_0 >= 0 && wagerId_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('acceptWager',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 206 char 1',
+                                     'shadow-market.compact line 209 char 1',
                                      'Field',
                                      wagerId_0)
         }
@@ -306,14 +315,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('cancelWager',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 217 char 1',
+                                     'shadow-market.compact line 220 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(wagerId_0) === 'bigint' && wagerId_0 >= 0 && wagerId_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('cancelWager',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 217 char 1',
+                                     'shadow-market.compact line 220 char 1',
                                      'Field',
                                      wagerId_0)
         }
@@ -342,14 +351,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('lockMarket',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 229 char 1',
+                                     'shadow-market.compact line 232 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(marketId_0) === 'bigint' && marketId_0 >= 0 && marketId_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('lockMarket',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 229 char 1',
+                                     'shadow-market.compact line 232 char 1',
                                      'Field',
                                      marketId_0)
         }
@@ -379,21 +388,21 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('resolveMarket',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 237 char 1',
+                                     'shadow-market.compact line 240 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(marketId_0) === 'bigint' && marketId_0 >= 0 && marketId_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('resolveMarket',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 237 char 1',
+                                     'shadow-market.compact line 240 char 1',
                                      'Field',
                                      marketId_0)
         }
         if (!(typeof(outcome_0) === 'bigint' && outcome_0 >= 0 && outcome_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('resolveMarket',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'shadow-market.compact line 237 char 1',
+                                     'shadow-market.compact line 240 char 1',
                                      'Field',
                                      outcome_0)
         }
@@ -423,14 +432,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('claimPoolWinnings',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 254 char 1',
+                                     'shadow-market.compact line 257 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(betId_0) === 'bigint' && betId_0 >= 0 && betId_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('claimPoolWinnings',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 254 char 1',
+                                     'shadow-market.compact line 257 char 1',
                                      'Field',
                                      betId_0)
         }
@@ -459,14 +468,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('claimWagerWinnings',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 288 char 1',
+                                     'shadow-market.compact line 291 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(wagerId_0) === 'bigint' && wagerId_0 >= 0 && wagerId_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('claimWagerWinnings',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 288 char 1',
+                                     'shadow-market.compact line 291 char 1',
                                      'Field',
                                      wagerId_0)
         }
@@ -532,6 +541,7 @@ export class Contract {
     const state_0 = new __compactRuntime.ContractState();
     let stateValue_0 = __compactRuntime.StateValue.newArray();
     let stateValue_2 = __compactRuntime.StateValue.newArray();
+    stateValue_2 = stateValue_2.arrayPush(__compactRuntime.StateValue.newNull());
     stateValue_2 = stateValue_2.arrayPush(__compactRuntime.StateValue.newNull());
     stateValue_2 = stateValue_2.arrayPush(__compactRuntime.StateValue.newNull());
     stateValue_2 = stateValue_2.arrayPush(__compactRuntime.StateValue.newNull());
@@ -804,6 +814,24 @@ export class Contract {
                                                                   alignment: _descriptor_8.alignment() } }] } },
                                        { push: { storage: false,
                                                  value: __compactRuntime.StateValue.newCell({ value: _descriptor_8.toValue(12n),
+                                                                                              alignment: _descriptor_8.alignment() }).encode() } },
+                                       { push: { storage: true,
+                                                 value: __compactRuntime.StateValue.newMap(
+                                                          new __compactRuntime.StateMap()
+                                                        ).encode() } },
+                                       { ins: { cached: false, n: 1 } },
+                                       { ins: { cached: true, n: 1 } }]);
+    __compactRuntime.queryLedgerState(context,
+                                      partialProofData,
+                                      [
+                                       { idx: { cached: false,
+                                                pushPath: true,
+                                                path: [
+                                                       { tag: 'value',
+                                                         value: { value: _descriptor_8.toValue(0n),
+                                                                  alignment: _descriptor_8.alignment() } }] } },
+                                       { push: { storage: false,
+                                                 value: __compactRuntime.StateValue.newCell({ value: _descriptor_8.toValue(13n),
                                                                                               alignment: _descriptor_8.alignment() }).encode() } },
                                        { push: { storage: true,
                                                  value: __compactRuntime.StateValue.newCell({ value: _descriptor_0.toValue(0n),
@@ -1145,7 +1173,7 @@ export class Contract {
                                                          value: { value: _descriptor_8.toValue(0n),
                                                                   alignment: _descriptor_8.alignment() } }] } },
                                        { push: { storage: false,
-                                                 value: __compactRuntime.StateValue.newCell({ value: _descriptor_8.toValue(12n),
+                                                 value: __compactRuntime.StateValue.newCell({ value: _descriptor_8.toValue(13n),
                                                                                               alignment: _descriptor_8.alignment() }).encode() } },
                                        { push: { storage: true,
                                                  value: __compactRuntime.StateValue.newCell({ value: _descriptor_0.toValue(tmp_3),
@@ -1174,7 +1202,7 @@ export class Contract {
     if (!(result_0.buffer instanceof ArrayBuffer && result_0.BYTES_PER_ELEMENT === 1 && result_0.length === 32)) {
       __compactRuntime.typeError('userSecretKey',
                                  'return value',
-                                 'shadow-market.compact line 65 char 1',
+                                 'shadow-market.compact line 66 char 1',
                                  'Bytes<32>',
                                  result_0)
     }
@@ -1191,7 +1219,7 @@ export class Contract {
     if (!(typeof(result_0) === 'bigint' && result_0 >= 0 && result_0 <= __compactRuntime.MAX_FIELD)) {
       __compactRuntime.typeError('betAmount',
                                  'return value',
-                                 'shadow-market.compact line 66 char 1',
+                                 'shadow-market.compact line 67 char 1',
                                  'Field',
                                  result_0)
     }
@@ -1208,7 +1236,7 @@ export class Contract {
     if (!(typeof(result_0) === 'bigint' && result_0 >= 0 && result_0 <= __compactRuntime.MAX_FIELD)) {
       __compactRuntime.typeError('betSide',
                                  'return value',
-                                 'shadow-market.compact line 67 char 1',
+                                 'shadow-market.compact line 68 char 1',
                                  'Field',
                                  result_0)
     }
@@ -1225,7 +1253,7 @@ export class Contract {
     if (!(result_0.buffer instanceof ArrayBuffer && result_0.BYTES_PER_ELEMENT === 1 && result_0.length === 32)) {
       __compactRuntime.typeError('betNonce',
                                  'return value',
-                                 'shadow-market.compact line 68 char 1',
+                                 'shadow-market.compact line 69 char 1',
                                  'Bytes<32>',
                                  result_0)
     }
@@ -1242,7 +1270,7 @@ export class Contract {
     if (!(typeof(result_0) === 'bigint' && result_0 >= 0 && result_0 <= __compactRuntime.MAX_FIELD)) {
       __compactRuntime.typeError('wagerAmountInput',
                                  'return value',
-                                 'shadow-market.compact line 69 char 1',
+                                 'shadow-market.compact line 70 char 1',
                                  'Field',
                                  result_0)
     }
@@ -1310,7 +1338,13 @@ export class Contract {
                                        { ins: { cached: true, n: 1 } }]);
     return [];
   }
-  _createMarket_0(context, partialProofData, endTime_0, minBet_0, title_0) {
+  _createMarket_0(context,
+                  partialProofData,
+                  endTime_0,
+                  minBet_0,
+                  title_0,
+                  oracle_0)
+  {
     const userKey_0 = this._persistentHash_1(this._userSecretKey_0(context,
                                                                    partialProofData));
     const disclosedEndTime_0 = endTime_0;
@@ -1429,7 +1463,6 @@ export class Contract {
                                                                                               alignment: _descriptor_1.alignment() }).encode() } },
                                        { ins: { cached: false, n: 1 } },
                                        { ins: { cached: true, n: 2 } }]);
-    const tmp_1 = 0n;
     __compactRuntime.queryLedgerState(context,
                                       partialProofData,
                                       [
@@ -1441,6 +1474,27 @@ export class Contract {
                                                                   alignment: _descriptor_8.alignment() } },
                                                        { tag: 'value',
                                                          value: { value: _descriptor_8.toValue(9n),
+                                                                  alignment: _descriptor_8.alignment() } }] } },
+                                       { push: { storage: false,
+                                                 value: __compactRuntime.StateValue.newCell({ value: _descriptor_0.toValue(newMarketId_0),
+                                                                                              alignment: _descriptor_0.alignment() }).encode() } },
+                                       { push: { storage: true,
+                                                 value: __compactRuntime.StateValue.newCell({ value: _descriptor_1.toValue(oracle_0),
+                                                                                              alignment: _descriptor_1.alignment() }).encode() } },
+                                       { ins: { cached: false, n: 1 } },
+                                       { ins: { cached: true, n: 2 } }]);
+    const tmp_1 = 0n;
+    __compactRuntime.queryLedgerState(context,
+                                      partialProofData,
+                                      [
+                                       { idx: { cached: false,
+                                                pushPath: true,
+                                                path: [
+                                                       { tag: 'value',
+                                                         value: { value: _descriptor_8.toValue(0n),
+                                                                  alignment: _descriptor_8.alignment() } },
+                                                       { tag: 'value',
+                                                         value: { value: _descriptor_8.toValue(10n),
                                                                   alignment: _descriptor_8.alignment() } }] } },
                                        { push: { storage: false,
                                                  value: __compactRuntime.StateValue.newCell({ value: _descriptor_0.toValue(newMarketId_0),
@@ -1461,7 +1515,7 @@ export class Contract {
                                                          value: { value: _descriptor_8.toValue(0n),
                                                                   alignment: _descriptor_8.alignment() } },
                                                        { tag: 'value',
-                                                         value: { value: _descriptor_8.toValue(10n),
+                                                         value: { value: _descriptor_8.toValue(11n),
                                                                   alignment: _descriptor_8.alignment() } }] } },
                                        { push: { storage: false,
                                                  value: __compactRuntime.StateValue.newCell({ value: _descriptor_0.toValue(newMarketId_0),
@@ -1482,7 +1536,7 @@ export class Contract {
                                                          value: { value: _descriptor_8.toValue(0n),
                                                                   alignment: _descriptor_8.alignment() } },
                                                        { tag: 'value',
-                                                         value: { value: _descriptor_8.toValue(11n),
+                                                         value: { value: _descriptor_8.toValue(12n),
                                                                   alignment: _descriptor_8.alignment() } }] } },
                                        { push: { storage: false,
                                                  value: __compactRuntime.StateValue.newCell({ value: _descriptor_0.toValue(newMarketId_0),
@@ -1526,7 +1580,7 @@ export class Contract {
                                                      disclosedSide_0,
                                                      __compactRuntime.convertBytesToField(32,
                                                                                           nonce_0,
-                                                                                          'shadow-market.compact line 142 char 83')]);
+                                                                                          'shadow-market.compact line 145 char 83')]);
     const commitment_0 = commitmentData_0;
     const betId_0 = _descriptor_0.fromValue(__compactRuntime.queryLedgerState(context,
                                                                               partialProofData,
@@ -1539,7 +1593,7 @@ export class Contract {
                                                                                                  value: { value: _descriptor_8.toValue(0n),
                                                                                                           alignment: _descriptor_8.alignment() } },
                                                                                                { tag: 'value',
-                                                                                                 value: { value: _descriptor_8.toValue(12n),
+                                                                                                 value: { value: _descriptor_8.toValue(13n),
                                                                                                           alignment: _descriptor_8.alignment() } }] } },
                                                                                { popeq: { cached: false,
                                                                                           result: undefined } }]).value);
@@ -1554,7 +1608,7 @@ export class Contract {
                                                                                                                          value: { value: _descriptor_8.toValue(0n),
                                                                                                                                   alignment: _descriptor_8.alignment() } },
                                                                                                                        { tag: 'value',
-                                                                                                                         value: { value: _descriptor_8.toValue(12n),
+                                                                                                                         value: { value: _descriptor_8.toValue(13n),
                                                                                                                                   alignment: _descriptor_8.alignment() } }] } },
                                                                                                        { popeq: { cached: false,
                                                                                                                   result: undefined } }]).value),
@@ -1569,7 +1623,7 @@ export class Contract {
                                                          value: { value: _descriptor_8.toValue(0n),
                                                                   alignment: _descriptor_8.alignment() } }] } },
                                        { push: { storage: false,
-                                                 value: __compactRuntime.StateValue.newCell({ value: _descriptor_8.toValue(12n),
+                                                 value: __compactRuntime.StateValue.newCell({ value: _descriptor_8.toValue(13n),
                                                                                               alignment: _descriptor_8.alignment() }).encode() } },
                                        { push: { storage: true,
                                                  value: __compactRuntime.StateValue.newCell({ value: _descriptor_0.toValue(tmp_0),
@@ -1668,7 +1722,7 @@ export class Contract {
                                                                                                       value: { value: _descriptor_8.toValue(0n),
                                                                                                                alignment: _descriptor_8.alignment() } },
                                                                                                     { tag: 'value',
-                                                                                                      value: { value: _descriptor_8.toValue(9n),
+                                                                                                      value: { value: _descriptor_8.toValue(10n),
                                                                                                                alignment: _descriptor_8.alignment() } }] } },
                                                                                     { idx: { cached: false,
                                                                                              pushPath: false,
@@ -1689,7 +1743,7 @@ export class Contract {
                                                                                                      value: { value: _descriptor_8.toValue(0n),
                                                                                                               alignment: _descriptor_8.alignment() } },
                                                                                                    { tag: 'value',
-                                                                                                     value: { value: _descriptor_8.toValue(10n),
+                                                                                                     value: { value: _descriptor_8.toValue(11n),
                                                                                                               alignment: _descriptor_8.alignment() } }] } },
                                                                                    { idx: { cached: false,
                                                                                             pushPath: false,
@@ -1716,7 +1770,7 @@ export class Contract {
                                                          value: { value: _descriptor_8.toValue(0n),
                                                                   alignment: _descriptor_8.alignment() } },
                                                        { tag: 'value',
-                                                         value: { value: _descriptor_8.toValue(9n),
+                                                         value: { value: _descriptor_8.toValue(10n),
                                                                   alignment: _descriptor_8.alignment() } }] } },
                                        { push: { storage: false,
                                                  value: __compactRuntime.StateValue.newCell({ value: _descriptor_0.toValue(disclosedMarketId_0),
@@ -1736,7 +1790,7 @@ export class Contract {
                                                          value: { value: _descriptor_8.toValue(0n),
                                                                   alignment: _descriptor_8.alignment() } },
                                                        { tag: 'value',
-                                                         value: { value: _descriptor_8.toValue(10n),
+                                                         value: { value: _descriptor_8.toValue(11n),
                                                                   alignment: _descriptor_8.alignment() } }] } },
                                        { push: { storage: false,
                                                  value: __compactRuntime.StateValue.newCell({ value: _descriptor_0.toValue(disclosedMarketId_0),
@@ -1757,7 +1811,7 @@ export class Contract {
                                                                                                     value: { value: _descriptor_8.toValue(0n),
                                                                                                              alignment: _descriptor_8.alignment() } },
                                                                                                   { tag: 'value',
-                                                                                                    value: { value: _descriptor_8.toValue(11n),
+                                                                                                    value: { value: _descriptor_8.toValue(12n),
                                                                                                              alignment: _descriptor_8.alignment() } }] } },
                                                                                   { idx: { cached: false,
                                                                                            pushPath: false,
@@ -1778,7 +1832,7 @@ export class Contract {
                                                          value: { value: _descriptor_8.toValue(0n),
                                                                   alignment: _descriptor_8.alignment() } },
                                                        { tag: 'value',
-                                                         value: { value: _descriptor_8.toValue(11n),
+                                                         value: { value: _descriptor_8.toValue(12n),
                                                                   alignment: _descriptor_8.alignment() } }] } },
                                        { push: { storage: false,
                                                  value: __compactRuntime.StateValue.newCell({ value: _descriptor_0.toValue(disclosedMarketId_0),
@@ -2245,7 +2299,7 @@ export class Contract {
                                                      side_0,
                                                      __compactRuntime.convertBytesToField(32,
                                                                                           nonce_0,
-                                                                                          'shadow-market.compact line 266 char 74')]);
+                                                                                          'shadow-market.compact line 269 char 74')]);
     const providedCommitment_0 = commitmentData_0;
     const marketId_0 = _descriptor_0.fromValue(__compactRuntime.queryLedgerState(context,
                                                                                  partialProofData,
@@ -2301,7 +2355,7 @@ export class Contract {
                                                                                                     value: { value: _descriptor_8.toValue(0n),
                                                                                                              alignment: _descriptor_8.alignment() } },
                                                                                                   { tag: 'value',
-                                                                                                    value: { value: _descriptor_8.toValue(9n),
+                                                                                                    value: { value: _descriptor_8.toValue(10n),
                                                                                                              alignment: _descriptor_8.alignment() } }] } },
                                                                                   { idx: { cached: false,
                                                                                            pushPath: false,
@@ -2322,7 +2376,7 @@ export class Contract {
                                                                                                    value: { value: _descriptor_8.toValue(0n),
                                                                                                             alignment: _descriptor_8.alignment() } },
                                                                                                  { tag: 'value',
-                                                                                                   value: { value: _descriptor_8.toValue(10n),
+                                                                                                   value: { value: _descriptor_8.toValue(11n),
                                                                                                             alignment: _descriptor_8.alignment() } }] } },
                                                                                  { idx: { cached: false,
                                                                                           pushPath: false,
@@ -3207,7 +3261,7 @@ export function ledger(stateOrChargedState) {
         return self_0.asMap().keys().map(  (key) => {    const value = self_0.asMap().get(key).asCell();    return [      _descriptor_0.fromValue(key.value),      _descriptor_1.fromValue(value.value)    ];  })[Symbol.iterator]();
       }
     },
-    poolYesTotal: {
+    marketOracle: {
       isEmpty(...args_0) {
         if (args_0.length !== 0) {
           throw new __compactRuntime.CompactError(`isEmpty: expected 0 arguments, received ${args_0.length}`);
@@ -3262,7 +3316,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'shadow-market.compact line 37 char 1',
+                                     'shadow-market.compact line 35 char 1',
                                      'Field',
                                      key_0)
         }
@@ -3294,11 +3348,11 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'shadow-market.compact line 37 char 1',
+                                     'shadow-market.compact line 35 char 1',
                                      'Field',
                                      key_0)
         }
-        return _descriptor_0.fromValue(__compactRuntime.queryLedgerState(context,
+        return _descriptor_1.fromValue(__compactRuntime.queryLedgerState(context,
                                                                          partialProofData,
                                                                          [
                                                                           { dup: { n: 0 } },
@@ -3325,10 +3379,10 @@ export function ledger(stateOrChargedState) {
           throw new __compactRuntime.CompactError(`iter: expected 0 arguments, received ${args_0.length}`);
         }
         const self_0 = state.asArray()[0].asArray()[9];
-        return self_0.asMap().keys().map(  (key) => {    const value = self_0.asMap().get(key).asCell();    return [      _descriptor_0.fromValue(key.value),      _descriptor_0.fromValue(value.value)    ];  })[Symbol.iterator]();
+        return self_0.asMap().keys().map(  (key) => {    const value = self_0.asMap().get(key).asCell();    return [      _descriptor_0.fromValue(key.value),      _descriptor_1.fromValue(value.value)    ];  })[Symbol.iterator]();
       }
     },
-    poolNoTotal: {
+    poolYesTotal: {
       isEmpty(...args_0) {
         if (args_0.length !== 0) {
           throw new __compactRuntime.CompactError(`isEmpty: expected 0 arguments, received ${args_0.length}`);
@@ -3449,7 +3503,7 @@ export function ledger(stateOrChargedState) {
         return self_0.asMap().keys().map(  (key) => {    const value = self_0.asMap().get(key).asCell();    return [      _descriptor_0.fromValue(key.value),      _descriptor_0.fromValue(value.value)    ];  })[Symbol.iterator]();
       }
     },
-    poolBetCount: {
+    poolNoTotal: {
       isEmpty(...args_0) {
         if (args_0.length !== 0) {
           throw new __compactRuntime.CompactError(`isEmpty: expected 0 arguments, received ${args_0.length}`);
@@ -3570,6 +3624,127 @@ export function ledger(stateOrChargedState) {
         return self_0.asMap().keys().map(  (key) => {    const value = self_0.asMap().get(key).asCell();    return [      _descriptor_0.fromValue(key.value),      _descriptor_0.fromValue(value.value)    ];  })[Symbol.iterator]();
       }
     },
+    poolBetCount: {
+      isEmpty(...args_0) {
+        if (args_0.length !== 0) {
+          throw new __compactRuntime.CompactError(`isEmpty: expected 0 arguments, received ${args_0.length}`);
+        }
+        return _descriptor_4.fromValue(__compactRuntime.queryLedgerState(context,
+                                                                         partialProofData,
+                                                                         [
+                                                                          { dup: { n: 0 } },
+                                                                          { idx: { cached: false,
+                                                                                   pushPath: false,
+                                                                                   path: [
+                                                                                          { tag: 'value',
+                                                                                            value: { value: _descriptor_8.toValue(0n),
+                                                                                                     alignment: _descriptor_8.alignment() } },
+                                                                                          { tag: 'value',
+                                                                                            value: { value: _descriptor_8.toValue(12n),
+                                                                                                     alignment: _descriptor_8.alignment() } }] } },
+                                                                          'size',
+                                                                          { push: { storage: false,
+                                                                                    value: __compactRuntime.StateValue.newCell({ value: _descriptor_3.toValue(0n),
+                                                                                                                                 alignment: _descriptor_3.alignment() }).encode() } },
+                                                                          'eq',
+                                                                          { popeq: { cached: true,
+                                                                                     result: undefined } }]).value);
+      },
+      size(...args_0) {
+        if (args_0.length !== 0) {
+          throw new __compactRuntime.CompactError(`size: expected 0 arguments, received ${args_0.length}`);
+        }
+        return _descriptor_3.fromValue(__compactRuntime.queryLedgerState(context,
+                                                                         partialProofData,
+                                                                         [
+                                                                          { dup: { n: 0 } },
+                                                                          { idx: { cached: false,
+                                                                                   pushPath: false,
+                                                                                   path: [
+                                                                                          { tag: 'value',
+                                                                                            value: { value: _descriptor_8.toValue(0n),
+                                                                                                     alignment: _descriptor_8.alignment() } },
+                                                                                          { tag: 'value',
+                                                                                            value: { value: _descriptor_8.toValue(12n),
+                                                                                                     alignment: _descriptor_8.alignment() } }] } },
+                                                                          'size',
+                                                                          { popeq: { cached: true,
+                                                                                     result: undefined } }]).value);
+      },
+      member(...args_0) {
+        if (args_0.length !== 1) {
+          throw new __compactRuntime.CompactError(`member: expected 1 argument, received ${args_0.length}`);
+        }
+        const key_0 = args_0[0];
+        if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
+          __compactRuntime.typeError('member',
+                                     'argument 1',
+                                     'shadow-market.compact line 40 char 1',
+                                     'Field',
+                                     key_0)
+        }
+        return _descriptor_4.fromValue(__compactRuntime.queryLedgerState(context,
+                                                                         partialProofData,
+                                                                         [
+                                                                          { dup: { n: 0 } },
+                                                                          { idx: { cached: false,
+                                                                                   pushPath: false,
+                                                                                   path: [
+                                                                                          { tag: 'value',
+                                                                                            value: { value: _descriptor_8.toValue(0n),
+                                                                                                     alignment: _descriptor_8.alignment() } },
+                                                                                          { tag: 'value',
+                                                                                            value: { value: _descriptor_8.toValue(12n),
+                                                                                                     alignment: _descriptor_8.alignment() } }] } },
+                                                                          { push: { storage: false,
+                                                                                    value: __compactRuntime.StateValue.newCell({ value: _descriptor_0.toValue(key_0),
+                                                                                                                                 alignment: _descriptor_0.alignment() }).encode() } },
+                                                                          'member',
+                                                                          { popeq: { cached: true,
+                                                                                     result: undefined } }]).value);
+      },
+      lookup(...args_0) {
+        if (args_0.length !== 1) {
+          throw new __compactRuntime.CompactError(`lookup: expected 1 argument, received ${args_0.length}`);
+        }
+        const key_0 = args_0[0];
+        if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
+          __compactRuntime.typeError('lookup',
+                                     'argument 1',
+                                     'shadow-market.compact line 40 char 1',
+                                     'Field',
+                                     key_0)
+        }
+        return _descriptor_0.fromValue(__compactRuntime.queryLedgerState(context,
+                                                                         partialProofData,
+                                                                         [
+                                                                          { dup: { n: 0 } },
+                                                                          { idx: { cached: false,
+                                                                                   pushPath: false,
+                                                                                   path: [
+                                                                                          { tag: 'value',
+                                                                                            value: { value: _descriptor_8.toValue(0n),
+                                                                                                     alignment: _descriptor_8.alignment() } },
+                                                                                          { tag: 'value',
+                                                                                            value: { value: _descriptor_8.toValue(12n),
+                                                                                                     alignment: _descriptor_8.alignment() } }] } },
+                                                                          { idx: { cached: false,
+                                                                                   pushPath: false,
+                                                                                   path: [
+                                                                                          { tag: 'value',
+                                                                                            value: { value: _descriptor_0.toValue(key_0),
+                                                                                                     alignment: _descriptor_0.alignment() } }] } },
+                                                                          { popeq: { cached: false,
+                                                                                     result: undefined } }]).value);
+      },
+      [Symbol.iterator](...args_0) {
+        if (args_0.length !== 0) {
+          throw new __compactRuntime.CompactError(`iter: expected 0 arguments, received ${args_0.length}`);
+        }
+        const self_0 = state.asArray()[0].asArray()[12];
+        return self_0.asMap().keys().map(  (key) => {    const value = self_0.asMap().get(key).asCell();    return [      _descriptor_0.fromValue(key.value),      _descriptor_0.fromValue(value.value)    ];  })[Symbol.iterator]();
+      }
+    },
     get poolBetIdCounter() {
       return _descriptor_0.fromValue(__compactRuntime.queryLedgerState(context,
                                                                        partialProofData,
@@ -3582,7 +3757,7 @@ export function ledger(stateOrChargedState) {
                                                                                           value: { value: _descriptor_8.toValue(0n),
                                                                                                    alignment: _descriptor_8.alignment() } },
                                                                                         { tag: 'value',
-                                                                                          value: { value: _descriptor_8.toValue(12n),
+                                                                                          value: { value: _descriptor_8.toValue(13n),
                                                                                                    alignment: _descriptor_8.alignment() } }] } },
                                                                         { popeq: { cached: false,
                                                                                    result: undefined } }]).value);
@@ -3642,7 +3817,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'shadow-market.compact line 41 char 1',
+                                     'shadow-market.compact line 42 char 1',
                                      'Field',
                                      key_0)
         }
@@ -3674,7 +3849,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'shadow-market.compact line 41 char 1',
+                                     'shadow-market.compact line 42 char 1',
                                      'Field',
                                      key_0)
         }
@@ -3763,7 +3938,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'shadow-market.compact line 42 char 1',
+                                     'shadow-market.compact line 43 char 1',
                                      'Field',
                                      key_0)
         }
@@ -3795,7 +3970,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'shadow-market.compact line 42 char 1',
+                                     'shadow-market.compact line 43 char 1',
                                      'Field',
                                      key_0)
         }
@@ -3884,7 +4059,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'shadow-market.compact line 43 char 1',
+                                     'shadow-market.compact line 44 char 1',
                                      'Field',
                                      key_0)
         }
@@ -3916,7 +4091,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'shadow-market.compact line 43 char 1',
+                                     'shadow-market.compact line 44 char 1',
                                      'Field',
                                      key_0)
         }
@@ -4005,7 +4180,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'shadow-market.compact line 44 char 1',
+                                     'shadow-market.compact line 45 char 1',
                                      'Field',
                                      key_0)
         }
@@ -4037,7 +4212,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'shadow-market.compact line 44 char 1',
+                                     'shadow-market.compact line 45 char 1',
                                      'Field',
                                      key_0)
         }
@@ -4126,7 +4301,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'shadow-market.compact line 47 char 1',
+                                     'shadow-market.compact line 48 char 1',
                                      'Field',
                                      key_0)
         }
@@ -4158,7 +4333,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'shadow-market.compact line 47 char 1',
+                                     'shadow-market.compact line 48 char 1',
                                      'Field',
                                      key_0)
         }
@@ -4247,7 +4422,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'shadow-market.compact line 48 char 1',
+                                     'shadow-market.compact line 49 char 1',
                                      'Field',
                                      key_0)
         }
@@ -4279,7 +4454,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'shadow-market.compact line 48 char 1',
+                                     'shadow-market.compact line 49 char 1',
                                      'Field',
                                      key_0)
         }
@@ -4368,7 +4543,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'shadow-market.compact line 49 char 1',
+                                     'shadow-market.compact line 50 char 1',
                                      'Field',
                                      key_0)
         }
@@ -4400,7 +4575,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'shadow-market.compact line 49 char 1',
+                                     'shadow-market.compact line 50 char 1',
                                      'Field',
                                      key_0)
         }
@@ -4489,7 +4664,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'shadow-market.compact line 50 char 1',
+                                     'shadow-market.compact line 51 char 1',
                                      'Field',
                                      key_0)
         }
@@ -4521,7 +4696,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'shadow-market.compact line 50 char 1',
+                                     'shadow-market.compact line 51 char 1',
                                      'Field',
                                      key_0)
         }
@@ -4610,7 +4785,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'shadow-market.compact line 51 char 1',
+                                     'shadow-market.compact line 52 char 1',
                                      'Field',
                                      key_0)
         }
@@ -4642,7 +4817,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'shadow-market.compact line 51 char 1',
+                                     'shadow-market.compact line 52 char 1',
                                      'Field',
                                      key_0)
         }
@@ -4731,7 +4906,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'shadow-market.compact line 52 char 1',
+                                     'shadow-market.compact line 53 char 1',
                                      'Field',
                                      key_0)
         }
@@ -4763,7 +4938,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'shadow-market.compact line 52 char 1',
+                                     'shadow-market.compact line 53 char 1',
                                      'Field',
                                      key_0)
         }
@@ -4852,7 +5027,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'shadow-market.compact line 53 char 1',
+                                     'shadow-market.compact line 54 char 1',
                                      'Field',
                                      key_0)
         }
@@ -4884,7 +5059,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'shadow-market.compact line 53 char 1',
+                                     'shadow-market.compact line 54 char 1',
                                      'Field',
                                      key_0)
         }
@@ -4973,7 +5148,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'shadow-market.compact line 54 char 1',
+                                     'shadow-market.compact line 55 char 1',
                                      'Field',
                                      key_0)
         }
@@ -5005,7 +5180,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'shadow-market.compact line 54 char 1',
+                                     'shadow-market.compact line 55 char 1',
                                      'Field',
                                      key_0)
         }
@@ -5094,7 +5269,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'shadow-market.compact line 55 char 1',
+                                     'shadow-market.compact line 56 char 1',
                                      'Field',
                                      key_0)
         }
@@ -5126,7 +5301,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'shadow-market.compact line 55 char 1',
+                                     'shadow-market.compact line 56 char 1',
                                      'Field',
                                      key_0)
         }
@@ -5215,7 +5390,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'shadow-market.compact line 56 char 1',
+                                     'shadow-market.compact line 57 char 1',
                                      'Field',
                                      key_0)
         }
@@ -5247,7 +5422,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'shadow-market.compact line 56 char 1',
+                                     'shadow-market.compact line 57 char 1',
                                      'Field',
                                      key_0)
         }
@@ -5336,7 +5511,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'shadow-market.compact line 59 char 1',
+                                     'shadow-market.compact line 60 char 1',
                                      'Field',
                                      key_0)
         }
@@ -5368,7 +5543,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0 && key_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'shadow-market.compact line 59 char 1',
+                                     'shadow-market.compact line 60 char 1',
                                      'Field',
                                      key_0)
         }

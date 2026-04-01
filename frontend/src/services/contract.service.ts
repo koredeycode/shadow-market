@@ -52,13 +52,17 @@ class ContractManager {
     if (!api) return;
 
     return new Promise((resolve, reject) => {
+      console.log('DEBUG: Waiting for state update synchronization...');
       const timeout = setTimeout(() => {
         subscription.unsubscribe();
+        console.error('DEBUG: State update synchronization timed out after', timeoutMs, 'ms');
         reject(new Error('State update synchronization timed out'));
       }, timeoutMs);
 
       const subscription = api.state$.subscribe((state) => {
+        console.log('DEBUG: State update received, checking predicate...', state);
         if (predicate(state)) {
+          console.log('DEBUG: Predicate met. Finalizing.');
           clearTimeout(timeout);
           subscription.unsubscribe();
           resolve();
@@ -78,20 +82,28 @@ class ContractManager {
   ): Promise<string> {
     if (!this.api) throw new Error('Contract not initialized');
     const txToast = toast.loading(loadingMsg);
+    console.log(`DEBUG: executeTx started with loadingMsg: "${loadingMsg}"`);
     try {
+      const startTime = Date.now();
       const txHash = await promise;
+      const endTime = Date.now();
+      
+      console.log(`DEBUG: API promise resolved in ${((endTime - startTime) / 1000).toFixed(2)}s. TxHash:`, txHash);
       
       // Update toast to 'Finalizing' state
       toast.loading('Validating on-chain finalization...', { id: txToast });
 
       if (waitForUpdate) {
+        console.log('DEBUG: Initiating waitForUpdate sync...');
         await this.waitForStateUpdate(waitForUpdate);
       } else {
         // Fallback for actions without explicit state wait
+        console.log('DEBUG: No waitForUpdate provided. Using 5s fallback wait.');
         await new Promise(resolve => setTimeout(resolve, 5000));
       }
       
       // Final success
+      console.log('DEBUG: Transaction execution fully verified and finalized.');
       toast.success(
         (t: Toast) => React.createElement(TxToast, { t, txHash, successMsg }),
         { id: txToast, duration: 6000 }
@@ -99,6 +111,7 @@ class ContractManager {
       
       return txHash;
     } catch (error: any) {
+      console.error('DEBUG: executeTx failed:', error);
       toast.error(`Execution failed: ${error.message}`, { id: txToast });
       throw error;
     }

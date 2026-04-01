@@ -37,26 +37,31 @@ export function useContract() {
       }
 
       try {
+        console.log('DEBUG: useContract.createMarket hook called:', { question, resolverAddress, endTime });
         const onchainEndTime = BigInt(Math.floor(endTime.getTime() / 1000));
         const initialLiquidity = 100n; // Default initial liquidity
         const oracleAddress = resolverAddress;
 
         toast.loading('Creating market...');
 
+        console.log('DEBUG: Calling contractManager.createMarket...');
+        const startTime = Date.now();
         const txHash = await contractManager.createMarket(
           question,
           onchainEndTime,
           initialLiquidity,
           oracleAddress
         );
+        const totalTime = Date.now() - startTime;
 
+        console.log(`DEBUG: contractManager.createMarket returned in ${(totalTime / 1000).toFixed(2)}s with txHash:`, txHash);
         toast.dismiss();
         toast.success(`Market created successfully! Tx: ${txHash.slice(0, 10)}...`);
         return txHash;
       } catch (error: any) {
         toast.dismiss();
+        console.error('DEBUG: useContract.createMarket caught error:', error);
         toast.error(error.message || 'Failed to create market');
-        console.error('Create market error:', error);
         return null;
       }
     },

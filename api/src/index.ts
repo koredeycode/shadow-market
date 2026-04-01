@@ -198,15 +198,25 @@ export class ShadowMarketAPI {
 
     try {
       const titleBytes = stringToBytes32(question);
-      const oracleBytes = fromHex(oracleAddress.replace('mn_shield-addr_', '').slice(0, 64)); // Simplified conversion
+      
+      // SAFE CONVERSION: If it's a shielded address (Bech32), we take a hash or prefix
+      // In the contract it's just a Bytes<32> identifier.
+      let oracleBytes: Uint8Array;
+      if (oracleAddress.startsWith('mn_shield-addr_')) {
+        oracleBytes = stringToBytes32(oracleAddress.replace('mn_shield-addr_', '').slice(0, 32));
+      } else {
+        oracleBytes = fromHex(oracleAddress.replace('mn_shield-addr_', '').slice(0, 64));
+      }
+      
       const createMarketFn = this.deployedContract.callTx.createMarket;
+      
       const txData = await (createMarketFn as any)(
         resolutionTime,
         initialLiquidity,
         titleBytes,
         oracleBytes
       );
-
+      
       console.log('Market created! Transaction:', txData.public.txHash);
       
       // Wait for state propagation

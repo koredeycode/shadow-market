@@ -13,7 +13,8 @@ export type ImpureCircuits<PS> = {
   createMarket(context: __compactRuntime.CircuitContext<PS>,
                endTime_0: bigint,
                minBet_0: bigint,
-               title_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
+               title_0: Uint8Array,
+               oracle_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
   placeBet(context: __compactRuntime.CircuitContext<PS>,
            marketId_0: bigint,
            side_0: bigint): __compactRuntime.CircuitResults<PS, []>;
@@ -39,7 +40,8 @@ export type ProvableCircuits<PS> = {
   createMarket(context: __compactRuntime.CircuitContext<PS>,
                endTime_0: bigint,
                minBet_0: bigint,
-               title_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
+               title_0: Uint8Array,
+               oracle_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
   placeBet(context: __compactRuntime.CircuitContext<PS>,
            marketId_0: bigint,
            side_0: bigint): __compactRuntime.CircuitResults<PS, []>;
@@ -68,7 +70,8 @@ export type Circuits<PS> = {
   createMarket(context: __compactRuntime.CircuitContext<PS>,
                endTime_0: bigint,
                minBet_0: bigint,
-               title_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
+               title_0: Uint8Array,
+               oracle_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
   placeBet(context: __compactRuntime.CircuitContext<PS>,
            marketId_0: bigint,
            side_0: bigint): __compactRuntime.CircuitResults<PS, []>;
@@ -123,6 +126,13 @@ export type Ledger = {
     [Symbol.iterator](): Iterator<[bigint, bigint]>
   };
   marketTitle: {
+    isEmpty(): boolean;
+    size(): bigint;
+    member(key_0: bigint): boolean;
+    lookup(key_0: bigint): Uint8Array;
+    [Symbol.iterator](): Iterator<[bigint, Uint8Array]>
+  };
+  marketOracle: {
     isEmpty(): boolean;
     size(): bigint;
     member(key_0: bigint): boolean;

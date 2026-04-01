@@ -21,7 +21,13 @@ import type {
   FinalizedTransaction,
   CoinPublicKey,
   EncPublicKey,
-  TransactionId
+  TransactionId,
+} from '@midnight-ntwrk/ledger-v8';
+import {
+  Transaction,
+  SignatureEnabled,
+  Proof,
+  Binding
 } from '@midnight-ntwrk/ledger-v8';
 import { randomBytes, toHex, fromHex, safeRandomNonce } from './utils.js';
 import { createWitnessProviders, type MarketWitnesses } from './witnesses.js';
@@ -172,13 +178,40 @@ export const createProvidersFromWallet = async (
   // Wallet provider implementation covering balancing and keys
   const walletProvider = {
     balanceTx: async (tx: UnboundTransaction, ttl?: Date): Promise<FinalizedTransaction> => {
-      // Convert UnboundTransaction to hex for the bridge
       const txHex = toHex(tx.serialize()); 
-      const balanced = await wallet.balanceUnsealedTransaction(txHex);
-      // The wallet returns { tx: string } where tx is hex encoded balanced transaction
-      // We need to return it as FinalizedTransaction (Uint8Array)
-      const balancedBytes = fromHex(balanced.tx);
-      return balancedBytes as unknown as FinalizedTransaction;
+      
+      try {
+        if (typeof (wallet as any).balanceUnsealedTransaction !== 'function') {
+          throw new Error('Wallet does not support balanceUnsealedTransaction');
+        }
+
+        console.log('Waiting for wallet confirmation...');
+        
+        // Add a 120-second timeout to the balancing call
+        const startTime = Date.now();
+        const balancePromise = wallet.balanceUnsealedTransaction(txHex)
+          .then((result) => {
+            console.log(`Wallet balanced transaction in ${((Date.now() - startTime) / 1000).toFixed(1)}s`);
+            return result;
+          })
+          .catch((err) => {
+            console.error('Wallet balancing rejected:', err);
+            throw err;
+          });
+
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Balancing timed out after 120 seconds. Please check if the wallet popup is visible.')), 120000)
+        );
+
+        const balanced = await Promise.race([balancePromise, timeoutPromise]) as { tx: string };
+        
+        // Return the RAW bytes from the wallet. 
+        // We do NOT deserialize here to ensure we don't touch the potentially sensitive header (v9).
+        return fromHex(balanced.tx) as unknown as FinalizedTransaction;
+      } catch (error: any) {
+        console.error('Balancing phase failed:', error);
+        throw new Error(`Balancing failed: ${error.message}. Please ensure you have DUST available.`);
+      }
     },
     getCoinPublicKey: (): CoinPublicKey => {
       return config.shieldedCoinPublicKey as CoinPublicKey;
@@ -191,9 +224,32 @@ export const createProvidersFromWallet = async (
   // Midnight provider handles transaction submission
   const midnightProvider = {
     submitTx: async (tx: FinalizedTransaction): Promise<TransactionId> => {
-      await wallet.submitTransaction(toHex(tx.serialize()));
-      // Derive transaction ID - this is complex, usually we just return a mock or wait
-      return 'submitted' as unknown as TransactionId;
+      console.log('Submitting finalized transaction to wallet...');
+      // In this new robust flow, tx IS the raw bytes from the wallet
+      const txBytes = tx as unknown as Uint8Array;
+      const txHex = toHex(txBytes);
+      
+      try {
+        await (wallet as any).submitTransaction(txHex);
+        console.log('Transaction successfully submitted!');
+        
+        // Extract the ID separately using a read-only deserialization
+        // This ensures the submission wasn't affected by the deserialization process
+        const txObj = Transaction.deserialize<SignatureEnabled, Proof, Binding>(
+          'signature',
+          'proof',
+          'binding',
+          txBytes
+        );
+        const txId = (txObj as any).identifiers()[0];
+        
+        console.log('On-chain Transaction ID:', txId);
+        
+        return txId as unknown as TransactionId;
+      } catch (error: any) {
+        console.error('Transaction submission failed:', error);
+        throw new Error(`Submission failed: ${error.message}`);
+      }
     },
   };
 

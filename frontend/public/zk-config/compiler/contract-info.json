@@ -38,6 +38,13 @@
             "type-name": "Bytes",
             "length": 32
           }
+        },
+        {
+          "name": "oracle",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
         }
       ],
       "result-type": {

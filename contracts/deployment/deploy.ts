@@ -256,6 +256,7 @@ async function createProviders(walletCtx: Awaited<ReturnType<typeof initWalletWi
     proofProvider: httpClientProofProvider(CONFIG.proofServer, zkConfigProvider),
     walletProvider: walletProvider,
     midnightProvider: walletProvider,
+    witnesses,
   } as any;
 }
 
@@ -372,17 +373,9 @@ async function main() {
     console.log('  Calling on-chain initialize...\n');
 
     // Connect via API to call initialize
-    const api = await ShadowMarketAPI.connect(
-      {
-        submitTransaction: providers.walletProvider.submitTx,
-      } as any,
-      {
-        indexerUri: CONFIG.indexer,
-        indexerWsUri: CONFIG.indexerWS,
-        proverServerUri: CONFIG.proofServer,
-        contractAddress: contractAddress as any,
-        networkId: (NETWORK_CONFIG.network === 'local' || NETWORK_CONFIG.network === 'undeployed') ? 'undeployed' : 'testnet',
-      }
+    const api = await ShadowMarketAPI.connectWithProviders(
+      providers as any,
+      contractAddress as any
     );
 
     await api.initialize();

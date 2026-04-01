@@ -101,11 +101,20 @@ marketsRouter.post(
     const { question, description, category, endTime, minBet, maxBet } = req.body;
 
     // Create market logic...
+    const slug = question
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 200);
+
     const [newMarket] = await db
       .insert(markets)
       .values({
         id: `market_${Date.now()}`,
-        onchainId: `onchain_${Date.now()}`,
+        onchainId: req.body.onchainId || `onchain_${Date.now()}`,
+        slug: `${slug}-${Math.random().toString(36).substring(2, 7)}`,
+        txHash: req.body.txHash,
         question,
         description,
         category,
