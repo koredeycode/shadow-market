@@ -18,6 +18,7 @@ const HowItWorks = lazy(() => import('./pages/HowItWorks'));
 // Admin pages
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 const AdminMarkets = lazy(() => import('./pages/admin/Markets'));
+const AdminContractState = lazy(() => import('./pages/admin/ContractState'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -46,11 +47,13 @@ function App() {
               {/* Admin Routes */}
               <Route path="admin" element={<AdminDashboard />} />
               <Route path="admin/markets" element={<AdminMarkets />} />
+              <Route path="admin/contract-state" element={<AdminContractState />} />
             </Route>
           </Routes>
         </Suspense>
         <Toaster 
           position="bottom-right"
+          containerStyle={{ zIndex: 99999 }}
           toastOptions={{
             duration: 5000,
             style: {

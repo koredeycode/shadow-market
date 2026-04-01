@@ -35,6 +35,7 @@
     "db:seed": "cd backend && tsx src/db/seed.ts",
     "db:studio": "cd backend && pnpm drizzle-kit studio",
     "contracts:compile": "cd contracts && pnpm run compile",
+    "contracts:build": "cd contracts && pnpm build",
     "contracts:deploy:local": "cd contracts && pnpm run deploy",
     "contracts:deploy:testnet": "cd contracts && pnpm run deploy",
     "contracts:initialize": "cd contracts && pnpm run initialize",

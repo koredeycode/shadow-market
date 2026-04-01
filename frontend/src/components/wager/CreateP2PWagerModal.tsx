@@ -7,7 +7,9 @@ import { X, Info, Clock, TrendingUp, TrendingDown, Zap, Loader2, AlertCircle } f
 import toast from 'react-hot-toast';
 import { wagersApi } from '../../api/wagers';
 import { useWallet } from '../../hooks/useWallet';
+import { useContract } from '../../hooks/useContract';
 import { Market } from '../../types';
+import { TxSuccessModal } from '../common/TxSuccessModal';
 
 const p2pWagerSchema = z.object({
   amount: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
@@ -31,7 +33,9 @@ interface CreateP2PWagerModalProps {
 
 export function CreateP2PWagerModal({ open, onClose, market }: CreateP2PWagerModalProps) {
   const { isConnected, unshieldedNightBalance, formattedUnshieldedNightBalance, connectWallet } = useWallet();
+  const { createWager } = useContract();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successData, setSuccessData] = useState<{ txHash: string; amount: string; side: string } | null>(null);
   const queryClient = useQueryClient();
 
   const { control, handleSubmit, watch, reset } = useForm<P2PWagerFormData>({
@@ -89,21 +93,39 @@ export function CreateP2PWagerModal({ open, onClose, market }: CreateP2PWagerMod
 
   const mutation = useMutation({
     mutationFn: async (data: P2PWagerFormData) => {
-      if (!isConnected) throw new Error('Wallet not connected');
+      if (!isConnected) throw new Error('Identity Verification Required');
+      
+      // Step 1: REQUIRED - Execute on-chain contract call
+      console.log('DEBUG: Initiating on-chain P2P wager creation...');
+      const txHash = await createWager(
+        market.onchainId || market.id,
+        data.side.toUpperCase() as 'YES' | 'NO',
+        parseFloat(data.amount),
+        [data.oddsNumerator, data.oddsDenominator]
+      );
+
+      if (!txHash) throw new Error('On-chain wager creation failed or was cancelled');
+
+      // Step 2: Sync to backend for indexing
+      console.log('DEBUG: Syncing P2P wager to backend with txHash:', txHash);
       return await wagersApi.createP2PWager({
         marketId: market.id,
         amount: data.amount,
         side: data.side,
         odds: [data.oddsNumerator, data.oddsDenominator],
         duration: data.durationHours * 3600,
-      });
+        txHash, // Pass txHash if API supports it
+      } as any);
     },
-    onSuccess: () => {
-      toast.success('P2P wager created! Waiting for someone to accept...');
+    onSuccess: (data, variables) => {
+      setSuccessData({
+        txHash: data.txHash || '',
+        amount: variables.amount,
+        side: variables.side.toUpperCase()
+      });
       queryClient.invalidateQueries({ queryKey: ['market', market.id] });
       queryClient.invalidateQueries({ queryKey: ['p2p-wagers', market.id] });
       reset();
-      onClose();
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to create wager');
@@ -344,27 +366,27 @@ export function CreateP2PWagerModal({ open, onClose, market }: CreateP2PWagerMod
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <p className="text-[9px] text-slate-600 uppercase font-mono">
-                        Your Potential Payout
-                      </p>
-                      <p className="text-lg font-mono text-success-green font-bold">
-                        +{payoutInfo.yourPotentialWin.toFixed(2)} DUST
-                      </p>
-                    </div>
-                    <div className="space-y-1 text-right">
-                      <p className="text-[9px] text-slate-600 uppercase font-mono">
-                        Opponent Requirement
-                      </p>
-                      <p className="text-lg font-mono text-white font-bold">
-                        {payoutInfo.opponentStake.toFixed(2)} DUST
-                      </p>
-                    </div>
+                       Your Potential Payout
+                    </p>
+                    <p className="text-lg font-mono text-success-green font-bold">
+                      +{payoutInfo.yourPotentialWin.toFixed(2)} NIGHT
+                    </p>
                   </div>
-                  <div className="flex justify-between items-center py-2 px-3 bg-white/[0.03] rounded-sm text-[10px] font-mono tracking-tight uppercase">
-                    <span className="text-slate-500">Total Contract Value</span>
-                    <span className="text-slate-300 font-bold underline decoration-electric-blue/40">
-                      {payoutInfo.totalPool.toFixed(2)} DUST
-                    </span>
+                  <div className="space-y-1 text-right">
+                    <p className="text-[9px] text-slate-600 uppercase font-mono">
+                      Opponent Requirement
+                    </p>
+                    <p className="text-lg font-mono text-white font-bold">
+                      {payoutInfo.opponentStake.toFixed(2)} NIGHT
+                    </p>
                   </div>
+                </div>
+                <div className="flex justify-between items-center py-2 px-3 bg-white/[0.03] rounded-sm text-[10px] font-mono tracking-tight uppercase">
+                  <span className="text-slate-500">Total Protocol Value</span>
+                  <span className="text-slate-300 font-bold underline decoration-electric-blue/40">
+                    {payoutInfo.totalPool.toFixed(2)} NIGHT
+                  </span>
+                </div>
                 </div>
               )}
             </div>
@@ -395,6 +417,23 @@ export function CreateP2PWagerModal({ open, onClose, market }: CreateP2PWagerMod
           </div>
         </form>
       </div>
+      <TxSuccessModal 
+        isOpen={!!successData}
+        onClose={() => {
+          setSuccessData(null);
+          onClose(); // Close the creation modal too
+        }}
+        txHash={successData?.txHash || ''}
+        title="Protocol Active"
+        subtitle={`Successfully published your ${successData?.amount} NIGHT ${successData?.side} wager offer to the decentralized P2P matcher.`}
+        primaryAction={{
+          label: 'View Orderbook',
+          onClick: () => {
+             setSuccessData(null);
+             onClose();
+          }
+        }}
+      />
     </div>
   );
 }

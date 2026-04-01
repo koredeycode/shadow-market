@@ -47,6 +47,7 @@ export function useWallet() {
     dustBalance,
     networkId,
     provider,
+    isTransacting,
     autoConnect,
     connect: storeConnect,
     disconnect: storeDisconnect,
@@ -260,7 +261,7 @@ export function useWallet() {
   // Refresh balances
   const refreshBalance = useCallback(async () => {
     const connectedAPI = connectedAPIRef.current;
-    if (!connectedAPI) return;
+    if (!connectedAPI || useWalletStore.getState().isTransacting) return;
 
     try {
       let unshieldedNight = '0';
@@ -361,14 +362,14 @@ export function useWallet() {
 
   // Auto-refresh balance every 30 seconds
   useEffect(() => {
-    if (!isConnected) return;
+    if (!isConnected || isTransacting) return;
 
     const interval = setInterval(() => {
       refreshBalance();
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [isConnected, refreshBalance]);
+  }, [isConnected, isTransacting, refreshBalance]);
   
   // Auto-connect on mount if previously connected
   useEffect(() => {

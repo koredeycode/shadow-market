@@ -27,10 +27,12 @@ export interface CreateP2PWagerRequest {
   side: 'yes' | 'no';
   odds: [number, number];
   duration: number;
+  txHash?: string;
 }
 
 export interface AcceptWagerRequest {
   wagerId: string;
+  txHash?: string;
 }
 
 export interface ClaimWinningsRequest {

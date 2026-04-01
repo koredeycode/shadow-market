@@ -20,6 +20,7 @@ echo -e "${BLUE}==============================================================${
 # 1. Compile Contracts
 echo -e "\n${YELLOW}[1/5] Compiling contracts...${NC}"
 pnpm contracts:compile
+pnpm contracts:build
 
 # 2. Deploy and Initialize
 echo -e "\n${YELLOW}[2/5] Deploying and initializing contract to local network...${NC}"

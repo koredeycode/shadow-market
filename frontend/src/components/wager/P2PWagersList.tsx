@@ -92,10 +92,10 @@ function WagerCard({
             </p>
             <p className="text-xl font-mono text-white font-bold">
               {betAmount.toFixed(2)}{' '}
-              <span className="text-xs text-slate-500 font-normal">DUST</span>
+              <span className="text-xs text-slate-500 font-normal">NIGHT</span>
             </p>
             <p className="text-[10px] text-success-green font-mono uppercase tracking-tight mt-1">
-              Wins {potentialWin.toFixed(2)} DUST
+              Wins {potentialWin.toFixed(2)} NIGHT
             </p>
           </div>
         </div>
@@ -129,10 +129,10 @@ function WagerCard({
             </p>
             <p className="text-xl font-mono text-white font-bold">
               {opponentStake.toFixed(2)}{' '}
-              <span className="text-xs text-slate-500 font-normal">DUST</span>
+              <span className="text-xs text-slate-500 font-normal">NIGHT</span>
             </p>
             <p className="text-[10px] text-success-green font-mono uppercase tracking-tight mt-1 md:justify-end">
-              Wins {betAmount.toFixed(2)} DUST
+              Wins {betAmount.toFixed(2)} NIGHT
             </p>
           </div>
         </div>

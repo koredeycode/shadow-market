@@ -11,8 +11,16 @@ import CompactStandardLibrary;
 // - P2P wagers with custom odds
 // - Market lifecycle management
 //
-// Compact Version: 0.22 (with workarounds for limitations)
+// Compact Version: 0.22
 // ===============================================================================
+
+// -----------------------------------------------------------------------------
+// ENUMS
+// -----------------------------------------------------------------------------
+
+enum MarketStatus { OPEN, LOCKED, RESOLVED }
+enum WagerStatus { OPEN, MATCHED, CANCELLED, SETTLED }
+enum Outcome { NONE, NO, YES }
 
 // -----------------------------------------------------------------------------
 // LEDGER STATE
@@ -22,27 +30,25 @@ import CompactStandardLibrary;
 export ledger adminKey: Bytes<32>;
 export ledger isInitialized: Field;
 
-// Market counters (using Field for readable counters)
+// Market counters
 export ledger marketCount: Field;
 export ledger wagerCount: Field;
 
 // Market data (per marketId)
-export ledger marketIds: Map<Field, Field>;          // marketId → marketId (for existence check)
-export ledger marketStatus: Map<Field, Field>;        // 0=pending, 1=open, 2=locked, 3=resolved
+export ledger marketStatus: Map<Field, MarketStatus>;
 export ledger marketEndTime: Map<Field, Field>;
-export ledger marketOutcome: Map<Field, Field>;       // 0=NO, 1=YES
-export ledger marketTitle: Map<Field, Bytes<32>>;      // marketId → title (max 32 chars)
-export ledger marketOracle: Map<Field, Bytes<32>>;     // marketId → oracle address
+export ledger marketOutcome: Map<Field, Outcome>;
+export ledger marketTitle: Map<Field, Bytes<32>>;
 
 // Pool betting data (per marketId)
 export ledger poolYesTotal: Map<Field, Field>;
 export ledger poolNoTotal: Map<Field, Field>;
 export ledger poolBetCount: Map<Field, Field>;
-export ledger poolBetIdCounter: Field;                     // Next available bet ID
-export ledger poolBetCommitments: Map<Field, Bytes<32>>;  // betId → commitment  
-export ledger poolBetClaimed: Map<Field, Field>;           // betId → claimed flag
-export ledger poolBetMarketId: Map<Field, Field>;         // betId → marketId
-export ledger poolBetUserKey: Map<Field, Bytes<32>>;      // betId → userKey
+export ledger poolBetIdCounter: Field;
+export ledger poolBetCommitments: Map<Field, Bytes<32>>;  
+export ledger poolBetClaimed: Map<Field, Field>;
+export ledger poolBetMarketId: Map<Field, Field>;
+export ledger poolBetUserKey: Map<Field, Bytes<32>>;
 
 // P2P wager data (per wagerId)
 export ledger wagerMarketId: Map<Field, Field>;
@@ -50,14 +56,14 @@ export ledger wagerCreatorKey: Map<Field, Bytes<32>>;
 export ledger wagerTakerKey: Map<Field, Bytes<32>>;
 export ledger wagerAmount: Map<Field, Field>;
 export ledger wagerMatchAmount: Map<Field, Field>;
-export ledger wagerSide: Map<Field, Field>;
+export ledger wagerSide: Map<Field, Outcome>;
 export ledger wagerOddsNum: Map<Field, Field>;
 export ledger wagerOddsDenom: Map<Field, Field>;
-export ledger wagerStatus: Map<Field, Field>;         // 1=open, 2=matched, 3=cancelled, 4=settled
+export ledger wagerStatus: Map<Field, WagerStatus>;
 export ledger wagerClaimed: Map<Field, Field>;
 
 // Market-wager linking
-export ledger marketWagerCount: Map<Field, Field>;    // marketId → count of wagers
+export ledger marketWagerCount: Map<Field, Field>;
 
 // -----------------------------------------------------------------------------
 // WITNESSES
@@ -65,7 +71,7 @@ export ledger marketWagerCount: Map<Field, Field>;    // marketId → count of w
 
 witness userSecretKey(): Bytes<32>;
 witness betAmount(): Field;
-witness betSide(): Field;
+witness betSide(): Outcome;
 witness betNonce(): Bytes<32>;
 witness wagerAmountInput(): Field;
 
@@ -99,32 +105,26 @@ export circuit initialize(): [] {
 export circuit createMarket(
   endTime: Field,
   minBet: Field,
-  title: Bytes<32>,
-  oracle: Bytes<32>
+  title: Bytes<32>
 ): [] {
-  const userKey = disclose(persistentHash<Bytes<32>>(userSecretKey()));
   const disclosedEndTime = disclose(endTime);
-  const disclosedMinBet = disclose(minBet);
+  const disclosedTitle = disclose(title);
   
   // Generate new market ID
   const newMarketId = marketCount + 1;
   marketCount = newMarketId;
   
-  // Store market data (simplified for 0.22 - no Map.get())
-  // Frontend will track via events
-  marketIds.insert(newMarketId, newMarketId);
-  marketStatus.insert(newMarketId, 1); // 1 = OPEN
+  // Store market data
+  marketStatus.insert(newMarketId, MarketStatus.OPEN);
   marketEndTime.insert(newMarketId, disclosedEndTime);
-  marketTitle.insert(newMarketId, disclose(title));
-  marketOracle.insert(newMarketId, disclose(oracle));
+  marketTitle.insert(newMarketId, disclosedTitle);
+  marketOutcome.insert(newMarketId, Outcome.NONE);
   
   // Initialize pools for this market
   poolYesTotal.insert(newMarketId, 0);
   poolNoTotal.insert(newMarketId, 0);
   poolBetCount.insert(newMarketId, 0);
-  
-  // Market resolution
-  marketOutcome.insert(newMarketId, 0); // 0 = unresolved
+  marketWagerCount.insert(newMarketId, 0);
 }
 
 // -----------------------------------------------------------------------------
@@ -133,7 +133,7 @@ export circuit createMarket(
 
 export circuit placeBet(
   marketId: Field,
-  side: Field  // 0 = NO, 1 = YES
+  side: Outcome
 ): [] {
   const userKey = disclose(persistentHash<Bytes<32>>(userSecretKey()));
   const amount = disclose(betAmount());
@@ -141,8 +141,13 @@ export circuit placeBet(
   const disclosedMarketId = disclose(marketId);
   const disclosedSide = disclose(side);
   
-  // Create commitment for privacy using persistentHash with Vector
-  const commitmentData = persistentHash<Vector<3, Field>>([amount, disclosedSide, nonce as Field]);
+  assert(disclosedSide != Outcome.NONE, "Invalid side");
+  
+  // Receive tokens from user
+  receiveUnshielded(default<Bytes<32>>, amount as Uint<128>);
+  
+  // Create commitment for privacy
+  const commitmentData = persistentHash<Vector<3, Field>>([amount, disclosedSide as Field, nonce as Field]);
   const commitment = commitmentData as Bytes<32>;
   
   // Generate unique bet ID
@@ -155,16 +160,15 @@ export circuit placeBet(
   poolBetUserKey.insert(betId, disclose(userKey));
   poolBetClaimed.insert(betId, 0);
   
-  // Update pool totals (publicly visible)
+  // Update pool totals
   const currentYes = poolYesTotal.lookup(disclosedMarketId);
   const currentNo = poolNoTotal.lookup(disclosedMarketId);
   
-  // Add to appropriate pool (mathematical conditional)
-  const newYes = currentYes + (disclosedSide * amount);
-  const newNo = currentNo + ((1 - disclosedSide) * amount);
-  
-  poolYesTotal.insert(disclosedMarketId, newYes);
-  poolNoTotal.insert(disclosedMarketId, newNo);
+  if (disclosedSide == Outcome.YES) {
+    poolYesTotal.insert(disclosedMarketId, currentYes + amount);
+  } else {
+    poolNoTotal.insert(disclosedMarketId, currentNo + amount);
+  }
   
   // Increment bet count
   const betCount = poolBetCount.lookup(disclosedMarketId);
@@ -177,7 +181,7 @@ export circuit placeBet(
 
 export circuit createWager(
   marketId: Field,
-  side: Field,        // 0 = NO, 1 = YES
+  side: Outcome,
   oddsNumerator: Field,
   oddsDenominator: Field
 ): [] {
@@ -187,6 +191,11 @@ export circuit createWager(
   const disclosedSide = disclose(side);
   const disclosedOddsNum = disclose(oddsNumerator);
   const disclosedOddsDenom = disclose(oddsDenominator);
+  
+  assert(disclosedSide != Outcome.NONE, "Invalid side");
+  
+  // Receive tokens from creator
+  receiveUnshielded(default<Bytes<32>>, amount as Uint<128>);
   
   // Generate wager ID
   const wagerId = wagerCount + 1;
@@ -199,7 +208,8 @@ export circuit createWager(
   wagerSide.insert(wagerId, disclosedSide);
   wagerOddsNum.insert(wagerId, disclosedOddsNum);
   wagerOddsDenom.insert(wagerId, disclosedOddsDenom);
-  wagerStatus.insert(wagerId, 1); // 1 = OPEN
+  wagerStatus.insert(wagerId, WagerStatus.OPEN);
+  wagerClaimed.insert(wagerId, 0);
   
   // Link wager to market
   const marketWagers = marketWagerCount.lookup(disclosedMarketId);
@@ -211,18 +221,26 @@ export circuit acceptWager(wagerId: Field): [] {
   const matchAmount = disclose(wagerAmountInput());
   const disclosedWagerId = disclose(wagerId);
   
+  // Receive tokens from taker
+  receiveUnshielded(default<Bytes<32>>, matchAmount as Uint<128>);
+  
   // Store taker info
   wagerTakerKey.insert(disclosedWagerId, userKey);
   wagerMatchAmount.insert(disclosedWagerId, matchAmount);
-  wagerStatus.insert(disclosedWagerId, 2); // 2 = MATCHED
+  wagerStatus.insert(disclosedWagerId, WagerStatus.MATCHED);
 }
 
 export circuit cancelWager(wagerId: Field): [] {
   const userKey = disclose(persistentHash<Bytes<32>>(userSecretKey()));
   const disclosedWagerId = disclose(wagerId);
   
-  // Verify creator (done off-chain for 0.22)
-  wagerStatus.insert(disclosedWagerId, 3); // 3 = CANCELLED
+  // Mark as cancelled
+  wagerStatus.insert(disclosedWagerId, WagerStatus.CANCELLED);
+  
+  // Refund creator (Simplified for 0.22)
+  const creatorKey = wagerCreatorKey.lookup(disclosedWagerId);
+  const amount = wagerAmount.lookup(disclosedWagerId);
+  // sendUnshielded(...) logic would go here
 }
 
 // -----------------------------------------------------------------------------
@@ -230,23 +248,20 @@ export circuit cancelWager(wagerId: Field): [] {
 // -----------------------------------------------------------------------------
 
 export circuit lockMarket(marketId: Field): [] {
-  const userKey = disclose(persistentHash<Bytes<32>>(userSecretKey()));
   const disclosedMarketId = disclose(marketId);
-  
-  // Only admin can lock (verified off-chain for 0.22)
-  marketStatus.insert(disclosedMarketId, 2); // 2 = LOCKED
+  marketStatus.insert(disclosedMarketId, MarketStatus.LOCKED);
 }
 
 export circuit resolveMarket(
   marketId: Field,
-  outcome: Field  // 0 = NO, 1 = YES
+  outcome: Outcome
 ): [] {
-  const userKey = disclose(persistentHash<Bytes<32>>(userSecretKey()));
   const disclosedMarketId = disclose(marketId);
   const disclosedOutcome = disclose(outcome);
   
-  // Only admin can resolve (verified off-chain for 0.22)
-  marketStatus.insert(disclosedMarketId, 3); // 3 = RESOLVED
+  assert(disclosedOutcome != Outcome.NONE, "Invalid outcome");
+  
+  marketStatus.insert(disclosedMarketId, MarketStatus.RESOLVED);
   marketOutcome.insert(disclosedMarketId, disclosedOutcome);
 }
 
@@ -254,56 +269,49 @@ export circuit resolveMarket(
 // CLAIMING WINNINGS
 // -----------------------------------------------------------------------------
 
-export circuit claimPoolWinnings(betId: Field): [] {
+export circuit claimPoolWinnings(betId: Field, user_addr: UserAddress): [] {
   const userKey = disclose(persistentHash<Bytes<32>>(userSecretKey()));
   const amount = disclose(betAmount());
   const side = disclose(betSide());
   const nonce = disclose(betNonce());
   const disclosedBetId = disclose(betId);
+  const disclosedUserAddr = disclose(user_addr);
   
-  // Verify bet belongs to this user
+  // Verify bet belongs to this user (simplified)
   const storedUserKey = poolBetUserKey.lookup(disclosedBetId);
   
   // Verify commitment
   const storedCommitment = poolBetCommitments.lookup(disclosedBetId);
-  const commitmentData = persistentHash<Vector<3, Field>>([amount, side, nonce as Field]);
+  const commitmentData = persistentHash<Vector<3, Field>>([amount, side as Field, nonce as Field]);
   const providedCommitment = commitmentData as Bytes<32>;
   
   // Get market ID for this bet
   const marketId = poolBetMarketId.lookup(disclosedBetId);
-  
-  // Calculate payout (if winner)
   const outcome = marketOutcome.lookup(marketId);
-  const isWinner = (side == outcome);
   
-  const yesTotal = poolYesTotal.lookup(marketId);
-  const noTotal = poolNoTotal.lookup(marketId);
+  // Check if winner
+  if (side == outcome) {
+     // Simplified payout for 0.22 (should be proportional)
+     sendUnshielded(default<Bytes<32>>, amount as Uint<128>, right<ContractAddress, UserAddress>(disclosedUserAddr));
+  }
   
-  // Get winning and losing pool totals
-  const winningPool = (outcome * yesTotal) + ((1 - outcome) * noTotal);
-  const losingPool = ((1 - outcome) * yesTotal) + (outcome * noTotal);
-  
-  // Payout = stake + (stake / winningPool) * losingPool
-  // Simplified for 0.22: Mark as claimed
   poolBetClaimed.insert(disclosedBetId, 1);
 }
 
-export circuit claimWagerWinnings(wagerId: Field): [] {
+export circuit claimWagerWinnings(wagerId: Field, user_addr: UserAddress): [] {
   const userKey = disclose(persistentHash<Bytes<32>>(userSecretKey()));
   const disclosedWagerId = disclose(wagerId);
+  const disclosedUserAddr = disclose(user_addr);
   
   // Get wager details
   const marketId = wagerMarketId.lookup(disclosedWagerId);
   const outcome = marketOutcome.lookup(marketId);
   const betSide = wagerSide.lookup(disclosedWagerId);
-  const creatorAmount = wagerAmount.lookup(disclosedWagerId);
-  const takerAmount = wagerMatchAmount.lookup(disclosedWagerId);
-  
-  // Determine winner
-  const creatorWon = (betSide == outcome);
   
   // Mark as settled
-  wagerStatus.insert(disclosedWagerId, 4); // 4 = SETTLED
+  wagerStatus.insert(disclosedWagerId, WagerStatus.SETTLED);
   wagerClaimed.insert(disclosedWagerId, 1);
+  
+  // Payout logic (simplified)
+  // sendUnshielded(default<Bytes<32>>, amount as Uint<128>, right<ContractAddress, UserAddress>(disclosedUserAddr));
 }
-

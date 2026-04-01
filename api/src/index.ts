@@ -57,6 +57,7 @@ export interface MarketDerivedState {
   isInitialized: boolean;
   marketCount: bigint;
   wagerCount: bigint;
+  poolBetIdCounter: bigint;
 }
 
 /**
@@ -93,6 +94,7 @@ export class ShadowMarketAPI {
             isInitialized: ledger.isInitialized > 0n,
             marketCount: ledger.marketCount,
             wagerCount: ledger.wagerCount,
+            poolBetIdCounter: ledger.poolBetIdCounter,
           };
         })
       );
@@ -129,15 +131,17 @@ export class ShadowMarketAPI {
     try {
       // Update witnesses context (mocked for now, but should be handled by providers)
       // For node/script environment, we can set the context if our provider supports it
+      const outcomeEnum = betOutcome ? 2n : 1n; // Outcome.YES=2, Outcome.NO=1
+
       if ((this.providers as any).witnessContext) {
         (this.providers as any).witnessContext.betAmount = betAmount;
-        (this.providers as any).witnessContext.betSide = betOutcome ? 1n : 0n;
+        (this.providers as any).witnessContext.betSide = outcomeEnum;
         (this.providers as any).witnessContext.betNonce = safeRandomNonce();
       }
 
       const txData = await (this.deployedContract.callTx.placeBet as any)(
         BigInt(marketId),
-        betOutcome ? 1n : 0n
+        outcomeEnum
       );
 
       console.log('Bet placed! Transaction:', txData.public.txHash);
@@ -161,7 +165,11 @@ export class ShadowMarketAPI {
     console.log(`CLAIMING POOL WINNINGS ON-CHAIN: betId=${betId}`);
 
     try {
-      const txData = await (this.deployedContract.callTx.claimPoolWinnings as any)(BigInt(betId));
+      const userAddress = this.providers.walletProvider.getCoinPublicKey();
+      const txData = await (this.deployedContract.callTx.claimPoolWinnings as any)(
+        BigInt(betId),
+        userAddress
+      );
 
       console.log('Winnings claimed! Transaction:', txData.public.txHash);
       return txData.public.txHash;
@@ -190,31 +198,19 @@ export class ShadowMarketAPI {
    */
   async createMarket(
     question: string,
-    resolutionTime: bigint,
-    initialLiquidity: bigint,
-    oracleAddress: string
+    resolutionTime: bigint
   ): Promise<string> {
     console.log(`CREATING MARKET ON-CHAIN: ${question}, endTime=${resolutionTime}`);
 
     try {
       const titleBytes = stringToBytes32(question);
       
-      // SAFE CONVERSION: If it's a shielded address (Bech32), we take a hash or prefix
-      // In the contract it's just a Bytes<32> identifier.
-      let oracleBytes: Uint8Array;
-      if (oracleAddress.startsWith('mn_shield-addr_')) {
-        oracleBytes = stringToBytes32(oracleAddress.replace('mn_shield-addr_', '').slice(0, 32));
-      } else {
-        oracleBytes = fromHex(oracleAddress.replace('mn_shield-addr_', '').slice(0, 64));
-      }
-      
       const createMarketFn = this.deployedContract.callTx.createMarket;
       
       const txData = await (createMarketFn as any)(
         resolutionTime,
-        initialLiquidity,
-        titleBytes,
-        oracleBytes
+        1n, // minBet
+        titleBytes
       );
       
       console.log('Market created! Transaction:', txData.public.txHash);
@@ -254,9 +250,11 @@ export class ShadowMarketAPI {
     console.log(`RESOLVING MARKET ON-CHAIN: ${marketId}, outcome=${outcome ? 'YES' : 'NO'}`);
 
     try {
+      const outcomeEnum = outcome ? 2n : 1n; // Outcome.YES=2, Outcome.NO=1
+      
       const txData = await (this.deployedContract.callTx.resolveMarket as any)(
         BigInt(marketId),
-        outcome ? 1n : 0n
+        outcomeEnum
       );
 
       console.log('Market resolved! Transaction:', txData.public.txHash);
@@ -284,9 +282,11 @@ export class ShadowMarketAPI {
         (this.providers as any).witnessContext.wagerAmount = amount;
       }
 
+      const outcomeEnum = side ? 2n : 1n; // YES=2, NO=1
+
       const txData = await (this.deployedContract.callTx.createWager as any)(
         BigInt(marketId),
-        side ? 1n : 0n,
+        outcomeEnum,
         oddsNumerator,
         oddsDenominator
       );
@@ -340,7 +340,11 @@ export class ShadowMarketAPI {
     console.log(`CLAIMING WAGER WINNINGS ON-CHAIN: ${wagerId}`);
 
     try {
-      const txData = await (this.deployedContract.callTx.claimWagerWinnings as any)(BigInt(wagerId));
+      const userAddress = this.providers.walletProvider.getCoinPublicKey();
+      const txData = await (this.deployedContract.callTx.claimWagerWinnings as any)(
+        BigInt(wagerId),
+        userAddress
+      );
 
       console.log('Wager winnings claimed! Transaction:', txData.public.txHash);
       return txData.public.txHash;

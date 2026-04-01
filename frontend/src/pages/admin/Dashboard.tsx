@@ -370,12 +370,12 @@ export function AdminDashboard() {
             <p className="text-xs text-slate-500">Review and verify new markets</p>
           </Link>
           <Link
-            to="/admin/activity"
+            to="/admin/contract-state"
             className="p-4 bg-white/[0.02] border border-white/5 rounded-sm hover:bg-white/[0.05] hover:border-electric-blue/30 transition-all group"
           >
-            <Clock className="w-6 h-6 text-slate-400 mb-3" />
-            <h3 className="text-sm font-bold text-white mb-1">Activity Log</h3>
-            <p className="text-xs text-slate-500">Monitor platform activity</p>
+            <Shield className="w-6 h-6 text-indigo-400 mb-3" />
+            <h3 className="text-sm font-bold text-white mb-1">Contract State</h3>
+            <p className="text-xs text-slate-500">Live on-chain ledger explorer</p>
           </Link>
         </div>
       </div>

@@ -10,7 +10,8 @@ import { useContract } from '../../hooks/useContract';
 import { useWallet } from '../../hooks/useWallet';
 import { Market, Wager } from '../../types';
 import { CustomSelect } from '../common/CustomSelect';
-import { DollarSign } from 'lucide-react';
+import { DollarSign, Terminal } from 'lucide-react';
+import { TxSuccessModal } from '../common/TxSuccessModal';
 
 const p2pWagerSchema = z.object({
   amount: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
@@ -35,6 +36,7 @@ export function P2PActionTerminal({ market, onClose, selectedWager, onClearSelec
   const { isConnected, formattedUnshieldedNightBalance, unshieldedNightBalance, address, setWalletModalOpen } = useWallet();
   const { createWager, acceptWager, cancelWager, claimWagerWinnings, isInitialized } = useContract();
   const queryClient = useQueryClient();
+  const [successData, setSuccessData] = useState<{ txHash: string; title: string; subtitle: string } | null>(null);
 
   const isUserCreator = selectedWager && address === selectedWager.creatorId;
 
@@ -76,11 +78,16 @@ export function P2PActionTerminal({ market, onClose, selectedWager, onClearSelec
     mutationFn: async () => {
       if (!selectedWager || !isConnected || !isInitialized) throw new Error('Ready state failure');
       const txHash = await acceptWager(selectedWager.id);
-      await wagersApi.acceptWager(selectedWager.id, { txHash });
+      if (!txHash) throw new Error('Transaction failed');
+      await wagersApi.acceptWager(selectedWager.id, { txHash, wagerId: selectedWager.id });
       return txHash;
     },
-    onSuccess: () => {
-      toast.success('Position Matched');
+    onSuccess: (txHash) => {
+      setSuccessData({
+        txHash,
+        title: 'Position Matched',
+        subtitle: 'Successfully accepted the P2P wager terms and locked funds in the ZK-escrow.'
+      });
       queryClient.invalidateQueries({ queryKey: ['market', market.id] });
       queryClient.invalidateQueries({ queryKey: ['p2p-wagers', market.id] });
       if (onClearSelection) onClearSelection();
@@ -91,11 +98,16 @@ export function P2PActionTerminal({ market, onClose, selectedWager, onClearSelec
     mutationFn: async () => {
       if (!selectedWager || !isConnected || !isInitialized) throw new Error('Ready state failure');
       const txHash = await cancelWager(selectedWager.id);
+      if (!txHash) throw new Error('Transaction failed or was cancelled');
       await wagersApi.cancelWager(selectedWager.id);
       return txHash;
     },
-    onSuccess: () => {
-      toast.success('Protocol Terminated');
+    onSuccess: (txHash) => {
+      setSuccessData({
+        txHash,
+        title: 'Protocol Terminated',
+        subtitle: 'Wager offer has been successfully withdrawn from the decentralized matcher.'
+      });
       queryClient.invalidateQueries({ queryKey: ['p2p-wagers', market.id] });
       if (onClearSelection) onClearSelection();
     }
@@ -105,40 +117,51 @@ export function P2PActionTerminal({ market, onClose, selectedWager, onClearSelec
     mutationFn: async () => {
       if (!selectedWager || !isConnected || !isInitialized) throw new Error('Ready state failure');
       const txHash = await claimWagerWinnings(selectedWager.id);
+      if (!txHash) throw new Error('Transaction failed or was cancelled');
       return txHash;
     },
-    onSuccess: () => {
-      toast.success('Winnings Dispersed');
+    onSuccess: (txHash) => {
+      setSuccessData({
+        txHash,
+        title: 'Winnings Dispersed',
+        subtitle: 'Protocol payout has been successfully transferred to your shielded balance.'
+      });
       queryClient.invalidateQueries({ queryKey: ['p2p-wagers', market.id] });
     }
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: P2PWagerFormData) => {
-      if (!isConnected || !isInitialized) throw new Error('Ready state failure');
+      if (!isConnected || !isInitialized) throw new Error('Identity Verification Required');
       
+      console.log('DEBUG: Initiating on-chain P2P wager creation...');
       const txHash = await createWager(
-        market.id,
-        data.amount,
-        data.side === 'yes',
-        [data.oddsNumerator, data.oddsDenominator],
-        data.durationHours
+        market.onchainId || market.id,
+        data.side.toUpperCase() as 'YES' | 'NO',
+        parseFloat(data.amount),
+        [data.oddsNumerator, data.oddsDenominator]
       );
 
-      if (!txHash) throw new Error('Transaction failed or cancelled');
+      if (!txHash) throw new Error('On-chain transaction failed or was cancelled');
 
+      console.log('DEBUG: Syncing to backend...');
       await wagersApi.createP2PWager({
         marketId: market.id,
         amount: data.amount,
         side: data.side,
         odds: [data.oddsNumerator, data.oddsDenominator],
-        duration: data.durationHours,
+        duration: data.durationHours * 3600,
+        txHash,
       });
 
       return txHash;
     },
-    onSuccess: () => {
-      toast.success('P2P Protocol Broadcast Successfully');
+    onSuccess: (txHash, variables) => {
+      setSuccessData({
+        txHash,
+        title: 'Protocol Broadcast',
+        subtitle: `Successfully published your ${variables.amount} NIGHT ${variables.side.toUpperCase()} wager offer.`
+      });
       queryClient.invalidateQueries({ queryKey: ['market', market.id] });
       queryClient.invalidateQueries({ queryKey: ['p2p-wagers', market.id] });
       reset();
@@ -313,20 +336,20 @@ export function P2PActionTerminal({ market, onClose, selectedWager, onClearSelec
         {/* Settlement Info */}
         {payoutInfo && (
           <div className="pt-6 border-t border-white/5 space-y-4">
-            <div className="bg-slate-950/80 border border-white/5 p-4 rounded-sm space-y-3">
-              <div className="flex justify-between items-center text-[11px] font-mono">
-                <span className="text-slate-500 uppercase">Your Potential Payout</span>
-                <span className="text-success-green font-bold">+{payoutInfo.yourPotentialWin.toFixed(2)} NIGHT</span>
-              </div>
-              <div className="flex justify-between items-center text-[11px] font-mono">
-                <span className="text-slate-500 uppercase">Opponent Stake Required</span>
-                <span className="text-white">{payoutInfo.opponentStake.toFixed(2)} NIGHT</span>
-              </div>
-              <div className="pt-3 border-t border-white/5 flex justify-between items-center text-[10px] font-mono text-slate-400">
-                <span className="uppercase tracking-widest">Total Liquidity Locked</span>
-                <span className="text-electric-blue font-bold">{payoutInfo.totalPool.toFixed(2)} NIGHT</span>
-              </div>
+          <div className="bg-slate-950/80 border border-white/5 p-4 rounded-sm space-y-3">
+            <div className="flex justify-between items-center text-[11px] font-mono">
+              <span className="text-slate-500 uppercase">Your Potential Payout</span>
+              <span className="text-success-green font-bold">+{payoutInfo.yourPotentialWin.toFixed(2)} NIGHT</span>
             </div>
+            <div className="flex justify-between items-center text-[11px] font-mono">
+              <span className="text-slate-500 uppercase">Opponent Stake Required</span>
+              <span className="text-white">{payoutInfo.opponentStake.toFixed(2)} NIGHT</span>
+            </div>
+            <div className="pt-3 border-t border-white/5 flex justify-between items-center text-[10px] font-mono text-slate-400">
+              <span className="uppercase tracking-widest">Total Liquidity Locked</span>
+              <span className="text-electric-blue font-bold">{payoutInfo.totalPool.toFixed(2)} NIGHT</span>
+            </div>
+          </div>
 
             <div className="flex gap-3 p-3 bg-amber-500/5 border border-amber-500/20 rounded-sm">
                 <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
@@ -354,6 +377,23 @@ export function P2PActionTerminal({ market, onClose, selectedWager, onClearSelec
             </>
         )}
       </form>
+      <TxSuccessModal 
+        isOpen={!!successData}
+        onClose={() => {
+          setSuccessData(null);
+          if (onClearSelection) onClearSelection();
+        }}
+        txHash={successData?.txHash || ''}
+        title={successData?.title || 'Success'}
+        subtitle={successData?.subtitle || ''}
+        primaryAction={{
+          label: 'Acknowledge',
+          onClick: () => {
+             setSuccessData(null);
+             if (onClearSelection) onClearSelection();
+          }
+        }}
+      />
     </div>
   );
 }

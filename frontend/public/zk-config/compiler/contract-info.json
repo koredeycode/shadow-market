@@ -38,13 +38,6 @@
             "type-name": "Bytes",
             "length": 32
           }
-        },
-        {
-          "name": "oracle",
-          "type": {
-            "type-name": "Bytes",
-            "length": 32
-          }
         }
       ],
       "result-type": {
@@ -67,7 +60,13 @@
         {
           "name": "side",
           "type": {
-            "type-name": "Field"
+            "type-name": "Enum",
+            "name": "Outcome",
+            "elements": [
+              "NONE",
+              "NO",
+              "YES"
+            ]
           }
         }
       ],
@@ -91,7 +90,13 @@
         {
           "name": "side",
           "type": {
-            "type-name": "Field"
+            "type-name": "Enum",
+            "name": "Outcome",
+            "elements": [
+              "NONE",
+              "NO",
+              "YES"
+            ]
           }
         },
         {
@@ -181,7 +186,13 @@
         {
           "name": "outcome",
           "type": {
-            "type-name": "Field"
+            "type-name": "Enum",
+            "name": "Outcome",
+            "elements": [
+              "NONE",
+              "NO",
+              "YES"
+            ]
           }
         }
       ],
@@ -201,6 +212,22 @@
           "type": {
             "type-name": "Field"
           }
+        },
+        {
+          "name": "user_addr",
+          "type": {
+            "type-name": "Struct",
+            "name": "UserAddress",
+            "elements": [
+              {
+                "name": "bytes",
+                "type": {
+                  "type-name": "Bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
         }
       ],
       "result-type": {
@@ -218,6 +245,22 @@
           "name": "wagerId",
           "type": {
             "type-name": "Field"
+          }
+        },
+        {
+          "name": "user_addr",
+          "type": {
+            "type-name": "Struct",
+            "name": "UserAddress",
+            "elements": [
+              {
+                "name": "bytes",
+                "type": {
+                  "type-name": "Bytes",
+                  "length": 32
+                }
+              }
+            ]
           }
         }
       ],
@@ -251,7 +294,13 @@
       "arguments": [
       ],
       "result type": {
-        "type-name": "Field"
+        "type-name": "Enum",
+        "name": "Outcome",
+        "elements": [
+          "NONE",
+          "NO",
+          "YES"
+        ]
       }
     },
     {

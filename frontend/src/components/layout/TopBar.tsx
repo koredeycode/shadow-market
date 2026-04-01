@@ -1,4 +1,4 @@
-import { Wallet, Bell, Search, Settings, Moon, ChevronDown, Zap } from 'lucide-react';
+import { Wallet, Search, Moon, ChevronDown, Zap } from 'lucide-react';
 import { useWallet } from '../../hooks/useWallet';
 import { Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
@@ -12,7 +12,7 @@ export function TopBar() {
     isConnecting, 
     formattedAddress, 
     formattedUnshieldedNightBalance, 
-    formattedDustBalance 
+    formattedNightBalance 
   } = useWallet();
   const { isWalletModalOpen, setWalletModalOpen } = useWalletStore();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -89,7 +89,7 @@ export function TopBar() {
                 <div className="flex items-center gap-4 mr-1">
                   <div className="flex flex-col items-end">
                     <span className="text-[8px] text-slate-500 font-mono leading-none mb-1 uppercase tracking-tighter">
-                      Night
+                      Unshielded
                     </span>
                     <span className="text-[10px] text-white font-mono font-bold leading-none">
                       {formattedUnshieldedNightBalance}
@@ -98,10 +98,10 @@ export function TopBar() {
                   <div className="w-[1px] h-6 bg-white/5" />
                   <div className="flex flex-col items-end">
                     <span className="text-[8px] text-slate-500 font-mono leading-none mb-1 uppercase tracking-tighter">
-                      Dust
+                      Shielded
                     </span>
                     <span className="text-[10px] text-white font-mono font-bold leading-none">
-                      {formattedDustBalance}
+                      {formattedNightBalance}
                     </span>
                   </div>
                 </div>

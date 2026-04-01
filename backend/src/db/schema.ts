@@ -14,14 +14,18 @@ import {
 
 // Enums
 export const marketStatusEnum = pgEnum('market_status', [
-  'PENDING',
   'OPEN',
   'LOCKED',
   'RESOLVED',
   'CANCELLED',
 ]);
 
-export const wagerStatusEnum = pgEnum('wager_status', ['OPEN', 'MATCHED', 'RESOLVED', 'CANCELLED']);
+export const wagerStatusEnum = pgEnum('wager_status', [
+  'OPEN',
+  'MATCHED',
+  'CANCELLED',
+  'SETTLED',
+]);
 
 export const kycStatusEnum = pgEnum('kyc_status', ['NONE', 'PENDING', 'APPROVED', 'REJECTED']);
 

@@ -58,7 +58,7 @@ export const createWitnessProviders = (
   },
 
   /**
-   * Provides the bet side (YES=1, NO=0)
+   * Provides the bet side (YES=2, NO=1, NONE=0)
    */
   betSide: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, bigint] => {
     const side = context?.betSide ?? 0n;

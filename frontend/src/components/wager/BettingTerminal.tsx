@@ -9,6 +9,7 @@ import { wagersApi } from '../../api/wagers';
 import { useContract } from '../../hooks/useContract';
 import { useWallet } from '../../hooks/useWallet';
 import { Market } from '../../types';
+import { TxSuccessModal } from '../common/TxSuccessModal';
 
 const betSchema = z.object({
   amount: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
@@ -28,6 +29,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
   const { isConnected, formattedUnshieldedNightBalance, setWalletModalOpen } = useWallet();
   const { placeBet, isInitialized } = useContract();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successData, setSuccessData] = useState<{ txHash: string; amount: string; side: string } | null>(null);
 
   // Prevent any accidental navigation
   useEffect(() => {
@@ -133,13 +135,11 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
         } catch (dbError) {
           // On-chain succeeded but database update failed - this is acceptable
           console.warn('Database sync failed (on-chain transaction succeeded):', dbError);
-          toast('Bet placed on-chain but database sync failed. This is normal.', { icon: '!' });
           return { positionId: market.id, txId: txHash, contractSuccess: true };
         }
       } catch (error: any) {
-        // Catch all errors and log them - don't let them bubble up to ErrorBoundary
         console.error('Mutation error caught:', error);
-        throw error; // Re-throw for onError handler
+        throw error;
       }
     },
     onSuccess: data => {
@@ -147,10 +147,11 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
         console.log('Mutation onSuccess triggered, updating UI...');
         console.log('Success data:', data);
 
-        // Show success toast
-        toast.success(
-          `Position Secured On-Chain!\nTx: ${data.txId || data.positionId.slice(0, 16)}...`
-        );
+        setSuccessData({
+          txHash: data.txId || '',
+          amount: watch('amount'),
+          side: watch('side').toUpperCase()
+        });
 
         // Clear form
         setValue('amount', '');
@@ -162,13 +163,8 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
       }
     },
     onError: (error: any) => {
-      try {
-        console.error('On-chain bet placement failed:', error);
-        toast.error(error.message || 'Failed to place bet on-chain');
-      } catch (toastError) {
-        console.error('Error showing error toast:', toastError);
-        // Don't re-throw
-      }
+      console.error('On-chain bet placement failed:', error);
+      // Redundant toast removed as executeTx handles it
     },
   });
 
@@ -384,6 +380,17 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
           <div className="absolute inset-0 bg-white opacity-0 group-active:opacity-20 transition-opacity" />
         </button>
       </div>
+      <TxSuccessModal 
+        isOpen={!!successData}
+        onClose={() => setSuccessData(null)}
+        txHash={successData?.txHash || ''}
+        title="Position Secured"
+        subtitle={`Successfully placed your ${successData?.amount} NIGHT ${successData?.side} bet. Your position is now locked in the ZK-escrow.`}
+        primaryAction={{
+          label: 'Acknowledge',
+          onClick: () => setSuccessData(null)
+        }}
+      />
     </div>
   );
 }

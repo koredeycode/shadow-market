@@ -63,7 +63,7 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
         <div className="space-y-4">
           <div className="space-y-1">
             <div className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">
-              Unshielded Night
+              Unshielded NIGHT
             </div>
             <div className="text-xl font-mono font-bold text-white flex items-baseline gap-2">
               {formattedUnshieldedNightBalance}
@@ -74,7 +74,7 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <div className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">
-                Shielded
+                Shielded (Private)
               </div>
               <div className="text-sm font-mono font-bold text-white flex items-baseline gap-1">
                 {formattedNightBalance}
@@ -83,11 +83,11 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
             </div>
             <div className="space-y-1">
               <div className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">
-                Dust
+                Network Gas
               </div>
               <div className="text-sm font-mono font-bold text-white flex items-baseline gap-1">
                 {formattedDustBalance}
-                <span className="text-[10px] text-slate-500 font-light">DUST</span>
+                <span className="text-[10px] text-slate-500 font-light">tDUST</span>
               </div>
             </div>
           </div>

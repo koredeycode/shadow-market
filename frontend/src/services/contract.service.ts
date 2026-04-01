@@ -9,9 +9,9 @@ import type { ConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
 import { ShadowMarketAPI, type DeployedShadowMarketConfig } from '@shadow-market/api';
 import { Subscription } from 'rxjs';
 import { useContractStore } from '../store/contract.store';
-import toast, { Toast } from 'react-hot-toast';
-import React from 'react';
-import { TxToast } from '../components/common/TxToast';
+import { useWalletStore } from '../store/wallet.store';
+import toast from 'react-hot-toast';
+import { showTxSuccessToast } from '../components/common/tx-toast.utils';
 
 /**
  * Contract Manager - Singleton service for contract interactions
@@ -75,22 +75,34 @@ class ContractManager {
    * Internal helper to wrap contract calls with toasts
    */
   private async executeTx(
-    promise: Promise<string>,
+    txOperation: () => Promise<string>,
     loadingMsg: string,
     successMsg: string,
     waitForUpdate?: (state: any) => boolean
   ): Promise<string> {
     if (!this.api) throw new Error('Contract not initialized');
-    const txToast = toast.loading(loadingMsg);
-    console.log(`DEBUG: executeTx started with loadingMsg: "${loadingMsg}"`);
+    
+    // Set transacting status to pause balance polling
+    useWalletStore.getState().setTransacting(true);
+
+    // 1. Create immediate toast BEFORE the wallet popup is triggered
+    const txToast = toast.loading('Waiting for wallet authorization...');
+    console.log(`DEBUG: executeTx started. Toast ID: ${txToast}`);
+    
     try {
+      // 2. Trigger the actual on-chain operation
       const startTime = Date.now();
+      const promise = txOperation();
+      
+      // Update toast to current action message
+      toast.loading(loadingMsg, { id: txToast });
+      
       const txHash = await promise;
       const endTime = Date.now();
       
       console.log(`DEBUG: API promise resolved in ${((endTime - startTime) / 1000).toFixed(2)}s. TxHash:`, txHash);
       
-      // Update toast to 'Finalizing' state
+      // 3. Update toast to 'Finalizing' state
       toast.loading('Validating on-chain finalization...', { id: txToast });
 
       if (waitForUpdate) {
@@ -102,17 +114,21 @@ class ContractManager {
         await new Promise(resolve => setTimeout(resolve, 5000));
       }
       
-      // Final success
+      // 4. Final success
       console.log('DEBUG: Transaction execution fully verified and finalized.');
-      toast.success(
-        (t: Toast) => React.createElement(TxToast, { t, txHash, successMsg }),
-        { id: txToast, duration: 6000 }
-      );
+      showTxSuccessToast(txHash, successMsg, txToast);
       
+      useWalletStore.getState().setTransacting(false);
       return txHash;
     } catch (error: any) {
       console.error('DEBUG: executeTx failed:', error);
-      toast.error(`Execution failed: ${error.message}`, { id: txToast });
+      useWalletStore.getState().setTransacting(false);
+      
+      // User rejection is a common case, handle it slightly more gracefully
+      const isUserRejection = error.message?.toLowerCase().includes('user rejected') || 
+                             error.message?.toLowerCase().includes('declined');
+      
+      toast.error(isUserRejection ? 'Transaction cancelled by user' : `Execution failed: ${error.message}`, { id: txToast });
       throw error;
     }
   }
@@ -122,7 +138,7 @@ class ContractManager {
    */
   async placeBet(marketId: string, betAmount: bigint, betOutcome: boolean): Promise<string> {
     return this.executeTx(
-      this.api!.placeBet(marketId, betAmount, betOutcome),
+      () => (this.api as any).placeBet(marketId, betAmount, betOutcome),
       'Transmitting bet proof...',
       'Bet finalized on-chain'
     );
@@ -133,7 +149,7 @@ class ContractManager {
    */
   async claimWinnings(betId: string): Promise<string> {
     return this.executeTx(
-      this.api!.claimWinnings(betId),
+      () => (this.api as any).claimWinnings(betId),
       'Verifying winning proof...',
       'Winnings claimed'
     );
@@ -144,9 +160,7 @@ class ContractManager {
    */
   async createMarket(
     question: string,
-    resolutionTime: bigint,
-    initialLiquidity: bigint,
-    oracleAddress: string
+    resolutionTime: bigint
   ): Promise<string> {
     let previousCount = 0n;
     if (this.api) {
@@ -156,7 +170,7 @@ class ContractManager {
     }
 
     return this.executeTx(
-      this.api!.createMarket(question, resolutionTime, initialLiquidity, oracleAddress),
+      () => (this.api as any).createMarket(question, resolutionTime),
       'Generating market circuit...',
       'Market deployed successfully',
       (state) => state.marketCount > previousCount
@@ -168,7 +182,7 @@ class ContractManager {
    */
   async resolveMarket(marketId: string, outcome: boolean): Promise<string> {
     return this.executeTx(
-      this.api!.resolveMarket(marketId, outcome),
+      () => (this.api as any).resolveMarket(marketId, outcome),
       'Transmitting resolution proof...',
       'Market resolved'
     );
@@ -191,7 +205,7 @@ class ContractManager {
     }
 
     return this.executeTx(
-      this.api!.createWager(marketId, side, amount, oddsNumerator, oddsDenominator),
+      () => (this.api as any).createWager(marketId, side, amount, oddsNumerator, oddsDenominator),
       'Publishing P2P wager...',
       'Wager offering active',
       (state) => state.wagerCount > previousCount
@@ -203,7 +217,7 @@ class ContractManager {
    */
   async acceptWager(wagerId: string): Promise<string> {
     return this.executeTx(
-      this.api!.acceptWager(wagerId),
+      () => (this.api as any).acceptWager(wagerId),
       'Accepting wager offer...',
       'Wager matched'
     );
@@ -214,7 +228,7 @@ class ContractManager {
    */
   async cancelWager(wagerId: string): Promise<string> {
     return this.executeTx(
-      this.api!.cancelWager(wagerId),
+      () => (this.api as any).cancelWager(wagerId),
       'Processing cancellation...',
       'Wager offer withdrawn'
     );
@@ -225,9 +239,20 @@ class ContractManager {
    */
   async claimWagerWinnings(wagerId: string): Promise<string> {
     return this.executeTx(
-      this.api!.claimWagerWinnings(wagerId),
+      () => (this.api as any).claimWagerWinnings(wagerId),
       'Finalizing payout...',
       'Payout received'
+    );
+  }
+  
+  /**
+   * Initialize the contract on-chain (admin only)
+   */
+  async executeContractInitialize(): Promise<string> {
+    return this.executeTx(
+      () => (this.api as any).initialize(),
+      'Executing initialize() circuit...',
+      'Contract initialized on-chain'
     );
   }
 

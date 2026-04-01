@@ -3,7 +3,7 @@ import type * as __compactRuntime from '@midnight-ntwrk/compact-runtime';
 export type Witnesses<PS> = {
   userSecretKey(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, Uint8Array];
   betAmount(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, bigint];
-  betSide(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, bigint];
+  betSide(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, number];
   betNonce(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, Uint8Array];
   wagerAmountInput(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, bigint];
 }
@@ -13,14 +13,13 @@ export type ImpureCircuits<PS> = {
   createMarket(context: __compactRuntime.CircuitContext<PS>,
                endTime_0: bigint,
                minBet_0: bigint,
-               title_0: Uint8Array,
-               oracle_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
+               title_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
   placeBet(context: __compactRuntime.CircuitContext<PS>,
            marketId_0: bigint,
-           side_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+           side_0: number): __compactRuntime.CircuitResults<PS, []>;
   createWager(context: __compactRuntime.CircuitContext<PS>,
               marketId_0: bigint,
-              side_0: bigint,
+              side_0: number,
               oddsNumerator_0: bigint,
               oddsDenominator_0: bigint): __compactRuntime.CircuitResults<PS, []>;
   acceptWager(context: __compactRuntime.CircuitContext<PS>, wagerId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
@@ -28,11 +27,13 @@ export type ImpureCircuits<PS> = {
   lockMarket(context: __compactRuntime.CircuitContext<PS>, marketId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
   resolveMarket(context: __compactRuntime.CircuitContext<PS>,
                 marketId_0: bigint,
-                outcome_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+                outcome_0: number): __compactRuntime.CircuitResults<PS, []>;
   claimPoolWinnings(context: __compactRuntime.CircuitContext<PS>,
-                    betId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+                    betId_0: bigint,
+                    user_addr_0: { bytes: Uint8Array }): __compactRuntime.CircuitResults<PS, []>;
   claimWagerWinnings(context: __compactRuntime.CircuitContext<PS>,
-                     wagerId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+                     wagerId_0: bigint,
+                     user_addr_0: { bytes: Uint8Array }): __compactRuntime.CircuitResults<PS, []>;
 }
 
 export type ProvableCircuits<PS> = {
@@ -40,14 +41,13 @@ export type ProvableCircuits<PS> = {
   createMarket(context: __compactRuntime.CircuitContext<PS>,
                endTime_0: bigint,
                minBet_0: bigint,
-               title_0: Uint8Array,
-               oracle_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
+               title_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
   placeBet(context: __compactRuntime.CircuitContext<PS>,
            marketId_0: bigint,
-           side_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+           side_0: number): __compactRuntime.CircuitResults<PS, []>;
   createWager(context: __compactRuntime.CircuitContext<PS>,
               marketId_0: bigint,
-              side_0: bigint,
+              side_0: number,
               oddsNumerator_0: bigint,
               oddsDenominator_0: bigint): __compactRuntime.CircuitResults<PS, []>;
   acceptWager(context: __compactRuntime.CircuitContext<PS>, wagerId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
@@ -55,11 +55,13 @@ export type ProvableCircuits<PS> = {
   lockMarket(context: __compactRuntime.CircuitContext<PS>, marketId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
   resolveMarket(context: __compactRuntime.CircuitContext<PS>,
                 marketId_0: bigint,
-                outcome_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+                outcome_0: number): __compactRuntime.CircuitResults<PS, []>;
   claimPoolWinnings(context: __compactRuntime.CircuitContext<PS>,
-                    betId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+                    betId_0: bigint,
+                    user_addr_0: { bytes: Uint8Array }): __compactRuntime.CircuitResults<PS, []>;
   claimWagerWinnings(context: __compactRuntime.CircuitContext<PS>,
-                     wagerId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+                     wagerId_0: bigint,
+                     user_addr_0: { bytes: Uint8Array }): __compactRuntime.CircuitResults<PS, []>;
 }
 
 export type PureCircuits = {
@@ -70,14 +72,13 @@ export type Circuits<PS> = {
   createMarket(context: __compactRuntime.CircuitContext<PS>,
                endTime_0: bigint,
                minBet_0: bigint,
-               title_0: Uint8Array,
-               oracle_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
+               title_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
   placeBet(context: __compactRuntime.CircuitContext<PS>,
            marketId_0: bigint,
-           side_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+           side_0: number): __compactRuntime.CircuitResults<PS, []>;
   createWager(context: __compactRuntime.CircuitContext<PS>,
               marketId_0: bigint,
-              side_0: bigint,
+              side_0: number,
               oddsNumerator_0: bigint,
               oddsDenominator_0: bigint): __compactRuntime.CircuitResults<PS, []>;
   acceptWager(context: __compactRuntime.CircuitContext<PS>, wagerId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
@@ -85,11 +86,13 @@ export type Circuits<PS> = {
   lockMarket(context: __compactRuntime.CircuitContext<PS>, marketId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
   resolveMarket(context: __compactRuntime.CircuitContext<PS>,
                 marketId_0: bigint,
-                outcome_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+                outcome_0: number): __compactRuntime.CircuitResults<PS, []>;
   claimPoolWinnings(context: __compactRuntime.CircuitContext<PS>,
-                    betId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+                    betId_0: bigint,
+                    user_addr_0: { bytes: Uint8Array }): __compactRuntime.CircuitResults<PS, []>;
   claimWagerWinnings(context: __compactRuntime.CircuitContext<PS>,
-                     wagerId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+                     wagerId_0: bigint,
+                     user_addr_0: { bytes: Uint8Array }): __compactRuntime.CircuitResults<PS, []>;
 }
 
 export type Ledger = {
@@ -97,19 +100,12 @@ export type Ledger = {
   readonly isInitialized: bigint;
   readonly marketCount: bigint;
   readonly wagerCount: bigint;
-  marketIds: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): bigint;
-    [Symbol.iterator](): Iterator<[bigint, bigint]>
-  };
   marketStatus: {
     isEmpty(): boolean;
     size(): bigint;
     member(key_0: bigint): boolean;
-    lookup(key_0: bigint): bigint;
-    [Symbol.iterator](): Iterator<[bigint, bigint]>
+    lookup(key_0: bigint): number;
+    [Symbol.iterator](): Iterator<[bigint, number]>
   };
   marketEndTime: {
     isEmpty(): boolean;
@@ -122,17 +118,10 @@ export type Ledger = {
     isEmpty(): boolean;
     size(): bigint;
     member(key_0: bigint): boolean;
-    lookup(key_0: bigint): bigint;
-    [Symbol.iterator](): Iterator<[bigint, bigint]>
+    lookup(key_0: bigint): number;
+    [Symbol.iterator](): Iterator<[bigint, number]>
   };
   marketTitle: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): Uint8Array;
-    [Symbol.iterator](): Iterator<[bigint, Uint8Array]>
-  };
-  marketOracle: {
     isEmpty(): boolean;
     size(): bigint;
     member(key_0: bigint): boolean;
@@ -228,8 +217,8 @@ export type Ledger = {
     isEmpty(): boolean;
     size(): bigint;
     member(key_0: bigint): boolean;
-    lookup(key_0: bigint): bigint;
-    [Symbol.iterator](): Iterator<[bigint, bigint]>
+    lookup(key_0: bigint): number;
+    [Symbol.iterator](): Iterator<[bigint, number]>
   };
   wagerOddsNum: {
     isEmpty(): boolean;
@@ -249,8 +238,8 @@ export type Ledger = {
     isEmpty(): boolean;
     size(): bigint;
     member(key_0: bigint): boolean;
-    lookup(key_0: bigint): bigint;
-    [Symbol.iterator](): Iterator<[bigint, bigint]>
+    lookup(key_0: bigint): number;
+    [Symbol.iterator](): Iterator<[bigint, number]>
   };
   wagerClaimed: {
     isEmpty(): boolean;
