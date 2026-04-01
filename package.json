@@ -45,6 +45,7 @@
     "clean": "pnpm -r clean && rm -rf node_modules",
     "clean:all": "pnpm clean && rm -rf **/node_modules **/dist **/.turbo",
     "setup": "pnpm install && pnpm network:start && pnpm contracts:compile && pnpm db:migrate",
+    "redeploy": "bash scripts/redeploy.sh",
     "generate:accounts": "tsx scripts/generate-accounts.ts",
     "copy-zkconfig": "mkdir -p frontend/public/zk-config && rm -rf frontend/public/zk-config/* && cp -r contracts/src/managed/shadow-market/* frontend/public/zk-config/"
   },
