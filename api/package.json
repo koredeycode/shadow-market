@@ -24,7 +24,8 @@
     "@midnight-ntwrk/midnight-js-node-zk-config-provider": "^4.0.1",
     "@midnight-ntwrk/midnight-js-types": "^4.0.1",
     "@midnight-ntwrk/midnight-js-utils": "^4.0.1",
-    "@shadow-market/contracts": "workspace:*"
+    "@shadow-market/contracts": "workspace:*",
+    "rxjs": "^7.8.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

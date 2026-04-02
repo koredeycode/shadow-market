@@ -23,13 +23,8 @@
         {
           "name": "endTime",
           "type": {
-            "type-name": "Field"
-          }
-        },
-        {
-          "name": "minBet",
-          "type": {
-            "type-name": "Field"
+            "type-name": "Uint",
+            "maxval": 18446744073709551615
           }
         },
         {
@@ -54,7 +49,8 @@
         {
           "name": "marketId",
           "type": {
-            "type-name": "Field"
+            "type-name": "Uint",
+            "maxval": 18446744073709551615
           }
         },
         {
@@ -84,7 +80,8 @@
         {
           "name": "marketId",
           "type": {
-            "type-name": "Field"
+            "type-name": "Uint",
+            "maxval": 18446744073709551615
           }
         },
         {
@@ -102,13 +99,15 @@
         {
           "name": "oddsNumerator",
           "type": {
-            "type-name": "Field"
+            "type-name": "Uint",
+            "maxval": 18446744073709551615
           }
         },
         {
           "name": "oddsDenominator",
           "type": {
-            "type-name": "Field"
+            "type-name": "Uint",
+            "maxval": 18446744073709551615
           }
         }
       ],
@@ -126,7 +125,8 @@
         {
           "name": "wagerId",
           "type": {
-            "type-name": "Field"
+            "type-name": "Uint",
+            "maxval": 18446744073709551615
           }
         }
       ],
@@ -144,7 +144,8 @@
         {
           "name": "wagerId",
           "type": {
-            "type-name": "Field"
+            "type-name": "Uint",
+            "maxval": 18446744073709551615
           }
         }
       ],
@@ -162,7 +163,8 @@
         {
           "name": "marketId",
           "type": {
-            "type-name": "Field"
+            "type-name": "Uint",
+            "maxval": 18446744073709551615
           }
         }
       ],
@@ -180,7 +182,8 @@
         {
           "name": "marketId",
           "type": {
-            "type-name": "Field"
+            "type-name": "Uint",
+            "maxval": 18446744073709551615
           }
         },
         {
@@ -210,7 +213,8 @@
         {
           "name": "betId",
           "type": {
-            "type-name": "Field"
+            "type-name": "Uint",
+            "maxval": 18446744073709551615
           }
         },
         {
@@ -244,7 +248,8 @@
         {
           "name": "wagerId",
           "type": {
-            "type-name": "Field"
+            "type-name": "Uint",
+            "maxval": 18446744073709551615
           }
         },
         {
@@ -286,7 +291,8 @@
       "arguments": [
       ],
       "result type": {
-        "type-name": "Field"
+        "type-name": "Uint",
+        "maxval": 340282366920938463463374607431768211455
       }
     },
     {
@@ -317,7 +323,8 @@
       "arguments": [
       ],
       "result type": {
-        "type-name": "Field"
+        "type-name": "Uint",
+        "maxval": 340282366920938463463374607431768211455
       }
     }
   ],

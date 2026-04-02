@@ -1,5 +1,7 @@
 /**
  * Witness providers for the unified prediction market contract
+ * 
+ * Ephemeral state pattern (matching example-locker style)
  */
 
 import type { WitnessContext } from '@midnight-ntwrk/compact-runtime';
@@ -17,82 +19,72 @@ export interface MarketPrivateState {
  */
 type Ledger = any;
 
-/**
- * Context data passed during circuit execution
- */
-interface CircuitContext {
-  betAmount?: bigint;
-  betSide?: bigint;
-  wagerAmount?: bigint;
-}
+// -----------------------------------------------------------------------------
+// EPHEMERAL CONTEXT (Global variables to be set before calling circuit)
+// -----------------------------------------------------------------------------
+
+let _betAmount = 0n;
+let _betSide = 0;
+let _betNonce: Uint8Array = new Uint8Array(32);
+let _wagerAmount = 0n;
 
 /**
- * Creates witness providers for the unified market contract
- *
- * Witnesses provide private data needed during circuit execution:
- * - userSecretKey: User's private key for signing
- * - betAmount: Amount being bet (from transaction context)
- * - betSide: YES (1) or NO (0)
- * - betNonce: Random nonce for uniqueness
- * - wagerAmountInput: Amount for P2P wagers
+ * Sets the context for pool betting
  */
-export const createWitnessProviders = (
-  privateState: MarketPrivateState,
-  context?: CircuitContext
-) => ({
+export const setBetContext = (amount: bigint, side: number, nonce?: Uint8Array): void => {
+  _betAmount = amount;
+  _betSide = side;
+  _betNonce = nonce ?? new Uint8Array(32);
+  if (!nonce) {
+    const randomBits = randomBytes(16);
+    _betNonce.set(randomBits, 0);
+  }
+};
+
+/**
+ * Sets the context for P2P wagering
+ */
+export const setWagerAmount = (amount: bigint): void => {
+  _wagerAmount = amount;
+};
+
+/**
+ * Create witness providers using the ephemeral context
+ */
+export const createWitnessProviders = (privateState: MarketPrivateState) => ({
   /**
-   * Provides the user's secret key
+   * Provides the user's secret key from PrivateState
    */
-  userSecretKey: (
-    ctx: WitnessContext<Ledger, MarketPrivateState>
-  ): [MarketPrivateState, Uint8Array] => {
+  userSecretKey: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, Uint8Array] => {
     return [privateState, privateState.userSecretKey];
   },
 
   /**
-   * Provides the bet amount from context
+   * Provides the bet amount from ephemeral context
    */
   betAmount: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, bigint] => {
-    const amount = context?.betAmount ?? 0n;
-    return [privateState, amount];
+    return [privateState, _betAmount];
   },
 
   /**
-   * Provides the bet side (YES=2, NO=1, NONE=0)
+   * Provides the bet side from ephemeral context
    */
-  betSide: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, bigint] => {
-    const side = context?.betSide ?? 0n;
-    return [privateState, side];
+  betSide: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, number] => {
+    return [privateState, _betSide];
   },
 
   /**
-   * Provides a random nonce for transaction uniqueness
-   * Using 16 bytes (128 bits) ensures it fits in a Field range
+   * Provides the nonce from ephemeral context
    */
   betNonce: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, Uint8Array] => {
-    const nonce = new Uint8Array(32).fill(0);
-    const randomBits = randomBytes(16);
-    nonce.set(randomBits, 0);
-    return [privateState, nonce];
+    return [privateState, _betNonce];
   },
 
   /**
-   * Provides the wager amount for P2P wagers
+   * Provides the wager amount from ephemeral context
    */
-  wagerAmountInput: (
-    ctx: WitnessContext<Ledger, MarketPrivateState>
-  ): [MarketPrivateState, bigint] => {
-    const amount = context?.wagerAmount ?? 0n;
-    return [privateState, amount];
-  },
-
-  /**
-   * Provides the caller's address (placeholder for now)
-   */
-  callerAddress: (
-    ctx: WitnessContext<Ledger, MarketPrivateState>
-  ): [MarketPrivateState, Uint8Array] => {
-    return [privateState, new Uint8Array(32).fill(0)];
+  wagerAmountInput: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, bigint] => {
+    return [privateState, _wagerAmount];
   },
 });
 

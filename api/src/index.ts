@@ -16,7 +16,7 @@ import { findDeployedContract, type DeployedContract } from '@midnight-ntwrk/mid
 import { CompiledContract } from '@midnight-ntwrk/compact-js';
 import { setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import { ShadowMarketContract, compiledShadowMarketContract, ledger as contractLedger } from '@shadow-market/contracts';
-import { map, Observable } from 'rxjs';
+import { map, Observable, shareReplay } from 'rxjs';
 import {
   createProvidersFromWallet,
   getOrCreatePrivateState,
@@ -24,6 +24,7 @@ import {
   type MarketProviders,
 } from './providers.js';
 import { stringToBytes32, safeRandomNonce, fromHex } from './utils.js';
+import { setBetContext, setWagerAmount } from './witnesses.js';
 
 /**
  * Configuration for connecting to a deployed contract
@@ -57,7 +58,7 @@ export interface MarketDerivedState {
   isInitialized: boolean;
   marketCount: bigint;
   wagerCount: bigint;
-  poolBetIdCounter: bigint;
+  betCount: bigint;
 }
 
 /**
@@ -89,14 +90,21 @@ export class ShadowMarketAPI {
       .pipe(
         map(contractState => {
           const ledger = contractLedger(contractState.data);
+          console.log('[DEBUG] ShadowMarketAPI: Ledger state update received:', {
+            isInitialized: ledger.isInitialized.toString(),
+            marketCount: ledger.marketCount.toString(),
+            wagerCount: ledger.wagerCount.toString(),
+            betCount: ledger.betCount.toString()
+          });
           return {
             ledger,
             isInitialized: ledger.isInitialized > 0n,
             marketCount: ledger.marketCount,
             wagerCount: ledger.wagerCount,
-            poolBetIdCounter: ledger.poolBetIdCounter,
+            betCount: ledger.betCount,
           };
-        })
+        }),
+        shareReplay(1)
       );
 
     console.log('ShadowMarketAPI connected to contract:', this.deployedContractAddress);
@@ -135,13 +143,10 @@ export class ShadowMarketAPI {
     try {
       // Update witnesses context (mocked for now, but should be handled by providers)
       // For node/script environment, we can set the context if our provider supports it
-      const outcomeEnum = betOutcome ? 2n : 1n; // Outcome.YES=2, Outcome.NO=1
+      const outcomeEnum = betOutcome ? 2 : 1; // Outcome.YES=2, Outcome.NO=1
 
-      if ((this.providers as any).witnessContext) {
-        (this.providers as any).witnessContext.betAmount = betAmount;
-        (this.providers as any).witnessContext.betSide = outcomeEnum;
-        (this.providers as any).witnessContext.betNonce = safeRandomNonce();
-      }
+      // Use the new ephemeral witness pattern
+      setBetContext(betAmount, outcomeEnum);
 
       const txData = await (this.deployedContract.callTx.placeBet as any)(
         BigInt(marketId),
@@ -149,10 +154,13 @@ export class ShadowMarketAPI {
       );
 
       console.log('Bet placed! Transaction:', txData.public.txHash);
-      
-      const onchainId = txData.public.disclosed[0].toString();
+      console.log('DEBUG: Full txData response:', JSON.stringify(txData, (key, value) => 
+        typeof value === 'bigint' ? value.toString() : value, 2));
+
+      // Use the last disclosed value for on-chain ID
+      const onchainId = this.getDisclosedId(txData);
       console.log('Disclosed Bet ID:', onchainId);
-      
+
       return { txHash: txData.public.txHash, onchainId };
     } catch (error: any) {
       console.error('placeBet circuit execution failed:', error);
@@ -212,13 +220,13 @@ export class ShadowMarketAPI {
       
       const txData = await (createMarketFn as any)(
         resolutionTime,
-        1n, // minBet
         titleBytes
       );
       
-      console.log('Market created! Transaction:', txData.public.txHash);
-      
-      const onchainId = txData.public.disclosed[0].toString();
+      console.log('DEBUG: Full txData response:', JSON.stringify(txData, (key, value) => 
+        typeof value === 'bigint' ? value.toString() : value, 2));
+
+      const onchainId = this.getDisclosedId(txData);
       console.log('Disclosed Market ID:', onchainId);
       
       return { txHash: txData.public.txHash, onchainId };
@@ -252,7 +260,7 @@ export class ShadowMarketAPI {
     console.log(`RESOLVING MARKET ON-CHAIN: ${marketId}, outcome=${outcome ? 'YES' : 'NO'}`);
 
     try {
-      const outcomeEnum = outcome ? 2n : 1n; // Outcome.YES=2, Outcome.NO=1
+      const outcomeEnum = outcome ? 2 : 1; // Outcome.YES=2, Outcome.NO=1
       
       const txData = await (this.deployedContract.callTx.resolveMarket as any)(
         BigInt(marketId),
@@ -280,11 +288,10 @@ export class ShadowMarketAPI {
     console.log(`CREATING P2P WAGER ON-CHAIN: market=${marketId}, amount=${amount}`);
 
     try {
-      if ((this.providers as any).witnessContext) {
-        (this.providers as any).witnessContext.wagerAmount = amount;
-      }
+      // Use the new ephemeral witness pattern
+      setWagerAmount(amount);
 
-      const outcomeEnum = side ? 2n : 1n; // YES=2, NO=1
+      const outcomeEnum = side ? 2 : 1; // YES=2, NO=1
 
       const txData = await (this.deployedContract.callTx.createWager as any)(
         BigInt(marketId),
@@ -294,8 +301,10 @@ export class ShadowMarketAPI {
       );
 
       console.log('Wager created! Transaction:', txData.public.txHash);
+      console.log('DEBUG: Full txData response:', JSON.stringify(txData, (key, value) => 
+        typeof value === 'bigint' ? value.toString() : value, 2));
       
-      const onchainId = txData.public.disclosed[0].toString();
+      const onchainId = this.getDisclosedId(txData);
       console.log('Disclosed Wager ID:', onchainId);
 
       return { txHash: txData.public.txHash, onchainId };
@@ -430,6 +439,152 @@ export class ShadowMarketAPI {
       console.error('Failed to connect to contract:', error);
       throw new Error(`Contract connection failed: ${error.message}`);
     }
+  }
+
+  /**
+   * Robustly extracts IDs from transaction results, which may be located in several places
+   * depending on the Compact version, Indexer configuration, and the type of call.
+   */
+  private getDisclosedId(txData: any): string {
+    console.log('DEBUG: getDisclosedId scanning txData...');
+    
+    // 1. Try standard locations (disclosed array)
+    let disclosed = 
+      txData.public?.disclosed || 
+      txData.disclosed || 
+      txData.result?.disclosed || 
+      txData.result?.events ||
+      (txData.public?.args && txData.public.args.length > 0 ? txData.public.args : null);
+    
+    if (disclosed && Array.isArray(disclosed) && disclosed.length > 0) {
+      console.log('DEBUG: Found disclosed values in standard location:', disclosed);
+    }
+
+    // 2. Fallback: Parse publicTranscript for POPEQ operations
+    if ((!disclosed || (Array.isArray(disclosed) && disclosed.length === 0)) && txData.public?.publicTranscript) {
+      console.log('DEBUG: Scanning publicTranscript for disclosed values...');
+      const extracted: any[] = [];
+      for (const op of txData.public.publicTranscript) {
+        if (op.popeq?.result?.value) {
+          extracted.push(op.popeq.result.value);
+        }
+      }
+      if (extracted.length > 0) {
+        disclosed = extracted;
+        console.log('DEBUG: Extracted from publicTranscript:', disclosed);
+      }
+    }
+
+    // 3. Fallback: Parse partitionedTranscript programs for POPEQ
+    if ((!disclosed || (Array.isArray(disclosed) && disclosed.length === 0)) && txData.public?.partitionedTranscript) {
+      console.log('DEBUG: Scanning partitionedTranscript for disclosed values...');
+      const extracted: any[] = [];
+      for (const section of txData.public.partitionedTranscript) {
+        if (section?.program) {
+          for (const op of section.program) {
+            if (op.popeq?.result?.value) {
+              extracted.push(op.popeq.result.value);
+            } else if (op.push?.value?.tag === 'cell' && op.push.value.content?.value) {
+              // Sometimes disclosed values are pushed as cells in the transcript
+               extracted.push(op.push.value.content.value);
+            }
+          }
+        }
+      }
+      if (extracted.length > 0) {
+        disclosed = extracted;
+        console.log('DEBUG: Extracted from partitionedTranscript:', disclosed);
+      }
+    }
+    
+    if (!disclosed || (Array.isArray(disclosed) && disclosed.length === 0)) {
+      console.warn('CRITICAL: No disclosed values found in any location!', {
+        txHash: txData.txHash || txData.hash,
+        publicKeys: Object.keys(txData.public || {}),
+        resultKeys: Object.keys(txData.result || {})
+      });
+
+      // LAST RESORT: Check identifiers or result
+      if (txData.public?.identifiers?.length > 1) {
+        const fallbackId = txData.public.identifiers[1];
+        console.log('WARNING: Falling back to secondary identifier:', fallbackId);
+        return fallbackId.toString();
+      }
+      
+      if (txData.result && !Array.isArray(txData.result) && typeof txData.result === 'object') {
+        const resultVal = txData.result.value || txData.result.id;
+        if (resultVal !== undefined) return resultVal.toString();
+      }
+
+      // If we are here, we might have successfully placed a bet/market but can't find the ID.
+      // Don't throw, just return empty and let the caller handle it.
+      return '';
+    }
+
+    // Capture the LAST disclosed value (usually the ID in our circuits)
+    const rawFinal = Array.isArray(disclosed) ? disclosed[disclosed.length - 1] : disclosed;
+    console.log('DEBUG: Raw final disclosed value:', rawFinal);
+
+    // Deep extraction function for various Midnight JS object formats
+    const extractValue = (val: any): any => {
+      if (val === null || val === undefined) return val;
+      
+      // Handle Uint8Array (often 1-byte or 8-byte for numbers)
+      if (val instanceof Uint8Array || (typeof val === 'object' && val.constructor?.name === 'Uint8Array')) {
+        if (val.length === 0) return '';
+        if (val.length <= 8) {
+          let res = 0n;
+          for (let i = 0; i < val.length; i++) {
+            res = (res << 8n) | BigInt(val[i]);
+          }
+          return res;
+        }
+        return Array.from(val).map((b: any) => b.toString(16).padStart(2, '0')).join('');
+      }
+
+      if (Array.isArray(val)) {
+        if (val.length === 0) return '';
+        
+        // If it's an array of length 1, peel it
+        if (val.length === 1) return extractValue(val[0]);
+        
+        // Special case: Array of objects that look like bytes { '0': index }
+        // This often happens in transcript scanning
+        if (val.every(item => typeof item === 'object' && item !== null && '0' in item && Object.keys(item).length === 1)) {
+          let res = 0n;
+          for (const item of val) {
+            res = (res << 8n) | BigInt(item['0']);
+          }
+          return res;
+        }
+
+        // If it's an array of Uint8Arrays (common in some transcript versions)
+        if (val.every(item => item instanceof Uint8Array || (typeof item === 'object' && item?.constructor?.name === 'Uint8Array'))) {
+          let res = 0n;
+          for (const item of val) {
+            const byte = item.length > 0 ? item[0] : 0;
+            res = (res << 8n) | BigInt(byte);
+          }
+          return res;
+        }
+        
+        // Default to last item if it's a generic array
+        return extractValue(val[val.length - 1]);
+      }
+      
+      if (typeof val === 'object') {
+        if ('0' in val) return extractValue(val['0']);
+        if ('value' in val) return extractValue(val.value);
+        if ('tag' in val && 'value' in val) return extractValue(val.value);
+      }
+      
+      return val;
+    };
+
+    const finalId = extractValue(rawFinal);
+    console.log('DEBUG: Extracted final ID:', finalId);
+    
+    return finalId !== null && finalId !== undefined ? finalId.toString() : '';
   }
 }
 

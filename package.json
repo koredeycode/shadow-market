@@ -16,6 +16,7 @@
     "dev:frontend": "cd frontend && pnpm dev",
     "build": "pnpm -r build",
     "build:contracts": "cd contracts && pnpm build",
+    "build:api": "cd api && pnpm build",
     "build:backend": "cd backend && pnpm build",
     "build:frontend": "cd frontend && pnpm build",
     "test": "pnpm -r test",

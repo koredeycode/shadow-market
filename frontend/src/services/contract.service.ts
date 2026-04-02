@@ -7,7 +7,7 @@
 
 import type { ConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
 import { ShadowMarketAPI, type DeployedShadowMarketConfig } from '@shadow-market/api';
-import { Subscription } from 'rxjs';
+import { Subscription, from } from 'rxjs';
 import { useContractStore } from '../store/contract.store';
 import { useWalletStore } from '../store/wallet.store';
 import toast from 'react-hot-toast';
@@ -38,7 +38,7 @@ class ContractManager {
     try {
       this.api = await ShadowMarketAPI.connect(wallet, config);
 
-      this.stateSubscription = this.api.state$.subscribe((state: any) => {
+      this.stateSubscription = from(this.api.state$).subscribe((state: any) => {
         const store = useContractStore.getState();
         store.setProtocolInitialized(state.isInitialized);
         store.setStats(state.marketCount, state.wagerCount);
@@ -64,18 +64,19 @@ class ContractManager {
 
     return new Promise((resolve, reject) => {
       this.log('Waiting for state update synchronization...');
+      let sub: any;
       const timeout = setTimeout(() => {
-        subscription.unsubscribe();
+        if (sub) sub.unsubscribe();
         console.error('DEBUG: State update synchronization timed out after', timeoutMs, 'ms');
         reject(new Error('State update synchronization timed out'));
       }, timeoutMs);
 
-      const subscription = api.state$.subscribe((state) => {
+      sub = api.state$.subscribe((state) => {
         this.log('State update received, checking predicate...', state);
         if (predicate(state)) {
           this.log('Predicate met. Finalizing.');
           clearTimeout(timeout);
-          subscription.unsubscribe();
+          if (sub) sub.unsubscribe();
           resolve();
         }
       });
@@ -105,10 +106,14 @@ class ContractManager {
     };
 
     // 1. Step 1: Authorization
-    const authToastId = toast.loading('Waiting for wallet authorization...', { duration: Infinity });
+    const authToastId = toast.loading('Waiting for wallet authorization... 🛡️ Check for popup', { duration: Infinity });
     activeToasts.push(authToastId);
     this.log(`Step 1 initialized: ${authToastId}`);
     
+    // Track interval for dynamic updates
+    let progressInterval: any;
+    const startTime = Date.now();
+
     try {
       // 2. Step 2: Transmission (Processing)
       const promise = txOperation();
@@ -119,22 +124,38 @@ class ContractManager {
       toast.success('Wallet Authorized', { id: authToastId, duration: Infinity });
       this.log(`Step 2 initialized: ${processingToastId}`);
       
+      // Dynamic updates for long-running proofs and balancing
+      progressInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        if (elapsed > 10 && elapsed < 30) {
+          toast.loading(`${loadingMsg} (🛡️ Check your wallet extension for a popup!)`, { id: processingToastId });
+        } else if (elapsed >= 30 && elapsed < 60) {
+          toast.loading(`${loadingMsg} (⚙️ Balancing outputs... this may take a moment)`, { id: processingToastId });
+        } else if (elapsed >= 60 && elapsed < 180) {
+          toast.loading(`${loadingMsg} (🧪 Complex ZK math in progress... please wait)`, { id: processingToastId });
+        } else if (elapsed >= 180) {
+          toast.loading(`${loadingMsg} (⚠️ Exceptional wait time... check if wallet popup is active)`, { id: processingToastId });
+        }
+      }, 5000);
+
       const result = await promise;
+      clearInterval(progressInterval);
       
       // 3. Step 3: Finalization
-      const finalizationToastId = toast.loading('Validating on-chain finalization...', { duration: Infinity });
+      const finalizationToastId = toast.loading('Validating on-chain finalization... 🔗', { duration: Infinity });
       activeToasts.push(finalizationToastId);
-      toast.success('Proof transmitted successfully', { id: processingToastId, duration: Infinity });
+      toast.success('Proof generated and transmitted', { id: processingToastId, duration: Infinity });
       this.log(`Step 3 initialized: ${finalizationToastId}`);
 
       if (waitForUpdate) {
         await this.waitForStateUpdate(waitForUpdate);
       } else {
+        // Fallback wait for indexer to catch up
         await new Promise(resolve => setTimeout(resolve, 5000));
       }
       
-      // 4. Step 4: Rich Success Component
-      toast.success('Execution verified and finalized', { id: finalizationToastId, duration: Infinity });
+      // 4. Step 4: Success Component
+      toast.success('Execution verified on-chain ✨', { id: finalizationToastId, duration: Infinity });
       
       const txHash = typeof result === 'string' ? result : (result as any).txHash;
       showTxSuccessToast(txHash, successMsg);
@@ -143,6 +164,7 @@ class ContractManager {
       useWalletStore.getState().setTransacting(false);
       return result;
     } catch (error: any) {
+      if (progressInterval) clearInterval(progressInterval);
       this.log('executeTx failed:', error);
       useWalletStore.getState().setTransacting(false);
       
@@ -302,7 +324,7 @@ class ContractManager {
       return null;
     }
 
-    return this.api.state$.subscribe(callback);
+    return from(this.api.state$).subscribe(callback);
   }
 
   /**

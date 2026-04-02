@@ -2,8 +2,6 @@
 import { CompiledContract } from '@midnight-ntwrk/compact-js';
 import {
   Contract as ShadowMarketContractType,
-  ledger as contractLedger,
-  pureCircuits as contractPureCircuits,
 } from './managed/shadow-market/contract/index.js';
 
 export {
@@ -13,25 +11,12 @@ export {
 } from './managed/shadow-market/contract/index.js';
 
 export * from './types.js';
+export * from './witnesses.js';
 
+/**
+ * Compiled contract artifact for production use
+ */
 export const compiledShadowMarketContract = CompiledContract.make('shadow-market', ShadowMarketContractType);
-
-/**
- * Private state for the shadow market contract
- */
-export interface MarketPrivateState {
-  /**
-   * User's secret key for transactions
-   */
-  userSecretKey: Uint8Array;
-}
-
-/**
- * Creates a new market private state with the given secret key
- */
-export const createMarketPrivateState = (secretKey: Uint8Array): MarketPrivateState => ({
-  userSecretKey: secretKey,
-});
 
 /**
  * Private state key identifier used by the contract
@@ -47,5 +32,5 @@ export type PrivateStateId = typeof marketPrivateStateKey;
  * Private states schema for the application
  */
 export type PrivateStates = {
-  readonly [marketPrivateStateKey]: MarketPrivateState;
+  readonly [marketPrivateStateKey]: import('./witnesses.js').MarketPrivateState;
 };

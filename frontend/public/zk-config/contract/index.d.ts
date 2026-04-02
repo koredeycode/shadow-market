@@ -1,5 +1,33 @@
 import type * as __compactRuntime from '@midnight-ntwrk/compact-runtime';
 
+export type Market = { status: number;
+                       endTime: bigint;
+                       outcome: number;
+                       title: Uint8Array;
+                       yesTotal: bigint;
+                       noTotal: bigint;
+                       betCount: bigint;
+                       wagerCount: bigint
+                     };
+
+export type Bet = { marketId: bigint;
+                    userKey: Uint8Array;
+                    commitment: Uint8Array;
+                    claimed: number
+                  };
+
+export type Wager = { marketId: bigint;
+                      creatorKey: Uint8Array;
+                      takerKey: Uint8Array;
+                      amount: bigint;
+                      matchAmount: bigint;
+                      side: number;
+                      oddsNum: bigint;
+                      oddsDenom: bigint;
+                      status: number;
+                      claimed: number
+                    };
+
 export type Witnesses<PS> = {
   userSecretKey(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, Uint8Array];
   betAmount(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, bigint];
@@ -12,7 +40,6 @@ export type ImpureCircuits<PS> = {
   initialize(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
   createMarket(context: __compactRuntime.CircuitContext<PS>,
                endTime_0: bigint,
-               minBet_0: bigint,
                title_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
   placeBet(context: __compactRuntime.CircuitContext<PS>,
            marketId_0: bigint,
@@ -40,7 +67,6 @@ export type ProvableCircuits<PS> = {
   initialize(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
   createMarket(context: __compactRuntime.CircuitContext<PS>,
                endTime_0: bigint,
-               minBet_0: bigint,
                title_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
   placeBet(context: __compactRuntime.CircuitContext<PS>,
            marketId_0: bigint,
@@ -71,7 +97,6 @@ export type Circuits<PS> = {
   initialize(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
   createMarket(context: __compactRuntime.CircuitContext<PS>,
                endTime_0: bigint,
-               minBet_0: bigint,
                title_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
   placeBet(context: __compactRuntime.CircuitContext<PS>,
            marketId_0: bigint,
@@ -99,161 +124,28 @@ export type Ledger = {
   readonly adminKey: Uint8Array;
   readonly isInitialized: bigint;
   readonly marketCount: bigint;
+  readonly betCount: bigint;
   readonly wagerCount: bigint;
-  marketStatus: {
+  markets: {
     isEmpty(): boolean;
     size(): bigint;
     member(key_0: bigint): boolean;
-    lookup(key_0: bigint): number;
-    [Symbol.iterator](): Iterator<[bigint, number]>
+    lookup(key_0: bigint): Market;
+    [Symbol.iterator](): Iterator<[bigint, Market]>
   };
-  marketEndTime: {
+  bets: {
     isEmpty(): boolean;
     size(): bigint;
     member(key_0: bigint): boolean;
-    lookup(key_0: bigint): bigint;
-    [Symbol.iterator](): Iterator<[bigint, bigint]>
+    lookup(key_0: bigint): Bet;
+    [Symbol.iterator](): Iterator<[bigint, Bet]>
   };
-  marketOutcome: {
+  wagers: {
     isEmpty(): boolean;
     size(): bigint;
     member(key_0: bigint): boolean;
-    lookup(key_0: bigint): number;
-    [Symbol.iterator](): Iterator<[bigint, number]>
-  };
-  marketTitle: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): Uint8Array;
-    [Symbol.iterator](): Iterator<[bigint, Uint8Array]>
-  };
-  poolYesTotal: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): bigint;
-    [Symbol.iterator](): Iterator<[bigint, bigint]>
-  };
-  poolNoTotal: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): bigint;
-    [Symbol.iterator](): Iterator<[bigint, bigint]>
-  };
-  poolBetCount: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): bigint;
-    [Symbol.iterator](): Iterator<[bigint, bigint]>
-  };
-  readonly poolBetIdCounter: bigint;
-  poolBetCommitments: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): Uint8Array;
-    [Symbol.iterator](): Iterator<[bigint, Uint8Array]>
-  };
-  poolBetClaimed: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): bigint;
-    [Symbol.iterator](): Iterator<[bigint, bigint]>
-  };
-  poolBetMarketId: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): bigint;
-    [Symbol.iterator](): Iterator<[bigint, bigint]>
-  };
-  poolBetUserKey: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): Uint8Array;
-    [Symbol.iterator](): Iterator<[bigint, Uint8Array]>
-  };
-  wagerMarketId: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): bigint;
-    [Symbol.iterator](): Iterator<[bigint, bigint]>
-  };
-  wagerCreatorKey: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): Uint8Array;
-    [Symbol.iterator](): Iterator<[bigint, Uint8Array]>
-  };
-  wagerTakerKey: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): Uint8Array;
-    [Symbol.iterator](): Iterator<[bigint, Uint8Array]>
-  };
-  wagerAmount: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): bigint;
-    [Symbol.iterator](): Iterator<[bigint, bigint]>
-  };
-  wagerMatchAmount: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): bigint;
-    [Symbol.iterator](): Iterator<[bigint, bigint]>
-  };
-  wagerSide: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): number;
-    [Symbol.iterator](): Iterator<[bigint, number]>
-  };
-  wagerOddsNum: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): bigint;
-    [Symbol.iterator](): Iterator<[bigint, bigint]>
-  };
-  wagerOddsDenom: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): bigint;
-    [Symbol.iterator](): Iterator<[bigint, bigint]>
-  };
-  wagerStatus: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): number;
-    [Symbol.iterator](): Iterator<[bigint, number]>
-  };
-  wagerClaimed: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): bigint;
-    [Symbol.iterator](): Iterator<[bigint, bigint]>
-  };
-  marketWagerCount: {
-    isEmpty(): boolean;
-    size(): bigint;
-    member(key_0: bigint): boolean;
-    lookup(key_0: bigint): bigint;
-    [Symbol.iterator](): Iterator<[bigint, bigint]>
+    lookup(key_0: bigint): Wager;
+    [Symbol.iterator](): Iterator<[bigint, Wager]>
   };
 }
 

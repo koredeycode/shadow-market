@@ -17,6 +17,9 @@ interface MidnightContextType {
   // Contract State
   isContractInitialized: boolean;
   isContractInitializing: boolean;
+  protocolInitialized: boolean;
+  marketCount: bigint;
+  wagerCount: bigint;
   contractError: string | null;
 
   // Actions
@@ -65,6 +68,9 @@ export const MidnightProvider: React.FC<{ children: ReactNode }> = ({ children }
     // Contract
     isContractInitialized: contract.isInitialized,
     isContractInitializing: contract.isInitializing,
+    protocolInitialized: contract.protocolInitialized,
+    marketCount: contract.marketCount,
+    wagerCount: contract.wagerCount,
     contractError: contract.error,
     placeBet: contract.placeBet,
     createMarket: contract.createMarket,

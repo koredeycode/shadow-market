@@ -24,6 +24,57 @@ const formatHash = (hash: string | Uint8Array | undefined) => {
   return Buffer.from(hash).toString('hex').slice(0, 24) + '...';
 };
 
+const formatBytes32 = (bytes: Uint8Array | undefined | null) => {
+  if (!bytes) return 'N/A';
+  try {
+    const text = new TextDecoder().decode(bytes);
+    return text.replace(/\0+$/, '') || 'Untitled';
+  } catch (e) {
+    return 'Binary Data';
+  }
+};
+
+const formatMarketStatus = (status: any) => {
+  const s = Number(status);
+  switch (s) {
+    case 0: return <span className="text-emerald-400 font-medium">OPEN</span>;
+    case 1: return <span className="text-amber-400 font-medium">LOCKED</span>;
+    case 2: return <span className="text-blue-400 font-medium">RESOLVED</span>;
+    default: return <span className="text-slate-500">({s})</span>;
+  }
+};
+
+const formatOutcome = (outcome: any) => {
+  const o = Number(outcome);
+  switch (o) {
+    case 0: return <span className="text-slate-500 font-mono">NONE</span>;
+    case 1: return <span className="text-rose-400 font-mono">NO</span>;
+    case 2: return <span className="text-emerald-400 font-mono">YES</span>;
+    default: return <span className="text-slate-500 font-mono">?</span>;
+  }
+};
+
+const formatWagerStatus = (status: any) => {
+  const s = Number(status);
+  switch (s) {
+    case 0: return <span className="text-emerald-400 font-medium">OPEN</span>;
+    case 1: return <span className="text-blue-400 font-medium">MATCHED</span>;
+    case 2: return <span className="text-rose-400 font-medium">CANCELLED</span>;
+    case 3: return <span className="text-slate-400 font-medium">SETTLED</span>;
+    default: return <span className="text-slate-500">({s})</span>;
+  }
+};
+
+const formatTime = (timestamp: any) => {
+  if (!timestamp) return '---';
+  try {
+    const date = new Date(Number(timestamp) * 1000);
+    return date.toLocaleString();
+  } catch (e) {
+    return 'Invalid Date';
+  }
+};
+
 const EnumValue: React.FC<{ label: string; value: number; color: string }> = ({ label, value, color }) => (
   <div className="flex items-center gap-2">
     <span className={`w-2 h-2 rounded-full bg-${color}`} />
@@ -33,8 +84,7 @@ const EnumValue: React.FC<{ label: string; value: number; color: string }> = ({ 
 );
 
 export function ContractState() {
-  const { address: connectedAddress } = useMidnight();
-  const { isContractInitialized } = useMidnight();
+  const { address: connectedAddress, isContractInitialized, protocolInitialized, marketCount, wagerCount } = useMidnight();
   const [contractState, setContractState] = useState<any>(null);
   const [lookupId, setLookupId] = useState('');
   const [lookupResult, setLookupResult] = useState<any>(null);
@@ -46,11 +96,23 @@ export function ContractState() {
 
   // Subscribe to contract state
   useEffect(() => {
+    if (!isContractInitialized) return;
+
+    console.log('DEBUG: ContractState initiating subscription because API is ready...');
     const sub = contractManager.subscribeToState((state) => {
+      console.log('DEBUG: ContractState receiving update from service:', state);
       setContractState(state);
     });
-    return () => sub?.unsubscribe();
-  }, []);
+    
+    return () => {
+      console.log('DEBUG: ContractState cleaning up subscription...');
+      sub?.unsubscribe();
+    };
+  }, [isContractInitialized]);
+
+  useEffect(() => {
+    console.log('DEBUG: useMidnight protocol state:', { protocolInitialized, marketCount, wagerCount });
+  }, [protocolInitialized, marketCount, wagerCount]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -67,21 +129,19 @@ export function ContractState() {
     const ledger = contractState.ledger;
 
     try {
-      // Lookup various maps for the given ID
-      const results = {
-        market: {
-          status: ledger.marketStatus.lookup(id),
-          endTime: ledger.marketEndTime.lookup(id),
-          outcome: ledger.marketOutcome.lookup(id),
-          // title: ledger.marketTitle.lookup(id), // Needs decoding
-        },
-        wager: {
-          status: ledger.wagerStatus.lookup(id),
-          amount: ledger.wagerAmount.lookup(id),
-          side: ledger.wagerSide.lookup(id),
-        }
-      };
-      setLookupResult(results);
+      // Lookup unified structs for the given ID
+      const market = ledger.markets.member(id) ? ledger.markets.lookup(id) : null;
+      const wager = ledger.wagers.member(id) ? ledger.wagers.lookup(id) : null;
+      const bet = ledger.bets.member(id) ? ledger.bets.lookup(id) : null;
+      
+      if (market || wager || bet) {
+        const results = { market, wager, bet };
+        console.log('Lookup results found:', results);
+        setLookupResult(results);
+      } else {
+        setLookupResult(null);
+        toast.error('ID not found in markets, wagers, or bets maps');
+      }
     } catch (e) {
       console.error('Lookup failed:', e);
       setLookupResult(null);
@@ -180,14 +240,14 @@ export function ContractState() {
                 <div className="flex items-center justify-between p-3 bg-black/20 border border-white/5 rounded-sm">
                   <span className="text-[10px] font-mono text-slate-400 uppercase">Initialization State</span>
                   <div className="flex items-center gap-2">
-                    {isContractInitialized ? (
+                    {protocolInitialized ? (
                       <>
                         <CheckCircle className="w-3 h-3 text-success-green" />
                         <span className="text-xs font-mono text-success-green uppercase">Initialized</span>
                       </>
                     ) : (
                       <>
-                        <XCircle className="w-3 h-3 text-red-500 underline" />
+                        <XCircle className="w-3 h-3 text-red-500" />
                         <span className="text-xs font-mono text-red-500 uppercase underline cursor-pointer" onClick={handleInitialize}>Pending Initialization (Click to Fix)</span>
                       </>
                     )}
@@ -216,7 +276,7 @@ export function ContractState() {
                   <span className="text-[10px] font-mono text-indigo-400 uppercase">betIdCounter</span>
                   <Zap className="w-4 h-4 text-indigo-500/50" />
                 </div>
-                <div className="text-3xl font-bold font-mono text-white">{contractState?.poolBetIdCounter?.toString() || '0'}</div>
+                <div className="text-3xl font-bold font-mono text-white">{contractState?.betCount?.toString() || '0'}</div>
               </div>
             </div>
           </div>
@@ -288,50 +348,128 @@ export function ContractState() {
           </div>
 
           {lookupResult ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-bottom-4 duration-300">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in slide-in-from-bottom-4 duration-300">
               {/* Market Mapping Results */}
-              <div className="glass-shine p-6 rounded-sm border border-white/5">
-                <h4 className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-                  <ChevronRight className="w-3 h-3 text-indigo-400" />
-                  Market Map Context
-                </h4>
-                <div className="space-y-3">
-                  <div className="flex justify-between p-3 border border-white/5 rounded-sm bg-white/[0.01]">
-                    <span className="text-[10px] font-mono text-slate-500 uppercase">Status</span>
-                    <span className="text-xs font-mono text-white">{lookupResult.market.status?.toString() || 'NULL'}</span>
-                  </div>
-                  <div className="flex justify-between p-3 border border-white/5 rounded-sm bg-white/[0.01]">
-                    <span className="text-[10px] font-mono text-slate-500 uppercase">End Time</span>
-                    <span className="text-xs font-mono text-white">{lookupResult.market.endTime?.toString() || 'NULL'}</span>
-                  </div>
-                  <div className="flex justify-between p-3 border border-white/5 rounded-sm bg-white/[0.01]">
-                    <span className="text-[10px] font-mono text-slate-500 uppercase">Outcome</span>
-                    <span className="text-xs font-mono text-white">{lookupResult.market.outcome?.toString() || 'NULL'}</span>
+              {lookupResult.market && (
+                <div className="glass-shine p-6 rounded-sm border border-white/5">
+                  <h4 className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                    <ChevronRight className="w-3 h-3 text-indigo-400" />
+                    Market Data
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="p-3 border border-indigo-500/20 rounded-sm bg-indigo-500/5 mb-2">
+                       <div className="text-[10px] font-mono text-indigo-400 uppercase mb-1">Market Title</div>
+                       <div className="text-sm font-medium text-white">{formatBytes32(lookupResult.market.title)}</div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
+                        <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Status</div>
+                        <div className="text-xs">{formatMarketStatus(lookupResult.market.status)}</div>
+                      </div>
+                      <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
+                        <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Outcome</div>
+                        <div className="text-xs">{formatOutcome(lookupResult.market.outcome)}</div>
+                      </div>
+                    </div>
+                    <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
+                      <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">End Time</div>
+                      <div className="text-xs text-slate-300">{formatTime(lookupResult.market.endTime)}</div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
+                        <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Yes Total</div>
+                        <div className="text-xs text-emerald-400 font-mono">{lookupResult.market.yesTotal?.toString()} NIGHT</div>
+                      </div>
+                      <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
+                        <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">No Total</div>
+                        <div className="text-xs text-rose-400 font-mono">{lookupResult.market.noTotal?.toString()} NIGHT</div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
+                        <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Bets</div>
+                        <div className="text-xs text-white font-mono">{lookupResult.market.betCount?.toString()}</div>
+                      </div>
+                      <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
+                        <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Wagers</div>
+                        <div className="text-xs text-white font-mono">{lookupResult.market.wagerCount?.toString()}</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Wager Mapping Results */}
-              <div className="glass-shine p-6 rounded-sm border border-white/5">
-                <h4 className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-                  <ChevronRight className="w-3 h-3 text-indigo-400" />
-                  Wager Map Context
-                </h4>
-                <div className="space-y-3">
-                  <div className="flex justify-between p-3 border border-white/5 rounded-sm bg-white/[0.01]">
-                    <span className="text-[10px] font-mono text-slate-500 uppercase">Status</span>
-                    <span className="text-xs font-mono text-white">{lookupResult.wager.status?.toString() || 'NULL'}</span>
-                  </div>
-                  <div className="flex justify-between p-3 border border-white/5 rounded-sm bg-white/[0.01]">
-                    <span className="text-[10px] font-mono text-slate-500 uppercase">Creator Side</span>
-                    <span className="text-xs font-mono text-white">{lookupResult.wager.side?.toString() || 'NULL'}</span>
-                  </div>
-                  <div className="flex justify-between p-3 border border-white/5 rounded-sm bg-white/[0.01]">
-                    <span className="text-[10px] font-mono text-slate-500 uppercase">Locked Amount</span>
-                    <span className="text-xs font-mono text-indigo-400 underline">{lookupResult.wager.amount?.toString() || '0'} NIGHT</span>
+              {lookupResult.wager && (
+                <div className="glass-shine p-6 rounded-sm border border-white/5">
+                  <h4 className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                    <ChevronRight className="w-3 h-3 text-indigo-400" />
+                    Wager Data
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="p-3 border border-white/5 rounded-sm bg-white/[0.01]">
+                       <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Creator Hash</div>
+                       <div className="text-[11px] font-mono text-slate-400 break-all">{formatHash(lookupResult.wager.creator)}</div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
+                        <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Status</div>
+                        <div className="text-xs">{formatWagerStatus(lookupResult.wager.status)}</div>
+                      </div>
+                      <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
+                        <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Side</div>
+                        <div className="text-xs">{formatOutcome(lookupResult.wager.side)}</div>
+                      </div>
+                    </div>
+                    <div className="p-2 border border-amber-500/20 rounded-sm bg-amber-500/5">
+                      <div className="text-[10px] font-mono text-amber-400 uppercase mb-1">Locked Amount</div>
+                      <div className="text-sm font-bold text-white font-mono">{lookupResult.wager.amount?.toString()} NIGHT</div>
+                    </div>
+                    <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
+                      <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Odds (Num/Den)</div>
+                      <div className="text-xs text-white font-mono">{lookupResult.wager.oddsNumerator?.toString()} / {lookupResult.wager.oddsDenominator?.toString()}</div>
+                    </div>
+                    <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
+                      <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Market Link</div>
+                      <div className="text-xs text-indigo-400 font-mono">Market #{lookupResult.wager.marketId?.toString()}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
+
+              {/* Bet Mapping Results */}
+              {lookupResult.bet && (
+                <div className="glass-shine p-6 rounded-sm border border-white/5">
+                  <h4 className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                    <ChevronRight className="w-3 h-3 text-indigo-400" />
+                    Pool Bet Data
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="p-3 border border-white/5 rounded-sm bg-white/[0.01]">
+                       <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Commitment</div>
+                       <div className="text-[11px] font-mono text-slate-400 break-all">{formatHash(lookupResult.bet.commitment)}</div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
+                        <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Claim Status</div>
+                        <div className="text-xs font-medium text-white">{Number(lookupResult.bet.claimed) === 1 ? 'CLAIMED' : 'UNCLAIMED'}</div>
+                      </div>
+                      <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
+                        <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Side</div>
+                        <div className="text-[10px] font-mono text-slate-400 italic">ENCRYPTED (PRIVATE-STATE)</div>
+                      </div>
+                    </div>
+                    <div className="p-2 border border-emerald-500/20 rounded-sm bg-emerald-500/5">
+                      <div className="text-[10px] font-mono text-emerald-400 uppercase mb-1">Bet Amount</div>
+                      <div className="text-[10px] font-mono text-slate-400 italic">ENCRYPTED (PRIVATE-STATE)</div>
+                    </div>
+                    <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
+                      <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Market Link</div>
+                      <div className="text-xs text-indigo-400 font-mono">Market #{lookupResult.bet.marketId?.toString()}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : lookupId && (
             <div className="p-12 text-center border border-dashed border-white/5 rounded-sm">
@@ -344,7 +482,7 @@ export function ContractState() {
       {activeTab === 'raw' && (
         <div className="p-6 bg-black border border-white/5 rounded-sm overflow-hidden min-h-[400px]">
           <pre className="text-[10px] font-mono text-indigo-400/80 leading-relaxed overflow-x-auto h-[500px] scrollbar-thin">
-            {JSON.stringify(contractState || { status: 'Disconnected' }, (_, value) => 
+            {JSON.stringify(contractState || { status: isContractInitialized ? 'Synchronizing on-chain state...' : 'Terminal Disconnected (Connect wallet)' }, (_, value) => 
                typeof value === 'bigint' ? value.toString() : value, 2)}
           </pre>
         </div>

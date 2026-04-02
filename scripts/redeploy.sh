@@ -18,17 +18,17 @@ echo -e "${BLUE}          SHADOW MARKET REDEPLOYMENT AUTOMATION               ${
 echo -e "${BLUE}==============================================================${NC}"
 
 # 1. Compile Contracts
-echo -e "\n${YELLOW}[1/5] Compiling contracts...${NC}"
+echo -e "\n${YELLOW}[1/8] Compiling contracts...${NC}"
 pnpm contracts:compile
 pnpm contracts:build
 
 # 2. Deploy and Initialize
-echo -e "\n${YELLOW}[2/5] Deploying and initializing contract to local network...${NC}"
+echo -e "\n${YELLOW}[2/8] Deploying and initializing contract to local network...${NC}"
 # This runs the deploy.ts script which also calls initialize()
 pnpm contracts:deploy:local
 
 # 3. Extract New Contract Address
-echo -e "\n${YELLOW}[3/5] Extracting new contract address...${NC}"
+echo -e "\n${YELLOW}[3/8] Extracting new contract address...${NC}"
 DEPLOYMENT_FILE="deployments/shadow-market-undeployed.json"
 
 if [ ! -f "$DEPLOYMENT_FILE" ]; then
@@ -46,7 +46,7 @@ fi
 echo -e "${GREEN}New Contract Address: ${NEW_ADDRESS}${NC}"
 
 # 4. Update Environment Files
-echo -e "\n${YELLOW}[4/5] Updating environment files...${NC}"
+echo -e "\n${YELLOW}[4/8] Updating environment files...${NC}"
 
 update_env_var() {
     local file=$1
@@ -82,12 +82,25 @@ update_env_var "frontend/.env" "VITE_UNIFIED_CONTRACT_ADDRESS" "$NEW_ADDRESS"
 update_env_var "frontend/.env" "VITE_MIDNIGHT_SHADOW_MARKET_CONTRACT_ADDRESS" "$NEW_ADDRESS"
 
 # 5. Copy ZK Proof Configurations
-echo -e "\n${YELLOW}[5/5] Copying ZK proof configurations to frontend...${NC}"
+echo -e "\n${YELLOW}[5/8] Copying ZK proof configurations to frontend...${NC}"
 pnpm copy-zkconfig
+
+# 6. Build API
+echo -e "\n${YELLOW}[6/8] Building API...${NC}"
+pnpm build:api
+
+# 7. Build Backend
+echo -e "\n${YELLOW}[7/8] Building Backend...${NC}"
+pnpm build:backend
+
+# 8. Build Frontend
+echo -e "\n${YELLOW}[8/8] Building Frontend...${NC}"
+pnpm build:frontend
 
 echo -e "\n${GREEN}==============================================================${NC}"
 echo -e "${GREEN}            REDEPLOYMENT COMPLETED SUCCESSFULLY!              ${NC}"
 echo -e "${GREEN}==============================================================${NC}"
 echo -e "${BLUE}Contract Address: ${NEW_ADDRESS}${NC}"
 echo -e "${BLUE}ZK proof artifacts have been synced to frontend/public/zk-config${NC}"
+echo -e "${BLUE}All components (API, Backend, Frontend) have been rebuilt.${NC}"
 echo -e "${BLUE}You can now restart your dev servers.${NC}\n"
