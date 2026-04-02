@@ -21,6 +21,15 @@ class ContractManager {
   private stateSubscription: Subscription | null = null;
 
   /**
+   * Helper to log with high-resolution timestamps
+   */
+  private log(message: string, ...args: any[]) {
+    const now = new Date();
+    const timestamp = `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}.${now.getMilliseconds().toString().padStart(3, '0')}]`;
+    console.log(`${timestamp} DEBUG: ${message}`, ...args);
+  }
+
+  /**
    * Initialize the contract connection
    */
   async initialize(wallet: ConnectedAPI, config: DeployedShadowMarketConfig): Promise<boolean> {
@@ -30,7 +39,9 @@ class ContractManager {
       this.api = await ShadowMarketAPI.connect(wallet, config);
 
       this.stateSubscription = this.api.state$.subscribe((state: any) => {
-        useContractStore.getState().setProtocolInitialized(state.isInitialized);
+        const store = useContractStore.getState();
+        store.setProtocolInitialized(state.isInitialized);
+        store.setStats(state.marketCount, state.wagerCount);
       });
 
       toast.success('Terminal synchronized', { id: initToast });
@@ -52,7 +63,7 @@ class ContractManager {
     if (!api) return;
 
     return new Promise((resolve, reject) => {
-      console.log('DEBUG: Waiting for state update synchronization...');
+      this.log('Waiting for state update synchronization...');
       const timeout = setTimeout(() => {
         subscription.unsubscribe();
         console.error('DEBUG: State update synchronization timed out after', timeoutMs, 'ms');
@@ -60,9 +71,9 @@ class ContractManager {
       }, timeoutMs);
 
       const subscription = api.state$.subscribe((state) => {
-        console.log('DEBUG: State update received, checking predicate...', state);
+        this.log('State update received, checking predicate...', state);
         if (predicate(state)) {
-          console.log('DEBUG: Predicate met. Finalizing.');
+          this.log('Predicate met. Finalizing.');
           clearTimeout(timeout);
           subscription.unsubscribe();
           resolve();
@@ -74,61 +85,80 @@ class ContractManager {
   /**
    * Internal helper to wrap contract calls with toasts
    */
-  private async executeTx(
-    txOperation: () => Promise<string>,
+  private async executeTx<T = string>(
+    txOperation: () => Promise<T>,
     loadingMsg: string,
     successMsg: string,
     waitForUpdate?: (state: any) => boolean
-  ): Promise<string> {
+  ): Promise<T> {
     if (!this.api) throw new Error('Contract not initialized');
     
     // Set transacting status to pause balance polling
     useWalletStore.getState().setTransacting(true);
+    
+    const activeToasts: string[] = [];
+    const cleanup = () => {
+      // Start 6s countdown for all milestone toasts
+      activeToasts.forEach(id => {
+        setTimeout(() => toast.dismiss(id), 6000);
+      });
+    };
 
-    // 1. Create immediate toast BEFORE the wallet popup is triggered
-    const txToast = toast.loading('Waiting for wallet authorization...');
-    console.log(`DEBUG: executeTx started. Toast ID: ${txToast}`);
+    // 1. Step 1: Authorization
+    const authToastId = toast.loading('Waiting for wallet authorization...', { duration: Infinity });
+    activeToasts.push(authToastId);
+    this.log(`Step 1 initialized: ${authToastId}`);
     
     try {
-      // 2. Trigger the actual on-chain operation
-      const startTime = Date.now();
+      // 2. Step 2: Transmission (Processing)
       const promise = txOperation();
       
-      // Update toast to current action message
-      toast.loading(loadingMsg, { id: txToast });
+      // Delay-stack: Create new processing toast and let auth toast linger indefinitely
+      const processingToastId = toast.loading(loadingMsg, { duration: Infinity });
+      activeToasts.push(processingToastId);
+      toast.success('Wallet Authorized', { id: authToastId, duration: Infinity });
+      this.log(`Step 2 initialized: ${processingToastId}`);
       
-      const txHash = await promise;
-      const endTime = Date.now();
+      const result = await promise;
       
-      console.log(`DEBUG: API promise resolved in ${((endTime - startTime) / 1000).toFixed(2)}s. TxHash:`, txHash);
-      
-      // 3. Update toast to 'Finalizing' state
-      toast.loading('Validating on-chain finalization...', { id: txToast });
+      // 3. Step 3: Finalization
+      const finalizationToastId = toast.loading('Validating on-chain finalization...', { duration: Infinity });
+      activeToasts.push(finalizationToastId);
+      toast.success('Proof transmitted successfully', { id: processingToastId, duration: Infinity });
+      this.log(`Step 3 initialized: ${finalizationToastId}`);
 
       if (waitForUpdate) {
-        console.log('DEBUG: Initiating waitForUpdate sync...');
         await this.waitForStateUpdate(waitForUpdate);
       } else {
-        // Fallback for actions without explicit state wait
-        console.log('DEBUG: No waitForUpdate provided. Using 5s fallback wait.');
         await new Promise(resolve => setTimeout(resolve, 5000));
       }
       
-      // 4. Final success
-      console.log('DEBUG: Transaction execution fully verified and finalized.');
-      showTxSuccessToast(txHash, successMsg, txToast);
+      // 4. Step 4: Rich Success Component
+      toast.success('Execution verified and finalized', { id: finalizationToastId, duration: Infinity });
       
+      const txHash = typeof result === 'string' ? result : (result as any).txHash;
+      showTxSuccessToast(txHash, successMsg);
+
+      cleanup(); // Start the 6s countdown for the trail
       useWalletStore.getState().setTransacting(false);
-      return txHash;
+      return result;
     } catch (error: any) {
-      console.error('DEBUG: executeTx failed:', error);
+      this.log('executeTx failed:', error);
       useWalletStore.getState().setTransacting(false);
       
-      // User rejection is a common case, handle it slightly more gracefully
       const isUserRejection = error.message?.toLowerCase().includes('user rejected') || 
                              error.message?.toLowerCase().includes('declined');
       
-      toast.error(isUserRejection ? 'Transaction cancelled by user' : `Execution failed: ${error.message}`, { id: txToast });
+      // Mark the last active toast as an error instead of dismissing everything
+      const lastId = activeToasts[activeToasts.length - 1];
+      if (lastId) {
+        toast.error(isUserRejection ? 'Transaction cancelled' : 'Execution failed', { id: lastId, duration: Infinity });
+      }
+
+      // Still show the detailed error toast
+      toast.error(isUserRejection ? 'Transaction cancelled by user' : `Execution failed: ${error.message}`, { duration: 10000 });
+      
+      cleanup(); // Even on error, let the trail stay for 6s
       throw error;
     }
   }
@@ -136,7 +166,7 @@ class ContractManager {
   /**
    * Place a bet on a prediction market
    */
-  async placeBet(marketId: string, betAmount: bigint, betOutcome: boolean): Promise<string> {
+  async placeBet(marketId: string, betAmount: bigint, betOutcome: boolean): Promise<{ txHash: string; onchainId: string }> {
     return this.executeTx(
       () => (this.api as any).placeBet(marketId, betAmount, betOutcome),
       'Transmitting bet proof...',
@@ -161,7 +191,7 @@ class ContractManager {
   async createMarket(
     question: string,
     resolutionTime: bigint
-  ): Promise<string> {
+  ): Promise<{ txHash: string; onchainId: string }> {
     let previousCount = 0n;
     if (this.api) {
         // We'll use the protocol state to wait for marketCount increment
@@ -197,7 +227,7 @@ class ContractManager {
     amount: bigint,
     oddsNumerator: bigint,
     oddsDenominator: bigint
-  ): Promise<string> {
+  ): Promise<{ txHash: string; onchainId: string }> {
     let previousCount = 0n;
     if (this.api) {
         const sub = this.api.state$.subscribe(s => { previousCount = s.wagerCount; });

@@ -110,11 +110,14 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
         console.log('Placing bet ON-CHAIN (required)...');
 
         // Step 1: REQUIRED - Execute on-chain transaction first
-        const txHash = await placeBet(
+        const result = await placeBet(
           market.onchainId || market.id,
           data.side.toUpperCase() as 'YES' | 'NO',
           parseFloat(data.amount)
         );
+
+        if (!result) throw new Error('Transaction failed or was cancelled');
+        const { txHash, onchainId } = result;
 
         console.log('On-chain transaction successful! Hash:', txHash);
 
@@ -127,6 +130,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
             side: data.side,
             slippage: data.slippage,
             txHash,
+            onchainId,
             skipRedirect: true,
           });
 

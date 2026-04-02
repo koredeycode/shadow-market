@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Shield, 
-  Search, 
   Terminal, 
   Hash, 
   Activity, 
   Database, 
-  Lock, 
   CheckCircle, 
   XCircle, 
   AlertTriangle,
@@ -19,7 +16,6 @@ import {
 import { useMidnight } from '../../contexts/MidnightContext';
 import { contractManager } from '../../services/contract.service';
 import { toast } from 'react-hot-toast';
-import { useWalletStore } from '../../store/wallet.store';
 
 // Helper to format bytes/hashes
 const formatHash = (hash: string | Uint8Array | undefined) => {
@@ -37,7 +33,7 @@ const EnumValue: React.FC<{ label: string; value: number; color: string }> = ({ 
 );
 
 export function ContractState() {
-  const { isConnected, address: connectedAddress } = useMidnight();
+  const { address: connectedAddress } = useMidnight();
   const { isContractInitialized } = useMidnight();
   const [contractState, setContractState] = useState<any>(null);
   const [lookupId, setLookupId] = useState('');
@@ -348,7 +344,7 @@ export function ContractState() {
       {activeTab === 'raw' && (
         <div className="p-6 bg-black border border-white/5 rounded-sm overflow-hidden min-h-[400px]">
           <pre className="text-[10px] font-mono text-indigo-400/80 leading-relaxed overflow-x-auto h-[500px] scrollbar-thin">
-            {JSON.stringify(contractState || { status: 'Disconnected' }, (key, value) => 
+            {JSON.stringify(contractState || { status: 'Disconnected' }, (_, value) => 
                typeof value === 'bigint' ? value.toString() : value, 2)}
           </pre>
         </div>

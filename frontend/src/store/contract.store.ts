@@ -5,6 +5,8 @@ interface ContractState {
   isInitialized: boolean;
   isInitializing: boolean;
   protocolInitialized: boolean;
+  marketCount: bigint;
+  wagerCount: bigint;
   error: string | null;
 
   // Actions
@@ -17,6 +19,7 @@ interface ContractState {
   ) => Promise<boolean>;
   cleanup: () => void;
   setProtocolInitialized: (status: boolean) => void;
+  setStats: (marketCount: bigint, wagerCount: bigint) => void;
   setError: (error: string | null) => void;
 }
 
@@ -24,6 +27,8 @@ export const useContractStore = create<ContractState>(set => ({
   isInitialized: false,
   isInitializing: false,
   protocolInitialized: false,
+  marketCount: 0n,
+  wagerCount: 0n,
   error: null,
 
   initialize: async (
@@ -88,11 +93,14 @@ export const useContractStore = create<ContractState>(set => ({
 
   cleanup: () => {
     contractManager.cleanup();
-    set({ isInitialized: false, error: null });
+    set({ isInitialized: false, error: null, marketCount: 0n, wagerCount: 0n });
   },
 
   setProtocolInitialized: (status: boolean) => {
     set({ protocolInitialized: status });
+  },
+  setStats: (marketCount: bigint, wagerCount: bigint) => {
+    set({ marketCount, wagerCount });
   },
   setError: (error: string | null) => {
     set({ error });

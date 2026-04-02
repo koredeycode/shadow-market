@@ -118,7 +118,7 @@ marketsRouter.post(
         question,
         description,
         category,
-        status: 'PENDING',
+        status: 'OPEN',
         endTime: new Date(endTime),
         resolutionSource: req.body.resolutionSource || 'manual',
         minBet,

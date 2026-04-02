@@ -133,6 +133,7 @@ export const positions = pgTable(
   'positions',
   {
     id: text('id').primaryKey(),
+    onchainId: varchar('onchain_id', { length: 255 }).unique(),
     txHash: varchar('tx_hash', { length: 255 }),
 
     // Foreign keys

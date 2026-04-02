@@ -15,6 +15,7 @@ const placeBetSchema = z.object({
   side: z.enum(['yes', 'no']),
   slippage: z.number().min(0).max(50).optional(),
   txHash: z.string().optional(),
+  onchainId: z.string().optional(),
 });
 
 const createP2PWagerSchema = z.object({
@@ -24,6 +25,7 @@ const createP2PWagerSchema = z.object({
   side: z.enum(['yes', 'no']),
   duration: z.number().positive(),
   txHash: z.string().optional(),
+  onchainId: z.string().optional(),
 });
 
 /**

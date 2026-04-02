@@ -3,7 +3,6 @@ import {
   Activity,
   BarChart3,
   CheckCircle,
-  Clock,
   DollarSign,
   Shield,
   TrendingUp,
@@ -57,7 +56,7 @@ function StatCard({ title, value, icon: Icon, trend, color }: StatCardProps) {
 
 export function AdminDashboard() {
   const queryClient = useQueryClient();
-  const { isInitialized, isInitializing, protocolInitialized } = useContract();
+  const { isInitializing, protocolInitialized } = useContract();
   const { 
     data: stats, 
     isLoading: isStatsLoading, 

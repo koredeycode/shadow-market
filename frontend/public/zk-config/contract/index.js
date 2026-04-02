@@ -203,21 +203,21 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('placeBet',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 134 char 1',
+                                     'shadow-market.compact line 135 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(marketId_0) === 'bigint' && marketId_0 >= 0 && marketId_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('placeBet',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 134 char 1',
+                                     'shadow-market.compact line 135 char 1',
                                      'Field',
                                      marketId_0)
         }
         if (!(typeof(side_0) === 'number' && side_0 >= 0 && side_0 <= 2)) {
           __compactRuntime.typeError('placeBet',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'shadow-market.compact line 134 char 1',
+                                     'shadow-market.compact line 135 char 1',
                                      'Enum<Outcome, NONE, NO, YES>',
                                      side_0)
         }
@@ -250,35 +250,35 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('createWager',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 182 char 1',
+                                     'shadow-market.compact line 184 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(marketId_0) === 'bigint' && marketId_0 >= 0 && marketId_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('createWager',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 182 char 1',
+                                     'shadow-market.compact line 184 char 1',
                                      'Field',
                                      marketId_0)
         }
         if (!(typeof(side_0) === 'number' && side_0 >= 0 && side_0 <= 2)) {
           __compactRuntime.typeError('createWager',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'shadow-market.compact line 182 char 1',
+                                     'shadow-market.compact line 184 char 1',
                                      'Enum<Outcome, NONE, NO, YES>',
                                      side_0)
         }
         if (!(typeof(oddsNumerator_0) === 'bigint' && oddsNumerator_0 >= 0 && oddsNumerator_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('createWager',
                                      'argument 3 (argument 4 as invoked from Typescript)',
-                                     'shadow-market.compact line 182 char 1',
+                                     'shadow-market.compact line 184 char 1',
                                      'Field',
                                      oddsNumerator_0)
         }
         if (!(typeof(oddsDenominator_0) === 'bigint' && oddsDenominator_0 >= 0 && oddsDenominator_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('createWager',
                                      'argument 4 (argument 5 as invoked from Typescript)',
-                                     'shadow-market.compact line 182 char 1',
+                                     'shadow-market.compact line 184 char 1',
                                      'Field',
                                      oddsDenominator_0)
         }
@@ -310,14 +310,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('acceptWager',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 219 char 1',
+                                     'shadow-market.compact line 222 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(wagerId_0) === 'bigint' && wagerId_0 >= 0 && wagerId_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('acceptWager',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 219 char 1',
+                                     'shadow-market.compact line 222 char 1',
                                      'Field',
                                      wagerId_0)
         }
@@ -346,14 +346,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('cancelWager',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 233 char 1',
+                                     'shadow-market.compact line 236 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(wagerId_0) === 'bigint' && wagerId_0 >= 0 && wagerId_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('cancelWager',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 233 char 1',
+                                     'shadow-market.compact line 236 char 1',
                                      'Field',
                                      wagerId_0)
         }
@@ -382,14 +382,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('lockMarket',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 250 char 1',
+                                     'shadow-market.compact line 253 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(marketId_0) === 'bigint' && marketId_0 >= 0 && marketId_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('lockMarket',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 250 char 1',
+                                     'shadow-market.compact line 253 char 1',
                                      'Field',
                                      marketId_0)
         }
@@ -419,21 +419,21 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('resolveMarket',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 255 char 1',
+                                     'shadow-market.compact line 258 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(marketId_0) === 'bigint' && marketId_0 >= 0 && marketId_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('resolveMarket',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 255 char 1',
+                                     'shadow-market.compact line 258 char 1',
                                      'Field',
                                      marketId_0)
         }
         if (!(typeof(outcome_0) === 'number' && outcome_0 >= 0 && outcome_0 <= 2)) {
           __compactRuntime.typeError('resolveMarket',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'shadow-market.compact line 255 char 1',
+                                     'shadow-market.compact line 258 char 1',
                                      'Enum<Outcome, NONE, NO, YES>',
                                      outcome_0)
         }
@@ -464,21 +464,21 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('claimPoolWinnings',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 272 char 1',
+                                     'shadow-market.compact line 275 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(betId_0) === 'bigint' && betId_0 >= 0 && betId_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('claimPoolWinnings',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 272 char 1',
+                                     'shadow-market.compact line 275 char 1',
                                      'Field',
                                      betId_0)
         }
         if (!(typeof(user_addr_0) === 'object' && user_addr_0.bytes.buffer instanceof ArrayBuffer && user_addr_0.bytes.BYTES_PER_ELEMENT === 1 && user_addr_0.bytes.length === 32)) {
           __compactRuntime.typeError('claimPoolWinnings',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'shadow-market.compact line 272 char 1',
+                                     'shadow-market.compact line 275 char 1',
                                      'struct UserAddress<bytes: Bytes<32>>',
                                      user_addr_0)
         }
@@ -509,21 +509,21 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('claimWagerWinnings',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 301 char 1',
+                                     'shadow-market.compact line 304 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(wagerId_0) === 'bigint' && wagerId_0 >= 0 && wagerId_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('claimWagerWinnings',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 301 char 1',
+                                     'shadow-market.compact line 304 char 1',
                                      'Field',
                                      wagerId_0)
         }
         if (!(typeof(user_addr_0) === 'object' && user_addr_0.bytes.buffer instanceof ArrayBuffer && user_addr_0.bytes.BYTES_PER_ELEMENT === 1 && user_addr_0.bytes.length === 32)) {
           __compactRuntime.typeError('claimWagerWinnings',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'shadow-market.compact line 301 char 1',
+                                     'shadow-market.compact line 304 char 1',
                                      'struct UserAddress<bytes: Bytes<32>>',
                                      user_addr_0)
         }
@@ -1542,6 +1542,7 @@ export class Contract {
                                                                                               alignment: _descriptor_0.alignment() }).encode() } },
                                        { ins: { cached: false, n: 1 } },
                                        { ins: { cached: true, n: 1 } }]);
+    newMarketId_0;
     __compactRuntime.queryLedgerState(context,
                                       partialProofData,
                                       [
@@ -1721,7 +1722,7 @@ export class Contract {
                               new Uint8Array(32),
                               ((t1) => {
                                 if (t1 > 340282366920938463463374607431768211455n) {
-                                  throw new __compactRuntime.CompactError('shadow-market.compact line 147 char 41: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
+                                  throw new __compactRuntime.CompactError('shadow-market.compact line 148 char 41: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
                                 }
                                 return t1;
                               })(amount_0));
@@ -1729,7 +1730,7 @@ export class Contract {
                                                      BigInt(disclosedSide_0),
                                                      __compactRuntime.convertBytesToField(32,
                                                                                           nonce_0,
-                                                                                          'shadow-market.compact line 150 char 92')]);
+                                                                                          'shadow-market.compact line 151 char 92')]);
     const commitment_0 = commitmentData_0;
     const betId_0 = _descriptor_0.fromValue(__compactRuntime.queryLedgerState(context,
                                                                               partialProofData,
@@ -1779,6 +1780,7 @@ export class Contract {
                                                                                               alignment: _descriptor_0.alignment() }).encode() } },
                                        { ins: { cached: false, n: 1 } },
                                        { ins: { cached: true, n: 1 } }]);
+    betId_0;
     __compactRuntime.queryLedgerState(context,
                                       partialProofData,
                                       [
@@ -2011,7 +2013,7 @@ export class Contract {
                               new Uint8Array(32),
                               ((t1) => {
                                 if (t1 > 340282366920938463463374607431768211455n) {
-                                  throw new __compactRuntime.CompactError('shadow-market.compact line 198 char 41: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
+                                  throw new __compactRuntime.CompactError('shadow-market.compact line 200 char 41: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
                                 }
                                 return t1;
                               })(amount_0));
@@ -2048,6 +2050,7 @@ export class Contract {
                                                                                               alignment: _descriptor_0.alignment() }).encode() } },
                                        { ins: { cached: false, n: 1 } },
                                        { ins: { cached: true, n: 1 } }]);
+    wagerId_0;
     __compactRuntime.queryLedgerState(context,
                                       partialProofData,
                                       [
@@ -2263,7 +2266,7 @@ export class Contract {
                               new Uint8Array(32),
                               ((t1) => {
                                 if (t1 > 340282366920938463463374607431768211455n) {
-                                  throw new __compactRuntime.CompactError('shadow-market.compact line 225 char 41: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
+                                  throw new __compactRuntime.CompactError('shadow-market.compact line 228 char 41: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
                                 }
                                 return t1;
                               })(matchAmount_0));
@@ -2521,7 +2524,7 @@ export class Contract {
                                                      BigInt(side_0),
                                                      __compactRuntime.convertBytesToField(32,
                                                                                           nonce_0,
-                                                                                          'shadow-market.compact line 285 char 83')]);
+                                                                                          'shadow-market.compact line 288 char 83')]);
     const providedCommitment_0 = commitmentData_0;
     const marketId_0 = _descriptor_0.fromValue(__compactRuntime.queryLedgerState(context,
                                                                                  partialProofData,
@@ -2571,7 +2574,7 @@ export class Contract {
                              new Uint8Array(32),
                              ((t1) => {
                                if (t1 > 340282366920938463463374607431768211455n) {
-                                 throw new __compactRuntime.CompactError('shadow-market.compact line 295 char 41: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
+                                 throw new __compactRuntime.CompactError('shadow-market.compact line 298 char 41: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
                                }
                                return t1;
                              })(amount_0),

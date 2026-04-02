@@ -7,6 +7,7 @@ export interface PlaceBetRequest {
   slippage?: number;
   skipRedirect?: boolean;
   txHash?: string;
+  onchainId?: string;
 }
 
 export interface PlaceBetResponse {
@@ -28,6 +29,7 @@ export interface CreateP2PWagerRequest {
   odds: [number, number];
   duration: number;
   txHash?: string;
+  onchainId?: string;
 }
 
 export interface AcceptWagerRequest {

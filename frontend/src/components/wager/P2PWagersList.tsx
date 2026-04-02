@@ -1,16 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
-  Clock,
-  X,
   User,
-  TrendingDown,
-  TrendingUp,
   Zap,
-  AlertTriangle,
   Loader2,
+  TrendingUp,
+  TrendingDown,
+  Clock,
+  AlertTriangle
 } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { wagersApi } from '../../api/wagers';
 import { useWallet } from '../../hooks/useWallet';
 import { Wager } from '../../types';
 
@@ -31,7 +28,6 @@ function WagerCard({
   onSelect: () => void;
   isUserCreator: boolean;
 }) {
-  const { isConnected } = useWallet();
 
   const [oddsNum, oddsDenom] = wager.odds;
   const betAmount = parseFloat(wager.amount);
@@ -164,7 +160,6 @@ function WagerCard({
 
 export function P2PWagersList({ marketId, selectedWagerId, onSelectWager }: P2PWagersListProps) {
   const { address } = useWallet();
-  const queryClient = useQueryClient();
 
   const {
     data: wagers,

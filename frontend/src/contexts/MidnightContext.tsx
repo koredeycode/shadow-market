@@ -25,13 +25,12 @@ interface MidnightContextType {
   refreshBalance: () => Promise<void>;
 
   // Contract Actions
-  placeBet: (marketId: string, side: 'YES' | 'NO', amount: number) => Promise<string>;
+  placeBet: (marketId: string, side: 'YES' | 'NO', amount: number) => Promise<{ txHash: string; onchainId: string }>;
   createMarket: (
     marketId: string,
     question: string,
-    resolverAddress: string,
     endTime: Date
-  ) => Promise<string | null>;
+  ) => Promise<{ txHash: string; onchainId: string } | null>;
   claimPoolWinnings: (betId: string) => Promise<boolean | null>;
 
   // UI Helpers

@@ -113,6 +113,7 @@ export circuit createMarket(
   // Generate new market ID
   const newMarketId = marketCount + 1;
   marketCount = newMarketId;
+  disclose(newMarketId);
   
   // Store market data
   marketStatus.insert(newMarketId, MarketStatus.OPEN);
@@ -153,6 +154,7 @@ export circuit placeBet(
   // Generate unique bet ID
   const betId = poolBetIdCounter;
   poolBetIdCounter = poolBetIdCounter + 1;
+  disclose(betId);
   
   // Store bet data
   poolBetCommitments.insert(betId, disclose(commitment));
@@ -200,6 +202,7 @@ export circuit createWager(
   // Generate wager ID
   const wagerId = wagerCount + 1;
   wagerCount = wagerId;
+  disclose(wagerId);
   
   // Store wager data
   wagerMarketId.insert(wagerId, disclosedMarketId);

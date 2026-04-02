@@ -1,8 +1,8 @@
 // Market types
-export type MarketStatus = 'PENDING' | 'OPEN' | 'LOCKED' | 'RESOLVED' | 'CANCELLED';
+export type MarketStatus = 'OPEN' | 'LOCKED' | 'RESOLVED' | 'CANCELLED';
 
 // Wager types
-export type WagerStatus = 'OPEN' | 'MATCHED' | 'RESOLVED' | 'CANCELLED';
+export type WagerStatus = 'OPEN' | 'MATCHED' | 'CANCELLED' | 'SETTLED';
 
 // Oracle types
 export type OracleStatus = 'ACTIVE' | 'SUSPENDED' | 'REMOVED';
@@ -28,6 +28,7 @@ export interface PlaceBetRequest {
   side: 'yes' | 'no';
   slippage?: number;
   txHash?: string;
+  onchainId?: string;
 }
 
 export interface CreateP2PWagerRequest {
@@ -37,6 +38,7 @@ export interface CreateP2PWagerRequest {
   side: 'yes' | 'no';
   duration: number;
   txHash?: string;
+  onchainId?: string;
 }
 
 export interface SubmitOracleReportRequest {

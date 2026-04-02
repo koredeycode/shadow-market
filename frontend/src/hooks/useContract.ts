@@ -20,10 +20,10 @@ export function useContract() {
       const betAmount = BigInt(amount);
       const betOutcome = side === 'YES';
 
-      // Call contract - returns txHash
-      const txHash = await contractManager.placeBet(marketId, betAmount, betOutcome);
+      // Call contract - returns { txHash, onchainId }
+      const result = await contractManager.placeBet(marketId, betAmount, betOutcome);
 
-      return txHash;
+      return result;
     },
     [isInitialized]
   );
@@ -42,14 +42,14 @@ export function useContract() {
 
         console.log('DEBUG: Calling contractManager.createMarket...');
         const startTime = Date.now();
-        const txHash = await contractManager.createMarket(
+        const result = await contractManager.createMarket(
           question,
           onchainEndTime
         );
         const totalTime = Date.now() - startTime;
 
-        console.log(`DEBUG: contractManager.createMarket returned in ${(totalTime / 1000).toFixed(2)}s with txHash:`, txHash);
-        return txHash;
+        console.log(`DEBUG: contractManager.createMarket returned in ${(totalTime / 1000).toFixed(2)}s:`, result);
+        return result;
       } catch (error: any) {
         console.error('DEBUG: useContract.createMarket caught error:', error);
         // Error toast is already handled by contractManager.executeTx
@@ -72,7 +72,7 @@ export function useContract() {
         const betSide = side === 'YES';
         const [num, den] = odds;
 
-        const txHash = await contractManager.createWager(
+        const result = await contractManager.createWager(
           marketId,
           betSide,
           betAmount,
@@ -80,7 +80,7 @@ export function useContract() {
           BigInt(den)
         );
 
-        return txHash;
+        return result;
       } catch (error: any) {
         // Redundant handling removed - executeTx handles toasts
         return null;

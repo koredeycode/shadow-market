@@ -1,16 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, Clock, Info, TrendingDown, TrendingUp, Zap, Loader2, X } from 'lucide-react';
+import { Info, Zap, Loader2, X, DollarSign } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import toast from 'react-hot-toast';
 import { z } from 'zod';
 import { wagersApi } from '../../api/wagers';
 import { useContract } from '../../hooks/useContract';
 import { useWallet } from '../../hooks/useWallet';
 import { Market, Wager } from '../../types';
 import { CustomSelect } from '../common/CustomSelect';
-import { DollarSign, Terminal } from 'lucide-react';
 import { TxSuccessModal } from '../common/TxSuccessModal';
 
 const p2pWagerSchema = z.object({
@@ -32,8 +30,8 @@ interface P2PActionTerminalProps {
   onClearSelection?: () => void;
 }
 
-export function P2PActionTerminal({ market, onClose, selectedWager, onClearSelection }: P2PActionTerminalProps) {
-  const { isConnected, formattedUnshieldedNightBalance, unshieldedNightBalance, address, setWalletModalOpen } = useWallet();
+export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P2PActionTerminalProps) {
+  const { isConnected, formattedUnshieldedNightBalance, address } = useWallet();
   const { createWager, acceptWager, cancelWager, claimWagerWinnings, isInitialized } = useContract();
   const queryClient = useQueryClient();
   const [successData, setSuccessData] = useState<{ txHash: string; title: string; subtitle: string } | null>(null);
@@ -135,14 +133,15 @@ export function P2PActionTerminal({ market, onClose, selectedWager, onClearSelec
       if (!isConnected || !isInitialized) throw new Error('Identity Verification Required');
       
       console.log('DEBUG: Initiating on-chain P2P wager creation...');
-      const txHash = await createWager(
+      const result = await createWager(
         market.onchainId || market.id,
         data.side.toUpperCase() as 'YES' | 'NO',
         parseFloat(data.amount),
         [data.oddsNumerator, data.oddsDenominator]
       );
 
-      if (!txHash) throw new Error('On-chain transaction failed or was cancelled');
+      if (!result) throw new Error('On-chain transaction failed or was cancelled');
+      const { txHash, onchainId } = result;
 
       console.log('DEBUG: Syncing to backend...');
       await wagersApi.createP2PWager({
@@ -152,13 +151,14 @@ export function P2PActionTerminal({ market, onClose, selectedWager, onClearSelec
         odds: [data.oddsNumerator, data.oddsDenominator],
         duration: data.durationHours * 3600,
         txHash,
+        onchainId,
       });
 
-      return txHash;
+      return { txHash, onchainId };
     },
-    onSuccess: (txHash, variables) => {
+    onSuccess: (result, variables) => {
       setSuccessData({
-        txHash,
+        txHash: result.txHash,
         title: 'Protocol Broadcast',
         subtitle: `Successfully published your ${variables.amount} NIGHT ${variables.side.toUpperCase()} wager offer.`
       });

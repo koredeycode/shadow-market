@@ -49,6 +49,7 @@ export class WagerService {
       .insert(positions)
       .values({
         id: positionId,
+        onchainId: data.onchainId,
         txHash: data.txHash,
         userId,
         marketId: market.id,
@@ -77,7 +78,7 @@ export class WagerService {
    */
   async createP2PWager(userId: string, data: CreateP2PWagerRequest) {
     const wagerId = generateId();
-    const onchainId = Date.now().toString(); // Temp - will be from contract
+    const onchainId = data.onchainId || Date.now().toString(); // Use provided ID or fallback
 
     const expiresAt = new Date(Date.now() + data.duration * 1000);
 
@@ -223,7 +224,7 @@ export class WagerService {
 
     return {
       active: userWagers.filter(w => w.status === 'OPEN' || w.status === 'MATCHED'),
-      completed: userWagers.filter(w => w.status === 'RESOLVED'),
+      completed: userWagers.filter(w => w.status === 'SETTLED'),
       cancelled: userWagers.filter(w => w.status === 'CANCELLED'),
     };
   }
