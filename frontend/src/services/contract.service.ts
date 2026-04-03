@@ -7,11 +7,11 @@
 
 import type { ConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
 import { ShadowMarketAPI, type DeployedShadowMarketConfig } from '@shadow-market/api';
+import toast from 'react-hot-toast';
 import { Subscription, from } from 'rxjs';
+import { showTxSuccessToast } from '../components/common/tx-toast.utils';
 import { useContractStore } from '../store/contract.store';
 import { useWalletStore } from '../store/wallet.store';
-import toast from 'react-hot-toast';
-import { showTxSuccessToast } from '../components/common/tx-toast.utils';
 
 /**
  * Contract Manager - Singleton service for contract interactions
@@ -49,6 +49,44 @@ class ContractManager {
     } catch (error: any) {
       toast.error(`Synchronization failed: ${error.message}`, { id: initToast });
       return false;
+    }
+  }
+
+  /**
+   * Verify wallet is ready and synced before transaction
+   */
+  private async verifyWalletReadiness(): Promise<void> {
+    const walletStore = useWalletStore.getState();
+    const dustBalance = Number(walletStore.dustBalance || '0');
+    
+    this.log(`Verifying wallet readiness... Dust: ${dustBalance}`);
+    
+    if (dustBalance === 0) {
+      this.log('Dust balance is 0. Attempting programmatic sync...');
+      const syncToast = toast.loading('Wallet out of sync. Inducing synchronization...');
+      
+      try {
+        // Attempt various sync methods available in different versions of the connector
+        const wallet = walletStore.provider;
+        if (wallet) {
+          if (typeof wallet.sync === 'function') await wallet.sync();
+          if (typeof wallet.getConnectionStatus === 'function') await wallet.getConnectionStatus();
+        }
+        
+        // Wait a moment for sync to propagate
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Final check after sync attempt
+        const updatedDust = Number(useWalletStore.getState().dustBalance || '0');
+        if (updatedDust === 0) {
+          toast.error('Wallet balance is 0 or out of sync. Please sync manually in Lace.', { id: syncToast });
+          throw new Error('Wallet synchronization required');
+        }
+        toast.success('Wallet synchronized', { id: syncToast });
+      } catch (e: any) {
+        toast.dismiss(syncToast);
+        throw e;
+      }
     }
   }
 
@@ -99,72 +137,63 @@ class ContractManager {
     
     const activeToasts: string[] = [];
     const cleanup = () => {
-      // Start 6s countdown for all milestone toasts
       activeToasts.forEach(id => {
         setTimeout(() => toast.dismiss(id), 6000);
       });
     };
 
-    // 1. Step 1: Authorization
-    const authToastId = toast.loading('Waiting for wallet authorization... 🛡️ Check for popup', { duration: Infinity });
-    activeToasts.push(authToastId);
-    this.log(`Step 1 initialized: ${authToastId}`);
-    
-    // Track interval for dynamic updates
-    let progressInterval: any;
-    const startTime = Date.now();
-
     try {
-      // 2. Step 2: Transmission (Processing)
-      const promise = txOperation();
-      
-      // Delay-stack: Create new processing toast and let auth toast linger indefinitely
-      const processingToastId = toast.loading(loadingMsg, { duration: Infinity });
-      activeToasts.push(processingToastId);
-      toast.success('Wallet Authorized', { id: authToastId, duration: Infinity });
-      this.log(`Step 2 initialized: ${processingToastId}`);
-      
-      // Dynamic updates for long-running proofs and balancing
-      progressInterval = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        if (elapsed > 10 && elapsed < 30) {
-          toast.loading(`${loadingMsg} (🛡️ Check your wallet extension for a popup!)`, { id: processingToastId });
-        } else if (elapsed >= 30 && elapsed < 60) {
-          toast.loading(`${loadingMsg} (⚙️ Balancing outputs... this may take a moment)`, { id: processingToastId });
-        } else if (elapsed >= 60 && elapsed < 180) {
-          toast.loading(`${loadingMsg} (🧪 Complex ZK math in progress... please wait)`, { id: processingToastId });
-        } else if (elapsed >= 180) {
-          toast.loading(`${loadingMsg} (⚠️ Exceptional wait time... check if wallet popup is active)`, { id: processingToastId });
-        }
-      }, 5000);
+      // 0. Pre-Flight: Sync Check
+      await this.verifyWalletReadiness();
 
-      const result = await promise;
-      clearInterval(progressInterval);
+      // 1. Step 1: Authorization
+      const progressToastId = toast.loading('Waiting for wallet authorization... Check for popup', { duration: Infinity });
+      activeToasts.push(progressToastId);
+      this.log('Step 1: Authorization');
       
-      // 3. Step 3: Finalization
-      const finalizationToastId = toast.loading('Validating on-chain finalization... 🔗', { duration: Infinity });
-      activeToasts.push(finalizationToastId);
-      toast.success('Proof generated and transmitted', { id: processingToastId, duration: Infinity });
-      this.log(`Step 3 initialized: ${finalizationToastId}`);
+      // Set up status listener for granular progress
+      let balancingStartTime = 0;
+      this.api.setStatusCallback((status: any, data?: any) => {
+        this.log(`Milestone reached: ${status}`, data);
+        switch (status) {
+          case 'CLEANING':
+            toast.loading('Cleaning transaction state...', { id: progressToastId });
+            break;
+          case 'SERIALIZING':
+            toast.loading('Serializing circuit parameters...', { id: progressToastId });
+            break;
+          case 'BALANCING_START':
+            balancingStartTime = performance.now();
+            toast.loading('Balancing transaction... (Check for final wallet approval)', { id: progressToastId });
+            break;
+          case 'BALANCING_END':
+            const duration = data?.duration || ((performance.now() - balancingStartTime) / 1000).toFixed(1);
+            toast.loading(`Balancing complete (${duration}s)`, { id: progressToastId });
+            break;
+        }
+      });
+
+      const result = await txOperation();
+      
+      // 3. Step 3: Submission & Finalization
+      toast.loading('Submission of transaction...', { id: progressToastId });
+      this.log('Step 3: Submission');
 
       if (waitForUpdate) {
         await this.waitForStateUpdate(waitForUpdate);
       } else {
-        // Fallback wait for indexer to catch up
         await new Promise(resolve => setTimeout(resolve, 5000));
       }
       
-      // 4. Step 4: Success Component
-      toast.success('Execution verified on-chain ✨', { id: finalizationToastId, duration: Infinity });
+      // 4. Step 4: Success
+      toast.success('Transaction Confirmed', { id: progressToastId });
       
-      const txHash = typeof result === 'string' ? result : (result as any).txHash;
-      showTxSuccessToast(txHash, successMsg);
+      showTxSuccessToast(successMsg);
 
       cleanup(); // Start the 6s countdown for the trail
       useWalletStore.getState().setTransacting(false);
       return result;
     } catch (error: any) {
-      if (progressInterval) clearInterval(progressInterval);
       this.log('executeTx failed:', error);
       useWalletStore.getState().setTransacting(false);
       
@@ -217,7 +246,7 @@ class ContractManager {
     let previousCount = 0n;
     if (this.api) {
         // We'll use the protocol state to wait for marketCount increment
-        const sub = this.api.state$.subscribe(s => { previousCount = s.marketCount; });
+        const sub = (this.api as any).state$.subscribe((s: any) => { previousCount = s.marketCount; });
         sub.unsubscribe();
     }
 
@@ -252,7 +281,7 @@ class ContractManager {
   ): Promise<{ txHash: string; onchainId: string }> {
     let previousCount = 0n;
     if (this.api) {
-        const sub = this.api.state$.subscribe(s => { previousCount = s.wagerCount; });
+        const sub = (this.api as any).state$.subscribe((s: any) => { previousCount = s.wagerCount; });
         sub.unsubscribe();
     }
 
@@ -295,6 +324,27 @@ class ContractManager {
       'Finalizing payout...',
       'Payout received'
     );
+  }
+
+  /**
+   * Look up a specific market directly from the on-chain ledger
+   */
+  getOnChainMarket(marketId: bigint): any | null {
+    return this.api?.getOnChainMarket(marketId) || null;
+  }
+
+  /**
+   * Look up a specific wager directly from the on-chain ledger
+   */
+  getOnChainWager(wagerId: bigint): any | null {
+    return this.api?.getOnChainWager(wagerId) || null;
+  }
+
+  /**
+   * Look up a specific bet directly from the on-chain ledger
+   */
+  getOnChainBet(betId: bigint): any | null {
+    return this.api?.getOnChainBet(betId) || null;
   }
   
   /**

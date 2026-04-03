@@ -181,7 +181,6 @@ adminRouter.post(
 const userFiltersSchema = z.object({
   search: z.string().optional(),
   blocked: z.coerce.boolean().optional(),
-  kycStatus: z.enum(['NONE', 'PENDING', 'APPROVED', 'REJECTED']).optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),
   offset: z.coerce.number().int().min(0).optional(),
 });
@@ -209,24 +208,7 @@ adminRouter.post(
   })
 );
 
-/**
- * POST /users/:id/kyc
- * Update user KYC status
- */
-const updateKycSchema = z.object({
-  status: z.enum(['NONE', 'PENDING', 'APPROVED', 'REJECTED']),
-});
 
-adminRouter.post(
-  '/users/:id/kyc',
-  validate({ body: updateKycSchema }),
-  asyncHandler(async (req: AuthRequest, res) => {
-    const { id } = req.params;
-    const { status } = req.body;
-    const user = await adminService.updateUserKyc(id, status, req.user!.id, req.ip);
-    res.json({ success: true, data: user, timestamp: Date.now() });
-  })
-);
 
 /**
  * GET /activity-log

@@ -68,10 +68,9 @@ export const marketsApi = {
     question: string;
     description?: string;
     category: string;
+    tags?: string[];
     endTime: string;
     resolutionSource: string;
-    minBet: string;
-    maxBet: string;
     onchainId: string;
     txHash: string;
   }): Promise<Market> => {

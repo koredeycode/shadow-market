@@ -1,5 +1,7 @@
 import { relations } from 'drizzle-orm';
 import {
+  bigint,
+  bigserial,
   boolean,
   decimal,
   index,
@@ -27,7 +29,19 @@ export const wagerStatusEnum = pgEnum('wager_status', [
   'SETTLED',
 ]);
 
-export const kycStatusEnum = pgEnum('kyc_status', ['NONE', 'PENDING', 'APPROVED', 'REJECTED']);
+export const categoryEnum = pgEnum('category', [
+  'Politics',
+  'Sports',
+  'Crypto',
+  'Finance',
+  'Geopolitics',
+  'Tech',
+  'Culture',
+  'Economy',
+  'Weather',
+  'Elections',
+  'Others',
+]);
 
 // Users table
 export const users = pgTable(
@@ -47,7 +61,6 @@ export const users = pgTable(
     // Admin & moderation
     isAdmin: boolean('is_admin').default(false).notNull(),
     isBlocked: boolean('is_blocked').default(false).notNull(),
-    kycStatus: kycStatusEnum('kyc_status').default('NONE').notNull(),
 
     // Stats
     totalVolume: decimal('total_volume', { precision: 20, scale: 0 }).default('0').notNull(),
@@ -71,14 +84,14 @@ export const markets = pgTable(
   'markets',
   {
     id: text('id').primaryKey(),
-    onchainId: varchar('onchain_id', { length: 255 }).unique().notNull(),
+    onchainId: bigint('onchain_id', { mode: 'bigint' }).unique().notNull(),
     slug: varchar('slug', { length: 255 }).unique().notNull(),
     txHash: varchar('tx_hash', { length: 255 }),
 
     // Market config
     question: text('question').notNull(),
     description: text('description'),
-    category: varchar('category', { length: 100 }).notNull(),
+    category: categoryEnum('category').notNull(),
     tags: json('tags').$type<string[]>().default([]).notNull(),
 
     // Timing
@@ -92,12 +105,9 @@ export const markets = pgTable(
 
     // Metadata
     resolutionSource: text('resolution_source').notNull(),
-    minBet: decimal('min_bet', { precision: 20, scale: 0 }).notNull(),
-    maxBet: decimal('max_bet', { precision: 20, scale: 0 }).notNull(),
 
     // Stats
     totalVolume: decimal('total_volume', { precision: 20, scale: 0 }).default('0').notNull(),
-    totalLiquidity: decimal('total_liquidity', { precision: 20, scale: 0 }).default('0').notNull(),
     totalPositions: integer('total_positions').default(0).notNull(),
     yesPrice: decimal('yes_price', { precision: 18, scale: 17 }).default('0.5').notNull(),
     noPrice: decimal('no_price', { precision: 18, scale: 17 }).default('0.5').notNull(),

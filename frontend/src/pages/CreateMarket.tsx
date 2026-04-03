@@ -1,19 +1,20 @@
-import { LayoutGrid, Zap, HelpCircle, Calendar, AlertCircle, Clock, ChevronLeft, ChevronRight, AlignLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { addDays, addMonths, eachDayOfInterval, endOfMonth, format, isPast, isSameDay, isToday, startOfMonth, subMonths } from 'date-fns';
+import { AlertCircle, AlignLeft, Calendar, ChevronLeft, ChevronRight, Clock, HelpCircle, LayoutGrid, Zap, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isPast, isToday, addDays } from 'date-fns';
-import { useState, useMemo } from 'react';
-import { useContract } from '../hooks/useContract';
 import { marketsApi } from '../api/markets';
 import { CustomSelect } from '../components/common/CustomSelect';
 import { TxSuccessModal } from '../components/common/TxSuccessModal';
+import { useContract } from '../hooks/useContract';
 
 const createMarketSchema = z.object({
   question: z.string().min(10, 'Question must be at least 10 characters').max(500),
   description: z.string().max(2000).optional(),
   category: z.string().min(1, 'Category is required'),
+  tags: z.array(z.string()).default([]),
   resolutionDate: z.string().refine(val => new Date(val) > new Date(), {
     message: 'Resolution date must be in the future',
   }),
@@ -37,8 +38,40 @@ export function CreateMarket() {
     resolver: zodResolver(createMarketSchema),
     defaultValues: {
       category: 'Politics',
+      tags: [],
     },
-});
+  });
+
+  const [tagInput, setTagInput] = useState('');
+  const tags = watch('tags') || [];
+
+  // Resolution Timeline States (Moved to top-level for Rules of Hooks)
+  const resolutionDate = watch('resolutionDate');
+  const initialDate = resolutionDate ? new Date(resolutionDate) : addDays(new Date(), 1);
+  const [currentMonth, setCurrentMonth] = useState(startOfMonth(initialDate));
+  const [selectedTime, setSelectedTime] = useState(format(initialDate, 'HH:mm'));
+
+  const days = useMemo(() => {
+    return eachDayOfInterval({
+      start: startOfMonth(currentMonth),
+      end: endOfMonth(currentMonth),
+    });
+  }, [currentMonth]);
+
+  const addTag = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const newTag = tagInput.trim();
+      if (newTag && !tags.includes(newTag)) {
+        setValue('tags', [...tags, newTag]);
+        setTagInput('');
+      }
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setValue('tags', tags.filter(t => t !== tagToRemove));
+  };
 
   const onSubmit = async (data: CreateMarketFormData) => {
     console.log('DEBUG: CreateMarket.onSubmit called with form data:', data);
@@ -62,10 +95,9 @@ export function CreateMarket() {
             question: data.question,
             description: data.description,
             category: data.category,
+            tags: data.tags,
             endTime: new Date(data.resolutionDate).toISOString(),
             resolutionSource: 'Oracle',
-            minBet: '1',
-            maxBet: '1000',
             onchainId, 
             txHash,
           });
@@ -104,9 +136,6 @@ export function CreateMarket() {
           </div>
           <h1 className="text-4xl font-bold text-white tracking-tight">Create Market</h1>
         </div>
-        <p className="text-slate-400 text-lg font-light leading-relaxed">
-          Design and launch your own prediction market on the Shadow Network.
-        </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 bg-slate-900/40 border border-white/5 p-8 rounded-sm backdrop-blur-sm">
@@ -151,27 +180,71 @@ export function CreateMarket() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-             {/* Category Selection */}
-             <CustomSelect
-                label="Market Category"
-                value={watch('category')}
-                onChange={(val) => setValue('category', val)}
-                error={errors.category?.message}
-                options={[
-                    { label: 'POLITICS', value: 'Politics', description: 'Elections, legislation, and global affairs' },
-                    { label: 'CRYPTO', value: 'Crypto', description: 'Price action, protocol launches, and adoption' },
-                    { label: 'SPORTS', value: 'Sports', description: 'Match results, player performance, and events' },
-                    { label: 'SCIENCE', value: 'Science', description: 'Breakthroughs, space exploration, and tech' },
-                    { label: 'OTHER', value: 'Other', description: 'Everything else in the shadow world' },
-                ]}
-             />
-             <div className="hidden md:block" />
+            {/* Category Selection */}
+            <CustomSelect
+              label="Market Category"
+              value={watch('category')}
+              onChange={(val) => setValue('category', val)}
+              error={errors.category?.message}
+              options={[
+                { label: 'POLITICS', value: 'Politics', description: 'Elections, government, and policy' },
+                { label: 'SPORTS', value: 'Sports', description: 'Professional leagues and major events' },
+                { label: 'CRYPTO', value: 'Crypto', description: 'Currencies, protocols, and digital assets' },
+                { label: 'FINANCE', value: 'Finance', description: 'Markets, stocks, and economic indicators' },
+                { label: 'GEOPOLITICS', value: 'Geopolitics', description: 'International relations and security' },
+                { label: 'TECH', value: 'Tech', description: 'Innovation, AI, and consumer tech' },
+                { label: 'CULTURE', value: 'Culture', description: 'Entertainment, art, and society' },
+                { label: 'ECONOMY', value: 'Economy', description: 'Macro trends and fiscal data' },
+                { label: 'WEATHER', value: 'Weather', description: 'Climate events and environmental data' },
+                { label: 'ELECTIONS', value: 'Elections', description: 'Voting, polls, and political contests' },
+                { label: 'OTHERS', value: 'Others', description: 'Anything else' },
+              ]}
+            />
+
+            {/* Tags Input */}
+            <div className="space-y-4">
+              <label className="text-[10px] font-mono text-slate-500 uppercase tracking-widest flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Zap className="w-3.5 h-3.5 text-electric-blue" />
+                  Tags (Optional)
+                </span>
+              </label>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={addTag}
+                  placeholder="Type tag and press Enter..."
+                  className="w-full bg-slate-950 border border-white/10 rounded-sm px-4 py-3 text-white placeholder:text-slate-700 focus:outline-none focus:border-electric-blue/50 transition-all font-light text-sm"
+                />
+                
+                {/* Tag Pills */}
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag) => (
+                    <span 
+                      key={tag} 
+                      className="inline-flex items-center gap-2 px-3 py-1 bg-electric-blue/10 border border-electric-blue/20 rounded-sm text-[10px] font-mono text-electric-blue group"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => removeTag(tag)}
+                        className="hover:text-white transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Resolution Configuration */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Custom Date/Time Selection */}
-            <div className="space-y-4">
+            <div className="space-y-4 md:col-span-2 border-t border-white/5 pt-8">
               <label className="text-[10px] font-mono text-slate-500 uppercase tracking-widest flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <Calendar className="w-3.5 h-3.5 text-electric-blue" />
@@ -179,7 +252,7 @@ export function CreateMarket() {
                 </span>
                 {errors.resolutionDate && (
                   <span className="text-red-400 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" /> Required Output
+                    <AlertCircle className="w-3 h-3" /> Required
                   </span>
                 )}
               </label>
@@ -189,15 +262,6 @@ export function CreateMarket() {
                 control={control}
                 render={({ field }) => {
                   const selectedDate = field.value ? new Date(field.value) : addDays(new Date(), 1);
-                  const [currentMonth, setCurrentMonth] = useState(startOfMonth(selectedDate));
-                  const [selectedTime, setSelectedTime] = useState(format(selectedDate, 'HH:mm'));
-
-                  const days = useMemo(() => {
-                    return eachDayOfInterval({
-                      start: startOfMonth(currentMonth),
-                      end: endOfMonth(currentMonth),
-                    });
-                  }, [currentMonth]);
 
                   const handleDateChange = (date: Date) => {
                     const [hours, minutes] = selectedTime.split(':').map(Number);
@@ -215,36 +279,36 @@ export function CreateMarket() {
                   };
 
                   return (
-                    <div className="flex flex-col md:flex-row gap-8 items-start">
+                    <div className="flex flex-col md:flex-row gap-12 items-start bg-slate-950/50 p-6 border border-white/5 rounded-sm">
                       {/* Calendar Section */}
                       <div className="flex-1 space-y-4 w-full">
                         {/* Calendar Header */}
-                        <div className="flex items-center justify-between px-2">
-                          <span className="text-xs font-bold text-white uppercase tracking-widest font-mono">
+                        <div className="flex items-center justify-between px-2 mb-2">
+                          <span className="text-sm font-bold text-white uppercase tracking-widest font-mono">
                             {format(currentMonth, 'MMMM yyyy')}
                           </span>
-                          <div className="flex gap-1">
+                          <div className="flex gap-2">
                             <button
                               type="button"
                               onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                              className="p-1.5 hover:bg-white/5 rounded-sm transition-colors"
+                              className="p-2 hover:bg-white/10 rounded-sm transition-colors border border-white/5"
                             >
-                              <ChevronLeft className="w-4 h-4 text-slate-500" />
+                              <ChevronLeft className="w-5 h-5 text-slate-400 hover:text-white" />
                             </button>
                             <button
                               type="button"
                               onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                              className="p-1.5 hover:bg-white/5 rounded-sm transition-colors"
+                              className="p-2 hover:bg-white/10 rounded-sm transition-colors border border-white/5"
                             >
-                              <ChevronRight className="w-4 h-4 text-slate-500" />
+                              <ChevronRight className="w-5 h-5 text-slate-400 hover:text-white" />
                             </button>
                           </div>
                         </div>
 
                         {/* Day Grid */}
-                        <div className="grid grid-cols-7 gap-1">
+                        <div className="grid grid-cols-7 gap-2">
                           {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-                            <div key={`${day}-${index}`} className="text-[8px] font-mono text-slate-700 text-center py-1 uppercase font-bold">
+                            <div key={`${day}-${index}`} className="text-[10px] font-mono text-slate-600 text-center py-2 uppercase font-bold tracking-widest">
                               {day}
                             </div>
                           ))}
@@ -257,15 +321,18 @@ export function CreateMarket() {
                                 type="button"
                                 disabled={isDisabled}
                                 onClick={() => handleDateChange(day)}
-                                className={`aspect-square flex items-center justify-center text-[10px] rounded-sm transition-all font-mono ${
+                                className={`aspect-square flex items-center justify-center text-xs rounded-sm transition-all font-mono relative ${
                                   isSelected
-                                    ? 'bg-electric-blue text-white font-bold shadow-[0_0_15px_rgba(59,130,246,0.2)]'
+                                    ? 'bg-electric-blue text-white font-bold shadow-[0_0_20px_rgba(59,130,246,0.3)] z-10'
                                     : isDisabled
-                                    ? 'text-slate-800 opacity-20 cursor-not-allowed'
-                                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                                    ? 'text-slate-800 opacity-10 cursor-not-allowed'
+                                    : 'text-slate-400 hover:bg-white/10 hover:text-white border border-transparent hover:border-white/10'
                                 }`}
                               >
                                 {format(day, 'd')}
+                                {isToday(day) && !isSelected && (
+                                  <div className="absolute bottom-1 w-1 h-1 bg-electric-blue rounded-full" />
+                                )}
                               </button>
                             );
                           })}
@@ -273,24 +340,31 @@ export function CreateMarket() {
                       </div>
 
                       {/* Divider */}
-                      <div className="hidden md:block w-px h-48 bg-white/5 self-center" />
+                      <div className="hidden md:block w-px h-64 bg-white/5 self-center" />
 
                       {/* Time Selection Section */}
-                      <div className="w-full md:w-32 space-y-4">
-                        <div className="flex items-center gap-2 text-slate-500">
-                          <Clock className="w-3.5 h-3.5" />
-                          <span className="text-[10px] font-mono uppercase tracking-widest">Time</span>
+                      <div className="w-full md:w-48 space-y-6 flex flex-col justify-center">
+                        <div className="flex items-center gap-3 text-slate-400">
+                          <Clock className="w-4 h-4 text-electric-blue" />
+                          <span className="text-[11px] font-mono uppercase tracking-[0.2em] font-bold">Time</span>
                         </div>
                         <div className="space-y-4">
-                          <input
-                            type="time"
-                            value={selectedTime}
-                            onChange={(e) => handleTimeChange(e.target.value)}
-                            className="w-full bg-slate-950 border border-white/10 rounded-sm px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-electric-blue/50 transition-all"
-                          />
-                          <p className="text-[9px] text-slate-600 font-mono leading-tight uppercase">
-                            Set resolution time in UTC
-                          </p>
+                          <div className="relative">
+                            <input
+                              type="time"
+                              value={selectedTime}
+                              onChange={(e) => handleTimeChange(e.target.value)}
+                              className="w-full bg-slate-950 border border-white/10 rounded-sm px-4 py-4 text-xl text-white font-mono focus:outline-none focus:border-electric-blue/50 transition-all text-center tracking-widest"
+                            />
+                            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none opacity-20">
+                              <Clock className="w-5 h-5" />
+                            </div>
+                          </div>
+                          <div className="bg-electric-blue/5 p-4 rounded-sm border border-electric-blue/10">
+                            <p className="text-[10px] text-slate-400 font-mono leading-tight uppercase text-center">
+                              Set resolution time in UTC
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -318,15 +392,12 @@ export function CreateMarket() {
             ) : (
               <Zap className="w-4 h-4" />
             )}
-            Launch Market on Shadow Network
+            Launch Market
           </button>
         </div>
       </form>
 
       <div className="mt-8 text-center">
-        <span className="text-[10px] font-mono text-slate-700 uppercase tracking-[0.4em]">
-          Stability Note: Market encryption is managed by the Midnight Protocol
-        </span>
         <TxSuccessModal 
         isOpen={!!successData}
         onClose={() => setSuccessData(null)}

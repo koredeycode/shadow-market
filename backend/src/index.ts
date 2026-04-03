@@ -7,6 +7,11 @@ import { initializeAdmin } from './services/admin-init.service.js';
 import logger from './utils/logger.js';
 import { initWebSocket } from './websocket.js';
 
+// Global BigInt serialization for JSON.stringify
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
+
 const server = http.createServer(app);
 
 // Initialize WebSocket server

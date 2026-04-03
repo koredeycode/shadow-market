@@ -7,6 +7,7 @@ import { db } from '../db/client.js';
 import { users } from '../db/schema.js';
 import { authenticate, type AuthRequest } from '../middleware/auth.js';
 import logger from '../utils/logger.js';
+import { generateRandomUsername } from '../utils/names.js';
 
 export const usersRouter = Router();
 
@@ -41,7 +42,7 @@ usersRouter.post('/auth', async (req, res, next) => {
         .values({
           id: randomUUID(),
           address,
-          username: username || null,
+          username: username || generateRandomUsername(),
           createdAt: new Date(),
           updatedAt: new Date(),
         })

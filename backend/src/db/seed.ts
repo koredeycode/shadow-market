@@ -1,4 +1,5 @@
 import { randomBytes } from 'crypto';
+import { sql } from 'drizzle-orm';
 import 'dotenv/config';
 import { db } from './client.js';
 import {
@@ -16,17 +17,39 @@ import {
 const generateId = () => randomBytes(16).toString('hex');
 
 export async function clearDatabase() {
-  console.log('Clearing existing data...');
-  // Delete in order to satisfy FK constraints
-  await db.delete(pricePoints);
-  await db.delete(wagers);
-  await db.delete(positions);
-  await db.delete(marketStats);
-  await db.delete(marketUpvotes);
-  await db.delete(adminActivityLog);
-  await db.delete(markets);
-  await db.delete(users);
-  console.log('Database cleared');
+  console.log('Force-clearing database schema...');
+  // Drop all tables to reset the schema entirely
+  const tables = [
+    'price_points',
+    'wagers',
+    'positions',
+    'market_stats',
+    'market_upvotes',
+    'admin_activity_log',
+    'markets',
+    'users',
+    'drizzle_migrations' // Ensure we clear migration tracking
+  ];
+
+  for (const table of tables) {
+    try {
+      await db.execute(sql`DROP TABLE IF EXISTS ${sql.identifier(table)} CASCADE`);
+    } catch (e) {
+      console.warn(`Failed to drop table ${table}:`, e);
+    }
+  }
+  
+  // Also drop the enums if they exist
+  const enums = ['category', 'market_status', 'wager_status', 'oracle_status', 'report_status'];
+  for (const enumName of enums) {
+    try {
+      await db.execute(sql`DROP TYPE IF EXISTS ${sql.identifier(enumName)} CASCADE`);
+    } catch (e) {
+      console.warn(`Failed to drop enum ${enumName}:`, e);
+    }
+  }
+
+  console.log('Database schema force-cleared');
 }
 
 // Slug generation utility
@@ -128,20 +151,16 @@ async function seed() {
       
       seedMarkets.push({
         id: generateId(),
-        onchainId: i.toString(),
+        onchainId: BigInt(i),
         slug: generateUniqueSlug(question),
-        contractAddress: '0x' + randomBytes(20).toString('hex'),
         question: question,
         description: `This is a detailed description for market #${i}. It resolves based on public data.`,
-        category: category,
+        category: (category === 'Science' || category === 'BioTech') ? 'Others' : category, // Map to existing enums
         tags: tagsMap[category] || ['general'],
         endTime: i % 2 === 0 ? nextMonth : nextYear,
         status: 'OPEN',
         resolutionSource: 'Public Data Oracle',
-        minBet: '1000',
-        maxBet: '10000000',
         totalVolume: (Math.random() * 50000000).toFixed(0),
-        totalLiquidity: (Math.random() * 10000000).toFixed(0),
         yesPrice: (0.1 + Math.random() * 0.8).toFixed(2),
         noPrice: '0.00', // Will be calculated
         creatorId: [alice.id, bob.id, carol.id][i % 3],

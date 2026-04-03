@@ -16,8 +16,6 @@ export interface CreateMarketRequest {
   tags?: string[];
   endTime: Date;
   resolutionSource: string;
-  minBet: string;
-  maxBet: string;
   onchainId?: string;
   txHash?: string;
 }
@@ -52,7 +50,7 @@ export interface MarketFilters {
   status?: MarketStatus;
   category?: string;
   tags?: string[];
-  sortBy?: 'volume' | 'liquidity' | 'ending_soon' | 'newest';
+  sortBy?: 'volume' | 'ending_soon' | 'newest';
   limit?: number;
   offset?: number;
 }
@@ -100,7 +98,6 @@ export interface WebSocketEvents {
     yesPrice: string;
     noPrice: string;
     totalVolume: string;
-    totalLiquidity: string;
     timestamp: number;
   };
   'market:resolved': {

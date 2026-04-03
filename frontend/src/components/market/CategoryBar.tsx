@@ -1,4 +1,4 @@
-import { TrendingUp, Flame, Zap, Globe, Cpu, Coins, Trophy, Landmark } from 'lucide-react';
+import { TrendingUp, Flame, Zap, Globe, Cpu, Coins, Trophy, Landmark, BarChart3, Cloud, CheckSquare, MoreHorizontal } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 const categories = [
@@ -7,9 +7,14 @@ const categories = [
   { name: 'Breaking', path: '/markets?filter=breaking', icon: Flame },
   { name: 'New', path: '/markets?filter=new', icon: Zap },
   { name: 'Crypto', path: '/markets?filter=crypto', icon: Coins },
-  { name: 'Tech', path: '/markets?filter=tech', icon: Cpu },
   { name: 'Sports', path: '/markets?filter=sports', icon: Trophy },
   { name: 'Finance', path: '/markets?filter=finance', icon: Landmark },
+  { name: 'Geopolitics', path: '/markets?filter=geopolitics', icon: Globe },
+  { name: 'Tech', path: '/markets?filter=tech', icon: Cpu },
+  { name: 'Economy', path: '/markets?filter=economy', icon: BarChart3 },
+  { name: 'Weather', path: '/markets?filter=weather', icon: Cloud },
+  { name: 'Elections', path: '/markets?filter=elections', icon: CheckSquare },
+  { name: 'Others', path: '/markets?filter=others', icon: MoreHorizontal },
 ];
 
 export function CategoryBar() {

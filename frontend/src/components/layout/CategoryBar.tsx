@@ -1,20 +1,18 @@
-import { TrendingUp, ChevronDown } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 
 const CATEGORIES = [
   'Politics',
   'Sports',
   'Crypto',
-  'Esports',
-  'Iran',
   'Finance',
   'Geopolitics',
   'Tech',
   'Culture',
   'Economy',
   'Weather',
-  'Mentions',
   'Elections',
+  'Others',
 ];
 
 export function CategoryBar() {
@@ -62,10 +60,10 @@ export function CategoryBar() {
                 {cat}
               </button>
             ))}
-            <button className="flex items-center gap-1 text-sm font-medium text-slate-400 hover:text-white transition-colors">
+            {/* <button className="flex items-center gap-1 text-sm font-medium text-slate-400 hover:text-white transition-colors">
               More
               <ChevronDown className="w-3 h-3" />
-            </button>
+            </button> */}
           </nav>
         </div>
       </div>

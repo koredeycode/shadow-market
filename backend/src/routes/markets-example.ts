@@ -27,7 +27,7 @@ marketsRouter.get(
     // Apply filters
     const conditions = [];
     if (status) conditions.push(eq(markets.status, status as any));
-    if (category) conditions.push(eq(markets.category, category as string));
+    if (category) conditions.push(eq(markets.category, category as any));
 
     if (conditions.length > 0) {
       query = query.where(and(...conditions)) as any;
@@ -111,18 +111,16 @@ marketsRouter.post(
     const [newMarket] = await db
       .insert(markets)
       .values({
-        id: `market_${Date.now()}`,
-        onchainId: req.body.onchainId || `onchain_${Date.now()}`,
+        id: req.body.id || `market_${Date.now()}`,
+        onchainId: req.body.onchainId ? BigInt(req.body.onchainId) : BigInt(Date.now()),
         slug: `${slug}-${Math.random().toString(36).substring(2, 7)}`,
         txHash: req.body.txHash,
         question,
         description,
-        category,
+        category: category as any,
         status: 'OPEN',
         endTime: new Date(endTime),
         resolutionSource: req.body.resolutionSource || 'manual',
-        minBet,
-        maxBet,
         creatorId: req.user?.id || 'test_user', // From auth middleware
       })
       .returning();

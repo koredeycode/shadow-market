@@ -87,6 +87,7 @@ export function ContractState() {
   const { address: connectedAddress, isContractInitialized, protocolInitialized, marketCount, wagerCount } = useMidnight();
   const [contractState, setContractState] = useState<any>(null);
   const [lookupId, setLookupId] = useState('');
+  const [lookupType, setLookupType] = useState<'market' | 'wager' | 'bet'>('market');
   const [lookupResult, setLookupResult] = useState<any>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'explorer' | 'raw'>('overview');
@@ -123,29 +124,31 @@ export function ContractState() {
   };
 
   const handleLookup = () => {
-    if (!lookupId || !contractState?.ledger) return;
+    if (!lookupId) return;
     
     const id = BigInt(lookupId);
-    const ledger = contractState.ledger;
 
     try {
-      // Lookup unified structs for the given ID
-      const market = ledger.markets.member(id) ? ledger.markets.lookup(id) : null;
-      const wager = ledger.wagers.member(id) ? ledger.wagers.lookup(id) : null;
-      const bet = ledger.bets.member(id) ? ledger.bets.lookup(id) : null;
+      let result = null;
+      if (lookupType === 'market') {
+        result = contractManager.getOnChainMarket(id);
+      } else if (lookupType === 'wager') {
+        result = contractManager.getOnChainWager(id);
+      } else if (lookupType === 'bet') {
+        result = contractManager.getOnChainBet(id);
+      }
       
-      if (market || wager || bet) {
-        const results = { market, wager, bet };
-        console.log('Lookup results found:', results);
-        setLookupResult(results);
+      if (result) {
+        console.log(`Lookup result found for ${lookupType}:`, result);
+        setLookupResult({ [lookupType]: result });
       } else {
         setLookupResult(null);
-        toast.error('ID not found in markets, wagers, or bets maps');
+        toast.error(`ID #${lookupId} not found in ${lookupType} map`);
       }
     } catch (e) {
       console.error('Lookup failed:', e);
       setLookupResult(null);
-      toast.error('ID not found in ledger maps');
+      toast.error('Lookup execution failed');
     }
   };
 
@@ -324,8 +327,29 @@ export function ContractState() {
       {activeTab === 'explorer' && (
         <div className="space-y-6">
           <div className="p-6 glass-shine rounded-sm border border-white/5 bg-white/[0.01]">
-            <div className="max-w-2xl mx-auto space-y-4">
-              <h3 className="text-center text-xs font-mono text-slate-500 uppercase tracking-[0.3em] mb-6">Ledger Lookup Identity</h3>
+            <div className="max-w-2xl mx-auto space-y-6">
+              <h3 className="text-center text-xs font-mono text-slate-500 uppercase tracking-[0.3em] mb-4">On-Chain Identity Lookup</h3>
+              
+              {/* Type Selector */}
+              <div className="flex items-center justify-center gap-1 p-1 bg-black/40 border border-white/5 rounded-sm">
+                {(['market', 'wager', 'bet'] as const).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => {
+                      setLookupType(type);
+                      setLookupResult(null);
+                    }}
+                    className={`flex-1 py-2 text-[10px] font-mono uppercase tracking-widest transition-all rounded-sm ${
+                      lookupType === type 
+                        ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' 
+                        : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                    }`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+
               <div className="relative group">
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                   <Hash className="w-4 h-4 text-slate-600 group-focus-within:text-indigo-400 transition-colors" />
@@ -334,8 +358,9 @@ export function ContractState() {
                   type="number"
                   value={lookupId}
                   onChange={(e) => setLookupId(e.target.value)}
-                  placeholder="Enter ID (MarketID, WagerID, or BetID)"
+                  placeholder={`Enter ${lookupType.charAt(0).toUpperCase() + lookupType.slice(1)} ID`}
                   className="w-full bg-black/40 border border-white/5 rounded-sm pl-12 pr-24 py-4 text-white font-mono text-sm focus:outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-700"
+                  onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
                 />
                 <button 
                   onClick={handleLookup}
@@ -401,15 +426,15 @@ export function ContractState() {
 
               {/* Wager Mapping Results */}
               {lookupResult.wager && (
-                <div className="glass-shine p-6 rounded-sm border border-white/5">
+                <div className="glass-shine p-6 rounded-sm border border-white/5 lg:col-span-1 lg:col-start-2">
                   <h4 className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
                     <ChevronRight className="w-3 h-3 text-indigo-400" />
                     Wager Data
                   </h4>
                   <div className="space-y-3">
                     <div className="p-3 border border-white/5 rounded-sm bg-white/[0.01]">
-                       <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Creator Hash</div>
-                       <div className="text-[11px] font-mono text-slate-400 break-all">{formatHash(lookupResult.wager.creator)}</div>
+                       <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Creator Key</div>
+                       <div className="text-[11px] font-mono text-slate-400 break-all">{formatHash(lookupResult.wager.creatorKey)}</div>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
@@ -426,8 +451,8 @@ export function ContractState() {
                       <div className="text-sm font-bold text-white font-mono">{lookupResult.wager.amount?.toString()} NIGHT</div>
                     </div>
                     <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
-                      <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Odds (Num/Den)</div>
-                      <div className="text-xs text-white font-mono">{lookupResult.wager.oddsNumerator?.toString()} / {lookupResult.wager.oddsDenominator?.toString()}</div>
+                      <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Odds (Num / Den)</div>
+                      <div className="text-xs text-white font-mono">{lookupResult.wager.oddsNum?.toString()} / {lookupResult.wager.oddsDenom?.toString()}</div>
                     </div>
                     <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
                       <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Market Link</div>
@@ -439,7 +464,7 @@ export function ContractState() {
 
               {/* Bet Mapping Results */}
               {lookupResult.bet && (
-                <div className="glass-shine p-6 rounded-sm border border-white/5">
+                <div className="glass-shine p-6 rounded-sm border border-white/5 lg:col-span-1 lg:col-start-2">
                   <h4 className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
                     <ChevronRight className="w-3 h-3 text-indigo-400" />
                     Pool Bet Data
@@ -449,6 +474,10 @@ export function ContractState() {
                        <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Commitment</div>
                        <div className="text-[11px] font-mono text-slate-400 break-all">{formatHash(lookupResult.bet.commitment)}</div>
                     </div>
+                    <div className="p-3 border border-white/5 rounded-sm bg-white/[0.01]">
+                       <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">User Key</div>
+                       <div className="text-[11px] font-mono text-slate-400 break-all">{formatHash(lookupResult.bet.userKey)}</div>
+                    </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
                         <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Claim Status</div>
@@ -456,12 +485,8 @@ export function ContractState() {
                       </div>
                       <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
                         <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Side</div>
-                        <div className="text-[10px] font-mono text-slate-400 italic">ENCRYPTED (PRIVATE-STATE)</div>
+                        <div className="text-[10px] font-mono text-slate-400 italic">ENCRYPTED</div>
                       </div>
-                    </div>
-                    <div className="p-2 border border-emerald-500/20 rounded-sm bg-emerald-500/5">
-                      <div className="text-[10px] font-mono text-emerald-400 uppercase mb-1">Bet Amount</div>
-                      <div className="text-[10px] font-mono text-slate-400 italic">ENCRYPTED (PRIVATE-STATE)</div>
                     </div>
                     <div className="p-2 border border-white/5 rounded-sm bg-white/[0.01]">
                       <div className="text-[10px] font-mono text-slate-500 uppercase mb-1">Market Link</div>

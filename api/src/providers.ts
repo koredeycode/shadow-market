@@ -10,27 +10,27 @@
  */
 
 import type { ConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
+import type {
+  CoinPublicKey,
+  EncPublicKey,
+  FinalizedTransaction,
+  TransactionId,
+  UnprovenTransaction as UnboundTransaction,
+} from '@midnight-ntwrk/ledger-v8';
+import {
+  Binding,
+  Proof,
+  SignatureEnabled,
+  Transaction
+} from '@midnight-ntwrk/ledger-v8';
 import { FetchZkConfigProvider } from '@midnight-ntwrk/midnight-js-fetch-zk-config-provider';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
-import type { 
+import type {
   MidnightProviders,
 } from '@midnight-ntwrk/midnight-js-types';
-import type {
-  UnprovenTransaction as UnboundTransaction,
-  FinalizedTransaction,
-  CoinPublicKey,
-  EncPublicKey,
-  TransactionId,
-} from '@midnight-ntwrk/ledger-v8';
-import {
-  Transaction,
-  SignatureEnabled,
-  Proof,
-  Binding
-} from '@midnight-ntwrk/ledger-v8';
-import { randomBytes, toHex, fromHex } from './utils.js';
-import { createWitnessProviders, type MarketWitnesses, type MarketPrivateState } from './witnesses.js';
+import { fromHex, randomBytes, toHex } from './utils.js';
+import { createWitnessProviders, type MarketPrivateState, type MarketWitnesses } from './witnesses.js';
 export type { MarketPrivateState };
 
 /**
@@ -98,6 +98,11 @@ export type MarketCircuitKeys =
   | 'claimWagerWinnings';
 
 /**
+ * Status of the transaction lifecycle
+ */
+export type MarketStatus = 'CLEANING' | 'SERIALIZING' | 'BALANCING_START' | 'BALANCING_END';
+
+/**
  * Complete providers type for the market contract
  */
 export type MarketProviders = MidnightProviders<
@@ -106,6 +111,7 @@ export type MarketProviders = MidnightProviders<
   MarketPrivateState
 > & {
   witnesses: MarketWitnesses;
+  onStatusUpdate?: (status: MarketStatus, data?: any) => void;
 };
 
 /**
@@ -115,6 +121,7 @@ export const createProvidersFromWallet = async (
   wallet: ConnectedAPI,
   config: ProviderConfig
 ): Promise<MarketProviders> => {
+  let statusCallback: ((status: MarketStatus, data?: any) => void) | undefined;
 
   const graphqlUri = config.indexerUri.endsWith('/graphql') ? config.indexerUri : `${config.indexerUri}/graphql`;
   const graphqlWsUri = config.indexerWsUri.endsWith('/graphql/ws') ? config.indexerWsUri : `${config.indexerWsUri}/graphql/ws`;
@@ -156,6 +163,7 @@ export const createProvidersFromWallet = async (
    */
   const balanceTx_v3 = async (tx: UnboundTransaction, ttl?: Date): Promise<FinalizedTransaction> => {
     const txBytes = tx.serialize();
+    const startTime = performance.now();
     
     try {
       if (typeof (wallet as any).balanceUnsealedTransaction !== 'function') {
@@ -165,6 +173,7 @@ export const createProvidersFromWallet = async (
       console.log(`[v3 WORKAROUND] Initiated for unsealed transaction (${txBytes.length} bytes)`);
       
       // Step 1: Clean deserialization to normalize the transaction object
+      if (statusCallback) statusCallback('CLEANING');
       console.log('[v3 WORKAROUND] Step 1: Cleaning transaction state...');
       const cleanTx = (Transaction as any).deserialize(
         'signature', 
@@ -174,10 +183,12 @@ export const createProvidersFromWallet = async (
       );
       
       // Step 2: Convert to Hex
+      if (statusCallback) statusCallback('SERIALIZING');
       const cleanTxHex = toHex(cleanTx.serialize());
       console.log(`[v3 WORKAROUND] Step 2: Serialized to hex (Length: ${cleanTxHex.length})`);
       
       // Step 3: Call wallet bridge and wait for balancing
+      if (statusCallback) statusCallback('BALANCING_START');
       console.log('[v3 WORKAROUND] Step 3: Calling wallet.balanceUnsealedTransaction... (STUCK HERE?)');
       
       // Use a timeout to ensure we don't hang the UI forever
@@ -188,7 +199,10 @@ export const createProvidersFromWallet = async (
       
       const balanced = await Promise.race([balancingPromise, timeoutPromise]) as { tx: string };
       
-      console.log('[v3 WORKAROUND] Step 4: Balancing successful. Deserializing result...');
+      const duration = ((performance.now() - startTime) / 1000).toFixed(2);
+      if (statusCallback) statusCallback('BALANCING_END', { duration });
+      console.log(`[v3 WORKAROUND] Step 4: Balancing successful. Duration: ${duration}s. Deserializing result...`);
+      
       const result = fromHex(balanced.tx) as unknown as FinalizedTransaction;
       console.log('[v3 WORKAROUND] complete.');
       
@@ -236,7 +250,8 @@ export const createProvidersFromWallet = async (
     midnightProvider: midnightProvider as any,
     walletProvider: walletProvider as any,
     witnesses,
-  };
+    onStatusUpdate: (cb: any) => { statusCallback = cb; }
+  } as any;
 };
 
 /**

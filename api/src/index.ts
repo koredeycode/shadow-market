@@ -90,6 +90,7 @@ export class ShadowMarketAPI {
       .pipe(
         map(contractState => {
           const ledger = contractLedger(contractState.data);
+          this.latestLedger = ledger;
           console.log('[DEBUG] ShadowMarketAPI: Ledger state update received:', {
             isInitialized: ledger.isInitialized.toString(),
             marketCount: ledger.marketCount.toString(),
@@ -108,6 +109,53 @@ export class ShadowMarketAPI {
       );
 
     console.log('ShadowMarketAPI connected to contract:', this.deployedContractAddress);
+  }
+
+  /**
+   * Set a callback for transaction status updates (milestones)
+   */
+  public setStatusCallback(cb: (status: any, data?: any) => void): void {
+    if (this.providers.onStatusUpdate && typeof (this.providers.onStatusUpdate as any) === 'function') {
+      (this.providers.onStatusUpdate as any)(cb);
+    }
+  }
+
+  private latestLedger: Ledger | null = null;
+
+  /**
+   * Get a specific market from the on-chain ledger
+   */
+  getOnChainMarket(marketId: bigint): any | null {
+    if (!this.latestLedger) return null;
+    try {
+      return this.latestLedger.markets.lookup(marketId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /**
+   * Get a specific wager from the on-chain ledger
+   */
+  getOnChainWager(wagerId: bigint): any | null {
+    if (!this.latestLedger) return null;
+    try {
+      return this.latestLedger.wagers.lookup(wagerId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /**
+   * Get a specific bet from the on-chain ledger
+   */
+  getOnChainBet(betId: bigint): any | null {
+    if (!this.latestLedger) return null;
+    try {
+      return this.latestLedger.bets.lookup(betId);
+    } catch (e) {
+      return null;
+    }
   }
 
   /**
@@ -446,134 +494,89 @@ export class ShadowMarketAPI {
    * depending on the Compact version, Indexer configuration, and the type of call.
    */
   private getDisclosedId(txData: any): string {
-    console.log('DEBUG: getDisclosedId scanning txData...');
+    console.log('DEBUG: >>> START DISCLOSED ID EXTRACTION <<<');
     
-    // 1. Try standard locations (disclosed array)
-    let disclosed = 
-      txData.public?.disclosed || 
-      txData.disclosed || 
-      txData.result?.disclosed || 
-      txData.result?.events ||
-      (txData.public?.args && txData.public.args.length > 0 ? txData.public.args : null);
-    
-    if (disclosed && Array.isArray(disclosed) && disclosed.length > 0) {
-      console.log('DEBUG: Found disclosed values in standard location:', disclosed);
+    // Log full public data for user review as requested
+    if (txData.public) {
+      // Use a custom replacer to handle BigInts in txData for logging
+      console.log('DEBUG: Full txData.public:', JSON.stringify(txData.public, (k, v) => 
+        typeof v === 'bigint' ? v.toString() : v, 2));
     }
 
-    // 2. Fallback: Parse publicTranscript for POPEQ operations
-    if ((!disclosed || (Array.isArray(disclosed) && disclosed.length === 0)) && txData.public?.publicTranscript) {
-      console.log('DEBUG: Scanning publicTranscript for disclosed values...');
-      const extracted: any[] = [];
-      for (const op of txData.public.publicTranscript) {
+    // 1. Collect all candidates from all possible locations
+    const candidates: any[] = [];
+    
+    // Standard compact result locations
+    const standardLocs = [
+      { name: 'public.disclosed', val: txData.public?.disclosed },
+      { name: 'disclosed', val: txData.disclosed },
+      { name: 'result.disclosed', val: txData.result?.disclosed },
+      { name: 'result.events', val: txData.result?.events },
+      { name: 'public.args', val: txData.public?.args }
+    ];
+
+    standardLocs.forEach(loc => {
+      if (loc.val) {
+        console.log(`DEBUG: Found candidate in ${loc.name}:`, loc.val);
+        if (Array.isArray(loc.val)) candidates.push(...loc.val);
+        else candidates.push(loc.val);
+      }
+    });
+
+    // Transcript-based locations (POPEQ)
+    if (txData.public?.publicTranscript) {
+      console.log('DEBUG: Scanning publicTranscript...');
+      txData.public.publicTranscript.forEach((op: any, i: number) => {
         if (op.popeq?.result?.value) {
-          extracted.push(op.popeq.result.value);
+          console.log(`DEBUG: Found POPEQ [${i}] in publicTranscript:`, op.popeq.result.value);
+          candidates.push(op.popeq.result.value);
         }
-      }
-      if (extracted.length > 0) {
-        disclosed = extracted;
-        console.log('DEBUG: Extracted from publicTranscript:', disclosed);
-      }
-    }
-
-    // 3. Fallback: Parse partitionedTranscript programs for POPEQ
-    if ((!disclosed || (Array.isArray(disclosed) && disclosed.length === 0)) && txData.public?.partitionedTranscript) {
-      console.log('DEBUG: Scanning partitionedTranscript for disclosed values...');
-      const extracted: any[] = [];
-      for (const section of txData.public.partitionedTranscript) {
-        if (section?.program) {
-          for (const op of section.program) {
-            if (op.popeq?.result?.value) {
-              extracted.push(op.popeq.result.value);
-            } else if (op.push?.value?.tag === 'cell' && op.push.value.content?.value) {
-              // Sometimes disclosed values are pushed as cells in the transcript
-               extracted.push(op.push.value.content.value);
-            }
-          }
-        }
-      }
-      if (extracted.length > 0) {
-        disclosed = extracted;
-        console.log('DEBUG: Extracted from partitionedTranscript:', disclosed);
-      }
-    }
-    
-    if (!disclosed || (Array.isArray(disclosed) && disclosed.length === 0)) {
-      console.warn('CRITICAL: No disclosed values found in any location!', {
-        txHash: txData.txHash || txData.hash,
-        publicKeys: Object.keys(txData.public || {}),
-        resultKeys: Object.keys(txData.result || {})
       });
-
-      // LAST RESORT: Check identifiers or result
-      if (txData.public?.identifiers?.length > 1) {
-        const fallbackId = txData.public.identifiers[1];
-        console.log('WARNING: Falling back to secondary identifier:', fallbackId);
-        return fallbackId.toString();
-      }
-      
-      if (txData.result && !Array.isArray(txData.result) && typeof txData.result === 'object') {
-        const resultVal = txData.result.value || txData.result.id;
-        if (resultVal !== undefined) return resultVal.toString();
-      }
-
-      // If we are here, we might have successfully placed a bet/market but can't find the ID.
-      // Don't throw, just return empty and let the caller handle it.
-      return '';
     }
 
-    // Capture the LAST disclosed value (usually the ID in our circuits)
-    const rawFinal = Array.isArray(disclosed) ? disclosed[disclosed.length - 1] : disclosed;
-    console.log('DEBUG: Raw final disclosed value:', rawFinal);
+    if (txData.public?.partitionedTranscript) {
+      console.log('DEBUG: Scanning partitionedTranscript...');
+      txData.public.partitionedTranscript.forEach((section: any, si: number) => {
+        if (section?.program) {
+          section.program.forEach((op: any, oi: number) => {
+            if (op.popeq?.result?.value) {
+              console.log(`DEBUG: Found POPEQ [${si}:${oi}] in partitionedTranscript:`, op.popeq.result.value);
+              candidates.push(op.popeq.result.value);
+            } else if (op.push?.value?.tag === 'cell' && op.push.value.content?.value) {
+               console.log(`DEBUG: Found push-cell [${si}:${oi}] in partitionedTranscript:`, op.push.value.content.value);
+               candidates.push(op.push.value.content.value);
+            }
+          });
+        }
+      });
+    }
 
-    // Deep extraction function for various Midnight JS object formats
+    // Extraction function for various Midnight JS object formats
     const extractValue = (val: any): any => {
-      if (val === null || val === undefined) return val;
+      if (val === null || val === undefined) return null;
       
-      // Handle Uint8Array (often 1-byte or 8-byte for numbers)
       if (val instanceof Uint8Array || (typeof val === 'object' && val.constructor?.name === 'Uint8Array')) {
-        if (val.length === 0) return '';
+        if (val.length === 0) return null; // Ignore empty arrays as they are likely spacer/padding
+        
+        // Small arrays (<=8 bytes) are treated as numbers/counters (ID, endTime)
         if (val.length <= 8) {
           let res = 0n;
-          for (let i = 0; i < val.length; i++) {
-            res = (res << 8n) | BigInt(val[i]);
-          }
+          for (let i = 0; i < val.length; i++) res = (res << 8n) | BigInt(val[i]);
           return res;
         }
+        
+        // Larger arrays are hex strings (title, hash)
         return Array.from(val).map((b: any) => b.toString(16).padStart(2, '0')).join('');
       }
 
       if (Array.isArray(val)) {
-        if (val.length === 0) return '';
-        
-        // If it's an array of length 1, peel it
+        if (val.length === 0) return null;
         if (val.length === 1) return extractValue(val[0]);
-        
-        // Special case: Array of objects that look like bytes { '0': index }
-        // This often happens in transcript scanning
-        if (val.every(item => typeof item === 'object' && item !== null && '0' in item && Object.keys(item).length === 1)) {
-          let res = 0n;
-          for (const item of val) {
-            res = (res << 8n) | BigInt(item['0']);
-          }
-          return res;
-        }
-
-        // If it's an array of Uint8Arrays (common in some transcript versions)
-        if (val.every(item => item instanceof Uint8Array || (typeof item === 'object' && item?.constructor?.name === 'Uint8Array'))) {
-          let res = 0n;
-          for (const item of val) {
-            const byte = item.length > 0 ? item[0] : 0;
-            res = (res << 8n) | BigInt(byte);
-          }
-          return res;
-        }
-        
-        // Default to last item if it's a generic array
         return extractValue(val[val.length - 1]);
       }
       
       if (typeof val === 'object') {
-        if ('0' in val) return extractValue(val['0']);
+        if ('0' in val && Object.keys(val).length === 1) return extractValue(val['0']);
         if ('value' in val) return extractValue(val.value);
         if ('tag' in val && 'value' in val) return extractValue(val.value);
       }
@@ -581,10 +584,28 @@ export class ShadowMarketAPI {
       return val;
     };
 
-    const finalId = extractValue(rawFinal);
-    console.log('DEBUG: Extracted final ID:', finalId);
+    // Filter and map candidates to valid values
+    const validValues = candidates
+      .map(c => ({ raw: c, processed: extractValue(c) }))
+      .filter(item => {
+        const v = item.processed;
+        return v !== null && v !== undefined && v.toString().trim() !== '';
+      });
+
+    console.log('DEBUG: Filtered Valid ID Candidates:', validValues.map(v => v.processed.toString()));
+
+    if (validValues.length === 0) {
+      console.warn('CRITICAL: No valid ID candidates extracted from transaction!');
+      if (txData.public?.identifiers?.length > 1) return txData.public.identifiers[1].toString();
+      return '';
+    }
+
+    // Usually, the ID is the LAST counter disclosed in the circuit
+    const resultId = validValues[validValues.length - 1].processed.toString();
+    console.log('DEBUG: Selected result ID:', resultId);
+    console.log('DEBUG: >>> END DISCLOSED ID EXTRACTION <<<');
     
-    return finalId !== null && finalId !== undefined ? finalId.toString() : '';
+    return resultId;
   }
 }
 

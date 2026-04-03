@@ -16,8 +16,6 @@ const createMarketSchema = z.object({
   tags: z.array(z.string()).optional(),
   endTime: z.string().transform(val => new Date(val)),
   resolutionSource: z.string().min(1),
-  minBet: z.string(),
-  maxBet: z.string(),
   onchainId: z.string().optional(),
   txHash: z.string().optional(),
 });
@@ -25,7 +23,7 @@ const createMarketSchema = z.object({
 const marketFiltersSchema = z.object({
   status: z.enum(['PENDING', 'OPEN', 'LOCKED', 'RESOLVED', 'CANCELLED']).optional(),
   category: z.string().optional(),
-  sortBy: z.enum(['volume', 'liquidity', 'ending_soon', 'newest']).optional(),
+  sortBy: z.enum(['volume', 'ending_soon', 'newest']).optional(),
   limit: z.coerce.number().min(1).max(100).optional(),
   offset: z.coerce.number().min(0).optional(),
 });

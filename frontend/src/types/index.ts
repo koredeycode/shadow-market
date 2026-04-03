@@ -15,10 +15,7 @@ export interface Market {
   status: MarketStatus;
   outcome?: number;
   resolutionSource: string;
-  minBet: string;
-  maxBet: string;
   totalVolume: string;
-  totalLiquidity: string;
   totalPositions: number;
   yesPrice: string;
   noPrice: string;
@@ -85,7 +82,7 @@ export interface PortfolioStats {
 export interface MarketFilters {
   status?: MarketStatus;
   category?: string;
-  sortBy?: 'volume' | 'liquidity' | 'ending_soon' | 'newest';
+  sortBy?: 'volume' | 'ending_soon' | 'newest';
   limit?: number;
   offset?: number;
 }
@@ -136,7 +133,6 @@ export interface AdminUser {
   createdAt: string;
   lastActive: string;
   isBlocked: boolean;
-  kycStatus: 'none' | 'pending' | 'verified' | 'rejected';
 }
 
 export interface TrendingMarket extends Market {

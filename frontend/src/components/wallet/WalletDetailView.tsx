@@ -3,10 +3,11 @@ import {
   Copy,
   ExternalLink,
   RefreshCw,
-  ShieldCheck,
+
   ChevronRight,
-  Zap,
+
   Briefcase,
+  Lock,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useWallet } from '../../hooks/useWallet';
@@ -164,13 +165,13 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
             <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all" />
           </Link>
 
-          <button className="w-full flex items-center justify-between p-2 hover:bg-white/5 rounded-sm transition-colors text-xs text-slate-400 hover:text-white group">
+          {/* <button className="w-full flex items-center justify-between p-2 hover:bg-white/5 rounded-sm transition-colors text-xs text-slate-400 hover:text-white group">
             <div className="flex items-center gap-3">
               <ShieldCheck className="w-4 h-4 text-electric-blue" />
               <span>Identity Settings</span>
             </div>
             <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all" />
-          </button>
+          </button> */}
 
           <button
             onClick={handleDisconnect}
@@ -184,10 +185,10 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
 
       <div className="bg-electric-blue/5 p-3 flex items-center gap-3 border-t border-white/5">
         <div className="p-1.5 bg-electric-blue/10 rounded-sm">
-          <Zap className="w-3.5 h-3.5 text-electric-blue" />
+          <Lock className="w-3.5 h-3.5 text-electric-blue" />
         </div>
         <div className="text-[9px] text-slate-500 font-light leading-tight">
-          Wallet connection is secured via encrypted ZK-proofs.
+          Secured Wallet Connection
         </div>
       </div>
     </div>

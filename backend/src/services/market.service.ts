@@ -14,26 +14,23 @@ export class MarketService {
    * Create a new market
    */
   async createMarket(userId: string, data: CreateMarketRequest) {
-    const marketId = generateId();
-    const onchainId = data.onchainId || Date.now().toString();
+    const onchainId = BigInt(data.onchainId || Date.now().toString());
     const slug = await this.generateUniqueSlug(data.question);
 
     const [market] = await db
       .insert(markets)
       .values({
-        id: marketId,
+        id: generateId(),
         onchainId,
         slug,
         txHash: data.txHash,
         question: data.question,
         description: data.description,
-        category: data.category,
+        category: data.category as any,
         tags: data.tags || [],
         endTime: data.endTime,
         status: 'OPEN',
         resolutionSource: data.resolutionSource,
-        minBet: data.minBet,
-        maxBet: data.maxBet,
         creatorId: userId,
       })
       .returning();
@@ -60,7 +57,7 @@ export class MarketService {
     }
 
     if (filters.category) {
-      conditions.push(eq(markets.category, filters.category));
+      conditions.push(eq(markets.category, filters.category as any));
     }
 
     if (conditions.length > 0) {
@@ -70,8 +67,6 @@ export class MarketService {
     // Apply sorting
     if (filters.sortBy === 'volume') {
       query = query.orderBy(desc(markets.totalVolume)) as any;
-    } else if (filters.sortBy === 'liquidity') {
-      query = query.orderBy(desc(markets.totalLiquidity)) as any;
     } else if (filters.sortBy === 'ending_soon') {
       query = query.orderBy(markets.endTime) as any;
     } else {
@@ -314,8 +309,6 @@ export class MarketService {
    */
   async updateTrendingScores() {
     const now = new Date();
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
     // Get all open markets
     const openMarkets = await db.select().from(markets).where(eq(markets.status, 'OPEN'));
 
@@ -370,7 +363,6 @@ export class MarketService {
     return {
       marketId,
       totalVolume: market.totalVolume,
-      totalLiquidity: market.totalLiquidity,
       totalPositions: Number(positionCount),
       yesPrice: market.yesPrice,
       noPrice: market.noPrice,

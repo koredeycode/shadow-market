@@ -25,9 +25,15 @@ export class WagerService {
 
     // Fallback to onchainId for scripts/integration
     if (!market) {
-      market = await db.query.markets.findFirst({
-        where: eq(markets.onchainId, data.marketId),
-      });
+      // Try parsing marketId as bigint for onchainId lookup
+      try {
+        const potentialOnchainId = BigInt(data.marketId);
+        market = await db.query.markets.findFirst({
+          where: eq(markets.onchainId, potentialOnchainId),
+        });
+      } catch (e) {
+        // Not a bigint, skip fallback
+      }
     }
 
     if (!market) throw new Error('Market not found');
@@ -89,9 +95,14 @@ export class WagerService {
 
     // Fallback to onchainId
     if (!market) {
-      market = await db.query.markets.findFirst({
-        where: eq(markets.onchainId, data.marketId),
-      });
+      try {
+        const potentialOnchainId = BigInt(data.marketId);
+        market = await db.query.markets.findFirst({
+          where: eq(markets.onchainId, potentialOnchainId),
+        });
+      } catch (e) {
+        // Not a bigint
+      }
     }
 
     if (!market) throw new Error('Market not found');
@@ -317,9 +328,14 @@ export class WagerService {
     });
     
     if (!market) {
-      market = await db.query.markets.findFirst({
-        where: eq(markets.onchainId, marketId),
-      });
+      try {
+        const potentialOnchainId = BigInt(marketId);
+        market = await db.query.markets.findFirst({
+          where: eq(markets.onchainId, potentialOnchainId),
+        });
+      } catch (e) {
+        // Not a bigint
+      }
     }
     
     const resolvedId = market ? market.id : marketId;

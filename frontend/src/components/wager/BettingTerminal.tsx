@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
-import { AlertTriangle, Info, TrendingDown, TrendingUp, Zap } from 'lucide-react';
+import { Info, TrendingDown, TrendingUp, Zap } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -72,19 +72,16 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
 
     const basePrice = side === 'yes' ? parseFloat(market.yesPrice) : parseFloat(market.noPrice);
     const betAmount = parseFloat(amount);
-    const liquidityFactor = parseFloat(market.totalLiquidity) || 1000000;
 
-    // Simplified AMM formula for demonstration
-    const priceImpact = (betAmount / liquidityFactor) * 0.05;
-    const estimatedPrice = basePrice + (side === 'yes' ? priceImpact : -priceImpact);
-
+    // Fixed price logic (No AMM impact)
+    const estimatedPrice = basePrice;
     const potentialPayout = betAmount / estimatedPrice;
     const potentialProfit = potentialPayout - betAmount;
     const returnPercentage = (potentialProfit / betAmount) * 100;
 
     return {
       estimatedPrice,
-      priceImpact: priceImpact * 100,
+      priceImpact: 0,
       potentialPayout,
       potentialProfit,
       returnPercentage,
@@ -296,16 +293,10 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
 
           <div className="flex items-center justify-between text-[11px] font-mono">
             <span className="text-slate-500 flex items-center gap-1.5 uppercase tracking-tight">
-              Market Impact <Info className="w-3 h-3 text-slate-600" />
+              Slippage <Info className="w-3 h-3 text-slate-600" />
             </span>
-            <span
-              className={
-                estimate?.priceImpact && estimate.priceImpact > 3
-                  ? 'text-amber-500 font-bold'
-                  : 'text-success-green font-bold'
-              }
-            >
-              {estimate ? `${estimate.priceImpact.toFixed(2)}%` : '0.00%'}
+            <span className="text-success-green font-bold tracking-tight">
+              0.00%
             </span>
           </div>
 
@@ -325,15 +316,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
           </div>
         </div>
 
-        {estimate?.priceImpact && estimate.priceImpact > 5 && (
-          <div className="flex gap-3 bg-amber-500/10 border border-amber-500/20 p-3 rounded-sm items-start">
-            <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
-            <p className="text-[10px] text-amber-200/80 font-mono leading-tight uppercase">
-              WARNING: High price impact detected. Consider reducing stake size for better
-              execution.
-            </p>
-          </div>
-        )}
+
 
         <button
           type="button"

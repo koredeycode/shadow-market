@@ -77,10 +77,10 @@ export function MarketIntelligenceCard({ market }: MarketIntelligenceCardProps) 
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-slate-500">
               <Users className="w-3.5 h-3.5" />
-              <span className="text-[10px] font-mono uppercase tracking-tight">Liquidity</span>
+              <span className="text-[10px] font-mono uppercase tracking-tight">Positions</span>
             </div>
             <div className="text-sm font-mono text-white">
-              {formatCurrency(market.totalLiquidity)}
+              {market.totalPositions.toLocaleString()}
             </div>
           </div>
         </div>

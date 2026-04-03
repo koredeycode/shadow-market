@@ -32,7 +32,6 @@ export interface AdminMarketFilters {
 export interface AdminUserFilters {
   search?: string;
   blocked?: boolean;
-  kycStatus?: string;
   limit?: number;
   offset?: number;
 }
@@ -369,10 +368,6 @@ export class AdminService {
       conditions.push(eq(users.isBlocked, filters.blocked));
     }
 
-    if (filters.kycStatus) {
-      conditions.push(eq(users.kycStatus, filters.kycStatus as any));
-    }
-
     if (filters.search) {
       conditions.push(
         or(
@@ -436,26 +431,7 @@ export class AdminService {
     return updated;
   }
 
-  /**
-   * Update user KYC status
-   */
-  async updateUserKyc(userId: string, kycStatus: string, adminId: string, ipAddress?: string) {
-    const [updated] = await db
-      .update(users)
-      .set({
-        kycStatus: kycStatus as any,
-      })
-      .where(eq(users.id, userId))
-      .returning();
 
-    if (!updated) {
-      throw new Error('User not found');
-    }
-
-    await this.logActivity(adminId, 'UPDATE_KYC', 'user', userId, { kycStatus }, ipAddress);
-
-    return updated;
-  }
 
   /**
    * Get activity log

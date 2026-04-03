@@ -11,8 +11,7 @@ export function TopBar() {
     isConnected, 
     isConnecting, 
     formattedAddress, 
-    formattedUnshieldedNightBalance, 
-    formattedNightBalance 
+    formattedUnshieldedNightBalance 
   } = useWallet();
   const { isWalletModalOpen, setWalletModalOpen } = useWalletStore();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -48,7 +47,7 @@ export function TopBar() {
         <Search className="w-4 h-4 text-slate-500 group-focus-within:text-electric-blue transition-colors" />
         <input
           type="text"
-          placeholder="Search markets, assets, or users..."
+          placeholder="Search markets..."
           className="bg-transparent border-none text-sm text-slate-300 focus:outline-none w-full font-light"
         />
         <div className="hidden lg:flex items-center gap-1 px-1.5 py-0.5 bg-white/5 border border-white/10 rounded-sm text-[10px] text-slate-600 font-mono">
@@ -95,7 +94,7 @@ export function TopBar() {
                       {formattedUnshieldedNightBalance}
                     </span>
                   </div>
-                  <div className="w-[1px] h-6 bg-white/5" />
+                  {/* <div className="w-[1px] h-6 bg-white/5" />
                   <div className="flex flex-col items-end">
                     <span className="text-[8px] text-slate-500 font-mono leading-none mb-1 uppercase tracking-tighter">
                       Shielded
@@ -103,7 +102,7 @@ export function TopBar() {
                     <span className="text-[10px] text-white font-mono font-bold leading-none">
                       {formattedNightBalance}
                     </span>
-                  </div>
+                  </div> */}
                 </div>
                 <div className="h-8 w-[1px] bg-white/10 mx-1" />
                 <div className="flex items-center gap-2">

@@ -56,17 +56,14 @@ export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
 
     const basePrice = side === 'yes' ? parseFloat(market.yesPrice) : parseFloat(market.noPrice);
     const betAmount = parseFloat(amount);
-    const liquidityFactor = parseFloat(market.totalLiquidity) || 1000000;
-    const priceImpact = (betAmount / liquidityFactor) * 0.1;
-
-    const estimatedPrice = basePrice + (side === 'yes' ? priceImpact : -priceImpact);
+    const estimatedPrice = basePrice;
     const potentialPayout = betAmount / estimatedPrice;
     const potentialProfit = potentialPayout - betAmount;
 
     return {
       basePrice,
       estimatedPrice,
-      priceImpact: priceImpact * 100,
+      priceImpact: 0,
       potentialPayout,
       potentialProfit,
     };
@@ -77,8 +74,8 @@ export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
   const validateAmount = () => {
     if (!amount) return null;
     const betAmount = parseFloat(amount);
-    const minBet = parseFloat(market.minBet);
-    const maxBet = parseFloat(market.maxBet);
+    const minBet = 1; // Atomic unit minimum
+    const maxBet = 1000000000; // Effectively unlimited for frontend validation
     const userBalance = parseFloat(unshieldedNightBalance || '0');
 
     if (betAmount < minBet) return `Minimum bet is ${minBet}`;
@@ -325,16 +322,6 @@ export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
                         {(estimate.estimatedPrice * 100).toFixed(2)}%
                       </span>
                     </div>
-                    <div className="flex justify-between text-[11px] font-mono">
-                      <span className="text-slate-500 uppercase">Price Impact</span>
-                      <span
-                        className={
-                          estimate.priceImpact > 3 ? 'text-amber-500' : 'text-success-green'
-                        }
-                      >
-                        {estimate.priceImpact.toFixed(2)}%
-                      </span>
-                    </div>
                     <div className="flex justify-between text-[11px] font-mono pt-2 border-t border-white/[0.02]">
                       <span className="text-slate-500 uppercase">Expected Payout</span>
                       <span className="text-white font-bold underline decoration-electric-blue/40">
@@ -343,15 +330,7 @@ export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
                     </div>
                   </div>
 
-                  {estimate.priceImpact > 5 && (
-                    <div className="flex gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-sm italic">
-                      <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
-                      <p className="text-[10px] text-amber-200/80 uppercase tracking-tight">
-                        Warning: Significant price impact detected. Large volume may result in
-                        unfavorable entry.
-                      </p>
-                    </div>
-                  )}
+
                 </div>
               )}
             </div>

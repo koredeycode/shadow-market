@@ -24,7 +24,6 @@ export async function syncMarketPrices() {
         yesPrice: market.yesPrice,
         noPrice: market.noPrice,
         totalVolume: market.totalVolume,
-        totalLiquidity: market.totalLiquidity,
       });
     }
 
