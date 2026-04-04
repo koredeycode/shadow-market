@@ -311,7 +311,10 @@ export const terminalSessions = pgTable('terminal_sessions', {
   id: text('id').primaryKey(),
   userId: text('user_id').references(() => users.id),
   status: varchar('status', { length: 20 }).notNull().default('PENDING'),
-  token: text('token'),
+  pairingCode: varchar('pairing_code', { length: 12 }).unique().notNull(), // Human-readable e.g. SHADOW-1234
+  token: text('token'), // High-entropy ID
+  signature: text('signature'), // Proof of identity from web
+  walletAddress: varchar('wallet_address', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   authorizedAt: timestamp('authorized_at'),
   expiresAt: timestamp('expires_at').notNull(),

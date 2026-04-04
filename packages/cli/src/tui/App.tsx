@@ -24,6 +24,10 @@ export const App = () => {
   const [betSide, setBetSide] = useState<'YES' | 'NO'>('YES');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState('');
+  
+  // Pairing State
+  const [pairingSession, setPairingSession] = useState<any>(null);
+  const [isPairing, setIsPairing] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -40,6 +44,42 @@ export const App = () => {
     }
     loadData();
   }, [activeTab]);
+
+  // Handle Pairing Initiation
+  useEffect(() => {
+    if (!walletManager.isLoggedIn() && !pairingSession && !loading) {
+      const initPairing = async () => {
+        try {
+          const session = await backendClient.createPairingSession();
+          setPairingSession(session);
+          setIsPairing(true);
+        } catch (err) {
+          console.error('Failed to create pairing session');
+        }
+      };
+      initPairing();
+    }
+  }, [walletStatus, loading]);
+
+  // Poll Pairing Status
+  useEffect(() => {
+    let interval: any;
+    if (isPairing && pairingSession?.pairingCode) {
+      interval = setInterval(async () => {
+        try {
+          const status = await backendClient.checkPairingStatus(pairingSession.pairingCode);
+          if (status?.status === 'AUTHORIZED') {
+            clearInterval(interval);
+            walletManager.setLinkedSession(status.token, status.walletAddress);
+            setWalletStatus(await walletManager.getStatus());
+            setIsPairing(false);
+            setPairingSession(null);
+          }
+        } catch (err) { /* silent poll */ }
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [isPairing, pairingSession]);
 
   useInput((input, key) => {
     if (isSubmitting) return;
@@ -127,18 +167,34 @@ export const App = () => {
           <Box flexDirection="column" width="100%">
             {activeTab === 'dashboard' && (
               <Box flexDirection="column">
-                <Text bold underline color="white">Market Overview</Text>
-                <Box marginTop={1} flexDirection="column">
-                   {markets.slice(0, 5).map((m: any) => (
-                     <Box key={m.id} marginBottom={1}>
-                       <Text color="magenta">[{m.onchainId || m.id.split('-')[0]}] </Text>
-                       <Text bold>{m.question.substring(0, 45)}{m.question.length > 45 ? '...' : ''}</Text>
-                       <Box marginLeft={2}>
-                         <Text color="green">{m.yesPrice || '0.5'}</Text> / <Text color="red">{m.noPrice || '0.5'}</Text>
-                       </Box>
-                     </Box>
-                   ))}
-                </Box>
+                {!walletStatus ? (
+                  <Box flexDirection="column" borderStyle="bold" borderColor="yellow" padding={1} alignItems="center">
+                    <Text bold color="yellow">LINK REQUIRED</Text>
+                    <Text>Go to Shadow Market Web Dashboard and enter this code:</Text>
+                    <Box marginY={1} paddingX={2} borderStyle="double" borderColor="cyan">
+                      <Text bold color="cyan">{pairingSession?.pairingCode || 'GENERATING...'}</Text>
+                    </Box>
+                    <Text dimColor>Waiting for wallet authorization...</Text>
+                    <Box marginTop={1}>
+                        <Text color="gray">This allows you to trade with your web-connected wallet.</Text>
+                    </Box>
+                  </Box>
+                ) : (
+                  <Box flexDirection="column">
+                    <Text bold underline color="white">Market Overview</Text>
+                    <Box marginTop={1} flexDirection="column">
+                       {markets.slice(0, 5).map((m: any) => (
+                         <Box key={m.id} marginBottom={1}>
+                           <Text color="magenta">[{m.onchainId || m.id.split('-')[0]}] </Text>
+                           <Text bold>{m.question.substring(0, 45)}{m.question.length > 45 ? '...' : ''}</Text>
+                           <Box marginLeft={2}>
+                             <Text color="green">{m.yesPrice || '0.5'}</Text> / <Text color="red">{m.noPrice || '0.5'}</Text>
+                           </Box>
+                         </Box>
+                       ))}
+                    </Box>
+                  </Box>
+                )}
               </Box>
             )}
 

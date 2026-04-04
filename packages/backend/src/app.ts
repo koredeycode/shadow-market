@@ -10,6 +10,7 @@ import { oraclesRouter } from './routes/oracles.js';
 import { positionsRouter } from './routes/positions.js';
 import { usersRouter } from './routes/users.js';
 import { wagersRouter } from './routes/wagers.js';
+import { sessionsRouter } from './routes/sessions.js';
 
 // Create Express app
 export const app = express();
@@ -36,6 +37,7 @@ app.use('/api/positions', positionsRouter);
 app.use('/api/oracles', oraclesRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/wagers', wagersRouter);
+app.use('/api/sessions', sessionsRouter);
 
 // 404 handler
 app.use((req, res) => {
