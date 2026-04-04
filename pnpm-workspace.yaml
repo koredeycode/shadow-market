@@ -1,6 +1,2 @@
 packages:
-  - 'contracts'
-  - 'api'
-  - 'backend'
-  - 'frontend'
-  - 'local-network'
+  - 'packages/*'
