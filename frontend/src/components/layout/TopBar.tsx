@@ -1,10 +1,11 @@
-import { Wallet, Search, Moon, ChevronDown, Zap } from 'lucide-react';
+import { Wallet, Moon, ChevronDown, Zap } from 'lucide-react';
 import { useWallet } from '../../hooks/useWallet';
 import { Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import { WalletModal } from '../wallet/WalletModal';
 import { WalletDetailView } from '../wallet/WalletDetailView';
 import { useWalletStore } from '../../store/wallet.store';
+import { HeaderSearch } from './HeaderSearch';
 
 export function TopBar() {
   const { 
@@ -43,30 +44,10 @@ export function TopBar() {
       </div>
 
       {/* Centered Search */}
-      <div className="flex-1 max-w-2xl hidden md:flex items-center gap-2 px-4 py-2 bg-slate-900/50 rounded-sm border border-white/10 group focus-within:border-electric-blue/50 transition-all">
-        <Search className="w-4 h-4 text-slate-500 group-focus-within:text-electric-blue transition-colors" />
-        <input
-          type="text"
-          placeholder="Search markets..."
-          className="bg-transparent border-none text-sm text-slate-300 focus:outline-none w-full font-light"
-        />
-        <div className="hidden lg:flex items-center gap-1 px-1.5 py-0.5 bg-white/5 border border-white/10 rounded-sm text-[10px] text-slate-600 font-mono">
-          <span>ALT</span>
-          <span>K</span>
-        </div>
-      </div>
+      <HeaderSearch />
 
       {/* Actions & Profile */}
       <div className="flex items-center gap-4">
-        {/* <div className="hidden sm:flex items-center gap-2 mr-2">
-          <button className="p-2 text-slate-500 hover:text-white transition-colors">
-            <Bell className="w-5 h-5" />
-          </button>
-          <button className="p-2 text-slate-500 hover:text-white transition-colors">
-            <Settings className="w-5 h-5" />
-          </button>
-        </div> */}
-
         <div className="flex items-center gap-3 relative" ref={detailRef}>
           {isConnected ? (
             <>
@@ -94,15 +75,6 @@ export function TopBar() {
                       {formattedUnshieldedNightBalance}
                     </span>
                   </div>
-                  {/* <div className="w-[1px] h-6 bg-white/5" />
-                  <div className="flex flex-col items-end">
-                    <span className="text-[8px] text-slate-500 font-mono leading-none mb-1 uppercase tracking-tighter">
-                      Shielded
-                    </span>
-                    <span className="text-[10px] text-white font-mono font-bold leading-none">
-                      {formattedNightBalance}
-                    </span>
-                  </div> */}
                 </div>
                 <div className="h-8 w-[1px] bg-white/10 mx-1" />
                 <div className="flex items-center gap-2">
@@ -130,7 +102,7 @@ export function TopBar() {
               ) : (
                 <Wallet className="w-4 h-4" />
               )}
-              {isConnecting ? 'CONNECTING...' : 'Connect Wallet'}
+              {isConnecting ? 'CONNECTING...' : 'Connect wallet'}
             </button>
           )}
         </div>

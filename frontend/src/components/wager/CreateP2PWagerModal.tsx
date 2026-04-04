@@ -81,7 +81,7 @@ export function CreateP2PWagerModal({ open, onClose, market }: CreateP2PWagerMod
     const betAmount = parseFloat(amount);
     const minBet = 1; // Atomic unit minimum
     const maxBet = 1000000000; // Unlimited
-    const userBalance = parseFloat(unshieldedNightBalance || '0');
+    const userBalance = parseFloat(unshieldedNightBalance || '0') / 1_000_000;
 
     if (betAmount < minBet) return `Minimum bet is ${minBet}`;
     if (betAmount > maxBet) return `Maximum bet is ${maxBet}`;

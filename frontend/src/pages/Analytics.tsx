@@ -221,7 +221,7 @@ export function Analytics() {
                           </td>
                           <td className="py-4 max-w-md">
                             <Link
-                              to={`/markets/${market.id}`}
+                              to={`/markets/${market.slug || market.id}`}
                               className="text-xs font-bold text-white hover:text-electric-blue transition-colors flex items-center gap-2 group/link"
                             >
                               {market.question}

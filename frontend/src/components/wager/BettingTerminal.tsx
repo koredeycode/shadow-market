@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
-import { Info, TrendingDown, TrendingUp, Zap } from 'lucide-react';
+import { TrendingDown, TrendingUp, Zap } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -233,7 +233,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
         <div className="space-y-2">
           <div className="flex justify-between items-end">
             <label className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">
-              Input Amount
+              Input amount
             </label>
             <span className="text-[10px] font-mono text-slate-400">
               Balance: <span className="text-white">{isConnected ? formattedUnshieldedNightBalance : '--'}</span>{' '}
@@ -282,27 +282,9 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
         </div>
 
         <div className="space-y-4 pt-4 border-t border-white/5">
-          <div className="flex items-center justify-between text-[11px] font-mono">
-            <span className="text-slate-500 flex items-center gap-1.5 uppercase tracking-tight">
-              Execution Price <Info className="w-3 h-3 text-slate-600" />
-            </span>
-            <span className="text-white font-bold tracking-tight">
-              {estimate ? `${(estimate.estimatedPrice * 100).toFixed(2)}%` : '--'}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between text-[11px] font-mono">
-            <span className="text-slate-500 flex items-center gap-1.5 uppercase tracking-tight">
-              Slippage <Info className="w-3 h-3 text-slate-600" />
-            </span>
-            <span className="text-success-green font-bold tracking-tight">
-              0.00%
-            </span>
-          </div>
-
           <div className="bg-slate-950/80 border border-white/5 p-4 rounded-sm space-y-3">
             <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-widest text-slate-400">
-              Potential Reward
+              Potential reward
             </div>
             <div className="flex items-end justify-between">
               <div className="text-2xl font-mono text-success-green font-bold leading-none">
@@ -356,12 +338,12 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
           {isSubmitting ? (
             <span className="flex items-center justify-center gap-2">
               <Zap className="w-4 h-4 animate-pulse" />
-              EXECUTING_TX...
+              Executing transaction...
             </span>
           ) : !isConnected ? (
-            'Connect Wallet'
+            'Connect wallet'
           ) : (
-            `PLACE_${side.toUpperCase()}_WAGER`
+            `Place ${side} wager`
           )}
 
           <div className="absolute inset-0 bg-white opacity-0 group-active:opacity-20 transition-opacity" />

@@ -1,25 +1,25 @@
-import { MarketStatus } from '@/types';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, BarChart3, Clock, Info, Share2, Shield, Zap } from 'lucide-react';
+import { format } from 'date-fns';
+import { ArrowLeft, BarChart3, Clock, Info, Share2, Zap } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { marketsApi } from '../api/markets';
 import { MarketChart } from '../components/market/MarketChart';
 import { MarketStats } from '../components/market/MarketStats';
-import { OrderBook } from '../components/market/OrderBook';
-import { RecentTrades } from '../components/market/RecentTrades';
 import { BettingTerminal } from '../components/wager/BettingTerminal';
 import { P2PWagersList } from '../components/wager/P2PWagersList';
 import { P2PActionTerminal } from '../components/wager/P2PActionTerminal';
-import { Wager } from '@/types';
+import { MarketStatus, Wager } from '../types';
 
 export function MarketDetail() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'overview' | 'chart' | 'p2p' | 'orders' | 'trades'>(
-    'chart'
-  );
+  const location = useLocation();
+  
+  // Determine active tab based on location path
+  const activeTab = location.pathname.endsWith('/wagers') ? 'p2p' : 'chart';
+  
   const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d' | '30d' | 'all'>('24h');
   const [selectedWager, setSelectedWager] = useState<Wager | null>(null);
 
@@ -31,7 +31,6 @@ export function MarketDetail() {
     queryKey: ['market', slug],
     queryFn: () => marketsApi.getById(slug!),
     enabled: !!slug,
-    // Disable auto-refetch - only refetch on manual refresh or navigation
     refetchInterval: false,
     refetchOnWindowFocus: false,
   });
@@ -102,14 +101,15 @@ export function MarketDetail() {
   const statusColorClass = statusColors[market.status] || 'border-slate-800 text-slate-500';
 
   return (
-    <div className="space-y-8 pb-20">
+    <div className="space-y-12 pb-20">
+      {/* Header Bar */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate('/markets')}
           className="flex items-center gap-2 px-4 py-2 text-slate-500 hover:text-white transition-all font-mono text-[10px] uppercase font-bold tracking-widest group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          Terminal Exit
+          Terminal exit
         </button>
 
         <div className="flex items-center gap-3">
@@ -129,205 +129,178 @@ export function MarketDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Main Content */}
-        <div className="lg:col-span-8 space-y-8">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 bg-electric-blue/10 text-electric-blue text-[9px] font-mono font-bold uppercase tracking-widest rounded-full border border-electric-blue/20">
-                {market.category}
-              </span>
-              <span className="text-[10px] text-slate-600 font-mono tracking-widest uppercase">
-                ID: {market.id}
-              </span>
-            </div>
+      {/* Title and Info Sections */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <span className="px-2 py-0.5 bg-electric-blue/10 text-electric-blue text-[9px] font-mono font-bold uppercase tracking-widest rounded-full border border-electric-blue/20">
+            {market.category}
+          </span>
+          <span className="text-[10px] text-slate-600 font-mono tracking-widest uppercase">
+            ID: {market.id}
+          </span>
+        </div>
 
-            <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight">
-              {market.question}
-            </h1>
+        <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight max-w-5xl">
+          {market.question}
+        </h1>
 
-            {market.description && (
-              <p className="text-slate-400 font-light leading-relaxed max-w-4xl">
-                {market.description}
-              </p>
+        {market.description && (
+          <p className="text-slate-400 font-light leading-relaxed max-w-4xl text-lg">
+            {market.description}
+          </p>
+        )}
+      </div>
+
+      {/* Unified Interaction Level */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        {/* Market Graphical Area */}
+        <div className="lg:col-span-8 bg-slate-900/40 border border-white/5 rounded-sm overflow-hidden flex flex-col min-h-[500px]">
+          <div className="flex items-center border-b border-white/5 bg-black/40">
+            <button
+              onClick={() => navigate(`/markets/${slug}`)}
+              className={`px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-[0.2em] transition-all border-r border-white/5 ${
+                activeTab === 'chart'
+                  ? 'text-electric-blue bg-electric-blue/5'
+                  : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              Market Center
+            </button>
+            <button
+              onClick={() => navigate(`/markets/${slug}/wagers`)}
+              className={`px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-[0.2em] transition-all border-r border-white/5 ${
+                activeTab === 'p2p'
+                  ? 'text-electric-blue bg-electric-blue/5'
+                  : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              Wagers Hub
+            </button>
+            <div className="flex-1" />
+            {activeTab === 'chart' && (
+              <div className="px-4 flex items-center gap-2">
+                {(['1h', '24h', '7d', 'all'] as const).map(range => (
+                  <button
+                    key={range}
+                    onClick={() => setTimeRange(range)}
+                    className={`px-2 py-1 rounded-sm text-[9px] font-mono font-bold uppercase transition-all tracking-wider ${
+                      timeRange === range
+                        ? 'text-electric-blue'
+                        : 'text-slate-600 hover:text-slate-400'
+                    }`}
+                  >
+                    {range}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
 
-          {/* Activity Section */}
-          <div className="bg-slate-900/40 border-stealth rounded-sm overflow-hidden flex flex-col">
-            <div className="flex items-center border-b border-white/5 bg-black/40">
-              <button
-                onClick={() => setActiveTab('chart')}
-                className={`px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-[0.2em] transition-all border-r border-white/5 ${
-                  activeTab === 'chart'
-                    ? 'text-electric-blue bg-electric-blue/5'
-                    : 'text-slate-500 hover:text-slate-300'
-                }`}
-              >
-                Data_Visualizer
-              </button>
-              <button
-                onClick={() => setActiveTab('orders')}
-                className={`px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-[0.2em] transition-all border-r border-white/5 ${
-                  activeTab === 'orders'
-                    ? 'text-electric-blue bg-electric-blue/5'
-                    : 'text-slate-500 hover:text-slate-300'
-                }`}
-              >
-                Order_Flow
-              </button>
-              <button
-                onClick={() => setActiveTab('trades')}
-                className={`px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-[0.2em] transition-all border-r border-white/5 ${
-                  activeTab === 'trades'
-                    ? 'text-electric-blue bg-electric-blue/5'
-                    : 'text-slate-500 hover:text-slate-300'
-                }`}
-              >
-                Market_History
-              </button>
-              <button
-                onClick={() => setActiveTab('p2p')}
-                className={`px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-[0.2em] transition-all ${
-                  activeTab === 'p2p'
-                    ? 'text-electric-blue bg-electric-blue/5'
-                    : 'text-slate-500 hover:text-slate-300'
-                }`}
-              >
-                Direct_Wagers
-              </button>
-            </div>
+          <div className="p-8 flex-1 flex flex-col">
+            {activeTab === 'chart' ? (
+              <div className="flex-1">
+                <MarketChart marketId={market.id} timeRange={timeRange} />
+              </div>
+            ) : (
+              <div className="space-y-6 flex-1">
+                <div className="flex justify-between items-center bg-electric-blue/5 border border-electric-blue/20 p-4 rounded-sm">
+                  <div className="space-y-1">
+                      <h3 className="text-[10px] font-mono font-bold text-electric-blue uppercase tracking-widest leading-none">
+                        Wager protocol interface
+                      </h3>
+                      <p className="text-[9px] text-slate-500 font-mono uppercase">Manage active P2P contracts</p>
+                  </div>
+                </div>
+                <P2PWagersList 
+                  marketId={market.id} 
+                  selectedWagerId={selectedWager?.id}
+                  onSelectWager={setSelectedWager}
+                />
+              </div>
+            )}
+          </div>
+        </div>
 
-            <div className="p-6">
-              {activeTab === 'chart' && (
-                <div className="space-y-6">
-                  <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                    {(['1h', '24h', '7d', '30d', 'all'] as const).map(range => (
-                      <button
-                        key={range}
-                        onClick={() => setTimeRange(range)}
-                        className={`px-3 py-1.5 rounded-sm text-[10px] font-mono font-bold uppercase transition-all tracking-wider ${
-                          timeRange === range
-                            ? 'bg-electric-blue text-white shadow-[0_0_10px_rgba(59,130,246,0.2)]'
-                            : 'bg-white/5 text-slate-500 hover:bg-white/10 hover:text-slate-300'
-                        }`}
-                      >
-                        {range}
-                      </button>
-                    ))}
-                  </div>
-                  <MarketChart marketId={market.id} timeRange={timeRange} />
-                </div>
-              )}
-              {activeTab === 'orders' && <OrderBook marketId={market.id} />}
-              {activeTab === 'trades' && <RecentTrades marketId={market.id} />}
-              {activeTab === 'p2p' && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center bg-electric-blue/5 border border-electric-blue/20 p-4 rounded-sm">
-                    <div className="space-y-1">
-                        <h3 className="text-[10px] font-mono font-bold text-electric-blue uppercase tracking-widest leading-none">
-                        Wager Protocol Interface
-                        </h3>
-                        <p className="text-[9px] text-slate-500 font-mono uppercase">Manage or initialize p2p contracts</p>
-                    </div>
-                    <button
-                      onClick={() => setSelectedWager(null)}
-                      className="px-6 py-2.5 bg-electric-blue text-white rounded-sm text-[10px] font-mono font-bold uppercase tracking-[0.2em] hover:brightness-110 transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] flex items-center gap-2"
-                    >
-                      <Zap className="w-3.5 h-3.5" />
-                      Initialize_New_Protocol
-                    </button>
-                  </div>
-                  <P2PWagersList 
-                    marketId={market.id} 
-                    selectedWagerId={selectedWager?.id}
-                    onSelectWager={setSelectedWager}
-                  />
-                </div>
+        {/* Execution Terminal */}
+        <div className="lg:col-span-4 flex flex-col h-full">
+          <div className="bg-slate-900/40 border border-white/10 rounded-sm overflow-hidden flex-1 flex flex-col">
+            <div className="px-6 py-4 border-b border-white/5 bg-black/40 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap className="w-3.5 h-3.5 text-electric-blue" />
+                <h2 className="text-white font-bold text-[10px] uppercase tracking-[0.25em]">
+                  {activeTab === 'p2p' ? 'P2P protocol terminal' : 'Execution terminal'}
+                </h2>
+              </div>
+              <div className="flex gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-success-green animate-pulse" />
+                <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
+              </div>
+            </div>
+            <div className="p-1 flex-1">
+              {activeTab === 'p2p' ? (
+                <P2PActionTerminal 
+                  market={market} 
+                  selectedWager={selectedWager}
+                  onClearSelection={() => setSelectedWager(null)}
+                />
+              ) : (
+                <BettingTerminal market={market} />
               )}
             </div>
           </div>
+        </div>
+      </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+      {/* Secondary Level: Stats & Social Proof */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="lg:col-span-8 flex flex-col gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Timeline Row */}
             <div className="space-y-4">
-              <h3 className="text-white font-bold flex items-center gap-2 text-sm uppercase tracking-widest">
-                <Shield className="w-4 h-4 text-electric-blue" />
-                Resolution Data
+              <h3 className="text-white font-bold flex items-center gap-2 text-[10px] uppercase tracking-widest">
+                <Clock className="w-3.5 h-3.5 text-electric-blue" />
+                Market Timeline
               </h3>
-              <div className="bg-white/[0.02] border border-white/5 p-4 rounded-sm space-y-3">
-                <div className="flex justify-between items-center text-[11px] font-mono">
-                  <span className="text-slate-500 uppercase">Provider</span>
-                  <span className="text-white">Shadow_Oracle_v4</span>
-                </div>
-                <div className="flex justify-between items-center text-[11px] font-mono">
-                  <span className="text-slate-500 uppercase">Resolution Source</span>
-                  <span className="text-white underline cursor-pointer hover:text-electric-blue transition-colors truncate max-w-[200px]">
-                    {market.resolutionSource}
+              <div className="bg-slate-900/40 border border-white/5 p-6 rounded-sm space-y-4">
+                <div className="flex justify-between items-center text-[10px] font-mono">
+                  <span className="text-slate-500 uppercase">Creation time</span>
+                  <span className="text-white">
+                    {format(new Date(market.createdAt), 'EEEE, MMMM dd, yyyy h:mmaaa')}
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-[11px] font-mono">
-                  <span className="text-slate-500 uppercase">Settlement Period</span>
-                  <span className="text-white">Within 24 Hours of Closure</span>
+                <div className="flex justify-between items-center text-[10px] font-mono">
+                  <span className="text-slate-500 uppercase">Target expiry</span>
+                  <span className="text-white">
+                    {format(new Date(market.endTime), 'EEEE, MMMM dd, yyyy h:mmaaa')}
+                  </span>
                 </div>
               </div>
             </div>
 
+            {/* Protocol Row */}
             <div className="space-y-4">
-              <h3 className="text-white font-bold flex items-center gap-2 text-sm uppercase tracking-widest">
-                <Clock className="w-4 h-4 text-electric-blue" />
-                Market Timeline
+              <h3 className="text-white font-bold flex items-center gap-2 text-[10px] uppercase tracking-widest">
+                <Info className="w-3.5 h-3.5 text-slate-500" />
+                Protocol Information
               </h3>
-              <div className="bg-white/[0.02] border border-white/5 p-4 rounded-sm space-y-3">
-                <div className="flex justify-between items-center text-[11px] font-mono">
-                  <span className="text-slate-500 uppercase">Creation Time</span>
-                  <span className="text-white">
-                    {new Date(market.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-[11px] font-mono">
-                  <span className="text-slate-500 uppercase">Target Expiry</span>
-                  <span className="text-white">
-                    {new Date(market.endTime).toLocaleDateString()}
-                  </span>
-                </div>
+              <div className="bg-slate-900/40 border border-white/5 p-6 rounded-sm h-[106px] flex items-center">
+                <p className="text-[10px] text-slate-500 font-light leading-relaxed">
+                  All transactions are processed through encrypted ZK-proofs. Your identity remains
+                  private while executing on-chain wagers within the Shadow Network.
+                </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="lg:col-span-4 sticky top-24 space-y-6">
-          <div className="space-y-4">
-            <h2 className="text-white font-bold text-xs uppercase tracking-[0.25em] flex items-center gap-2">
-              <Zap className="w-3.5 h-3.5 text-electric-blue" />
-              {activeTab === 'p2p' ? 'P2P_PROTOCOL_TERMINAL' : 'EXECUTION_TERMINAL'}
-            </h2>
-            {activeTab === 'p2p' ? (
-              <P2PActionTerminal 
-                market={market} 
-                selectedWager={selectedWager}
-                onClearSelection={() => setSelectedWager(null)}
-              />
-            ) : (
-              <BettingTerminal market={market} />
-            )}
-          </div>
-
-          <div className="bg-white/[0.02] border border-white/5 p-6 rounded-sm space-y-6">
-            <h3 className="text-white font-bold text-[10px] uppercase tracking-widest flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-electric-blue" />
-              Market Statistics
-            </h3>
-            <MarketStats market={market} />
-          </div>
-
-          <div className="flex items-start gap-4 p-4 border border-white/5 bg-white/[0.01] rounded-sm">
-            <Info className="w-5 h-5 text-slate-600 shrink-0 mt-0.5" />
-            <p className="text-[10px] text-slate-500 font-light leading-relaxed">
-              All transactions are processed through encrypted ZK-proofs. Your identity remains
-              private while executing on-chain wagers.
-            </p>
-          </div>
+        {/* Market Stats */}
+        <div className="lg:col-span-4 bg-slate-900/40 border border-white/5 p-8 rounded-sm space-y-8">
+          <h3 className="text-white font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 border-b border-white/5 pb-4">
+            <BarChart3 className="w-4 h-4 text-electric-blue" />
+            Market Statistics
+          </h3>
+          <MarketStats market={market} />
         </div>
       </div>
     </div>

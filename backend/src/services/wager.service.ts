@@ -211,6 +211,9 @@ export class WagerService {
         currentValue,
         profitLoss,
         isSettled: pos.isSettled,
+        entryTimestamp: pos.entryTimestamp,
+        settledAt: pos.settledAt || undefined,
+        payout: pos.payout || undefined,
       };
     });
   }
@@ -241,18 +244,37 @@ export class WagerService {
   }
 
   /**
+   * Get full portfolio for a user
+   */
+  async getFullPortfolio(userId: string): Promise<any> {
+    const allPositions = await this.getUserPositions(userId);
+    const stats = await this.getPortfolioStats(userId);
+
+    return {
+      activePositions: allPositions.filter(p => !p.isSettled),
+      settledPositions: allPositions.filter(p => p.isSettled),
+      stats,
+    };
+  }
+
+  /**
    * Get portfolio statistics
    */
   async getPortfolioStats(userId: string): Promise<PortfolioStats> {
     const userPositions = await this.getUserPositions(userId);
 
     const totalValue = userPositions.reduce((sum, pos) => sum + parseFloat(pos.currentValue), 0);
-
     const totalProfitLoss = userPositions.reduce((sum, pos) => sum + parseFloat(pos.profitLoss), 0);
 
     const settledPositions = userPositions.filter(p => p.isSettled);
     const wonPositions = settledPositions.filter(p => parseFloat(p.profitLoss) > 0);
-    const winRate = settledPositions.length > 0 ? wonPositions.length / settledPositions.length : 0;
+    const lostPositions = settledPositions.filter(p => parseFloat(p.profitLoss) < 0);
+    
+    const winRate = settledPositions.length > 0 ? (wonPositions.length / settledPositions.length) * 100 : 0;
+
+    const averageBetSize = userPositions.length > 0
+      ? userPositions.reduce((sum, pos) => sum + parseFloat(pos.amount), 0) / userPositions.length
+      : 0;
 
     // Get user data
     const user = await db.query.users.findFirst({
@@ -265,6 +287,9 @@ export class WagerService {
       winRate,
       activePositions: userPositions.filter(p => !p.isSettled).length,
       totalBets: userPositions.length,
+      totalWins: wonPositions.length,
+      totalLosses: lostPositions.length,
+      averageBetSize: averageBetSize.toString(),
       totalVolume: user?.totalVolume || '0',
     };
   }

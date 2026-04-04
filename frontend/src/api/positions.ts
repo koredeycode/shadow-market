@@ -1,6 +1,5 @@
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+import { api } from '../lib/api';
+import type { ApiResponse } from '../types';
 
 export interface Position {
   id: string;
@@ -41,42 +40,26 @@ export interface Portfolio {
 }
 
 class PositionsApi {
-  private async getAuthHeaders() {
-    const token = localStorage.getItem('authToken');
-    return {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    };
-  }
-
   async getPortfolio(): Promise<Portfolio> {
-    const headers = await this.getAuthHeaders();
-    const response = await axios.get(`${API_BASE_URL}/positions`, { headers });
-    return response.data;
+    const { data } = await api.get<ApiResponse<Portfolio>>('/positions');
+    return data.data!;
   }
 
   async getPositionsByMarket(marketId: string): Promise<Position[]> {
-    const headers = await this.getAuthHeaders();
-    const response = await axios.get(`${API_BASE_URL}/positions/market/${marketId}`, { headers });
-    return response.data;
+    const { data } = await api.get<ApiResponse<Position[]>>(`/positions/market/${marketId}`);
+    return data.data!;
   }
 
   async getStats(): Promise<PortfolioStats> {
-    const headers = await this.getAuthHeaders();
-    const response = await axios.get(`${API_BASE_URL}/positions/stats`, { headers });
-    return response.data;
+    const { data } = await api.get<ApiResponse<PortfolioStats>>('/positions/stats');
+    return data.data!;
   }
 
   async claimWinnings(
     positionId: string
   ): Promise<{ success: boolean; txHash: string; amount: string }> {
-    const headers = await this.getAuthHeaders();
-    const response = await axios.post(
-      `${API_BASE_URL}/wagers/${positionId}/claim`,
-      {},
-      { headers }
-    );
-    return response.data;
+    const { data } = await api.post(`/wagers/${positionId}/claim`, {});
+    return data;
   }
 }
 

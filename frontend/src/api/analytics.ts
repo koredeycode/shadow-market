@@ -1,6 +1,5 @@
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+import { api } from '../lib/api';
+import type { ApiResponse } from '../types';
 
 export type TimeRange = '1h' | '24h' | '7d' | '30d' | 'all';
 
@@ -34,6 +33,7 @@ export interface UserActivityPoint {
 
 export interface TopMarket {
   id: string;
+  slug?: string;
   question: string;
   volume: number;
   totalPositions: number;
@@ -60,84 +60,72 @@ export interface PlatformStats {
 }
 
 class AnalyticsApi {
-  private async getAuthHeaders() {
-    const token = localStorage.getItem('authToken');
-    return {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    };
-  }
-
-  // Portfolio value over time (requires auth)
-  async getPortfolioValueHistory(timeRange: TimeRange = '7d'): Promise<PortfolioValuePoint[]> {
-    const headers = await this.getAuthHeaders();
-    const response = await axios.get(`${API_BASE_URL}/analytics/portfolio-value`, {
-      headers,
-      params: { timeRange },
-    });
-    return response.data;
-  }
-
   // Market volume over time (public)
   async getMarketVolumeHistory(timeRange: TimeRange = '7d'): Promise<MarketVolumePoint[]> {
-    const response = await axios.get(`${API_BASE_URL}/analytics/market-volume`, {
+    const { data } = await api.get<ApiResponse<MarketVolumePoint[]>>('/analytics/market-volume', {
       params: { timeRange },
     });
-    return response.data;
+    return data.data!;
   }
 
   // User activity over time (public)
   async getUserActivityHistory(timeRange: TimeRange = '7d'): Promise<UserActivityPoint[]> {
-    const response = await axios.get(`${API_BASE_URL}/analytics/user-activity`, {
+    const { data } = await api.get<ApiResponse<UserActivityPoint[]>>('/analytics/user-activity', {
       params: { timeRange },
     });
-    return response.data;
+    return data.data!;
   }
 
   // Category breakdown (public)
   async getCategoryStats(): Promise<CategoryStats[]> {
-    const response = await axios.get(`${API_BASE_URL}/analytics/categories`);
-    return response.data;
+    const { data } = await api.get<ApiResponse<CategoryStats[]>>('/analytics/categories');
+    return data.data!;
   }
 
   // Top markets by volume (public)
   async getTopMarkets(limit: number = 10): Promise<TopMarket[]> {
-    const response = await axios.get(`${API_BASE_URL}/analytics/top-markets`, {
+    const { data } = await api.get<ApiResponse<TopMarket[]>>('/analytics/top-markets', {
       params: { limit },
     });
-    return response.data;
+    return data.data!;
   }
 
   // Top traders by volume (public)
   async getTopTraders(limit: number = 10): Promise<TopTrader[]> {
-    const response = await axios.get(`${API_BASE_URL}/analytics/top-traders`, {
+    const { data } = await api.get<ApiResponse<TopTrader[]>>('/analytics/top-traders', {
       params: { limit },
     });
-    return response.data;
+    return data.data!;
   }
 
   // Platform-wide statistics (public)
   async getPlatformStats(): Promise<PlatformStats> {
-    const response = await axios.get(`${API_BASE_URL}/analytics/platform-stats`);
-    return response.data;
+    const { data } = await api.get<ApiResponse<PlatformStats>>('/analytics/platform-stats');
+    return data.data!;
+  }
+
+  // Portfolio value history (private/public)
+  async getPortfolioValueHistory(timeRange: TimeRange = '7d'): Promise<PortfolioValuePoint[]> {
+    const { data } = await api.get<ApiResponse<PortfolioValuePoint[]>>('/analytics/portfolio-value', {
+      params: { timeRange },
+    });
+    return data.data!;
   }
 
   // Export data as CSV
   async exportPortfolioData(timeRange: TimeRange = 'all'): Promise<Blob> {
-    const headers = await this.getAuthHeaders();
-    const response = await axios.get(`${API_BASE_URL}/analytics/export/portfolio`, {
-      headers,
+    const { data } = await api.get('/analytics/export/portfolio', {
       params: { timeRange },
       responseType: 'blob',
     });
-    return response.data;
+    return data;
   }
 
   async exportMarketData(marketId: string): Promise<Blob> {
-    const response = await axios.get(`${API_BASE_URL}/analytics/export/market/${marketId}`, {
+    const { data } = await api.get(`/analytics/export/market/${marketId}`, {
       responseType: 'blob',
     });
-    return response.data;
+    return data;
   }
 }
 

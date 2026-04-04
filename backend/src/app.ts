@@ -7,6 +7,7 @@ import { httpLogger, responseTimeMiddleware } from './middleware/morgan-logger.j
 import { adminRouter } from './routes/admin.js';
 import { marketsRouter } from './routes/markets.js';
 import { oraclesRouter } from './routes/oracles.js';
+import { positionsRouter } from './routes/positions.js';
 import { usersRouter } from './routes/users.js';
 import { wagersRouter } from './routes/wagers.js';
 
@@ -31,6 +32,7 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/admin', adminRouter);
 app.use('/api/markets', marketsRouter);
+app.use('/api/positions', positionsRouter);
 app.use('/api/oracles', oraclesRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/wagers', wagersRouter);

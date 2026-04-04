@@ -113,7 +113,7 @@ export circuit initialize(): [] {
 export circuit createMarket(
   endTime: Uint<64>,
   title: Bytes<32>
-): [] {
+): Uint<64> {
   const disclosedEndTime = disclose(endTime);
   const disclosedTitle = disclose(title);
   
@@ -131,6 +131,7 @@ export circuit createMarket(
     betCount:   0,
     wagerCount: 0
   });
+  return newMarketId;
 }
 
 // -----------------------------------------------------------------------------
@@ -140,7 +141,7 @@ export circuit createMarket(
 export circuit placeBet(
   marketId: Uint<64>,
   side: Outcome
-): [] {
+): Uint<64> {
   const userKey = disclose(persistentHash<Bytes<32>>(userSecretKey()));
   const amount = disclose(betAmount());
   const nonce = disclose(betNonce());
@@ -185,6 +186,7 @@ export circuit placeBet(
     betCount:   (market.betCount + 1) as Uint<64>,
     wagerCount: market.wagerCount
   });
+  return newBetId;
 }
 
 // -----------------------------------------------------------------------------
@@ -196,7 +198,7 @@ export circuit createWager(
   side: Outcome,
   oddsNumerator: Uint<64>,
   oddsDenominator: Uint<64>
-): [] {
+): Uint<64> {
   const userKey = disclose(persistentHash<Bytes<32>>(userSecretKey()));
   const amount = disclose(wagerAmountInput());
   const disclosedMarketId = disclose(marketId);
@@ -237,6 +239,7 @@ export circuit createWager(
     betCount:   market.betCount,
     wagerCount: (market.wagerCount + 1) as Uint<64>
   });
+  return newWagerId;
 }
 
 export circuit acceptWager(wagerId: Uint<64>): [] {

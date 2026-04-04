@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { addDays, addMonths, eachDayOfInterval, endOfMonth, format, isPast, isSameDay, isToday, startOfMonth, subMonths } from 'date-fns';
+import { addDays, addMonths, eachDayOfInterval, endOfMonth, format, getDay, getMonth, getYear, isPast, isSameDay, isToday, setMonth, setYear, startOfMonth, subMonths } from 'date-fns';
 import { AlertCircle, AlignLeft, Calendar, ChevronLeft, ChevronRight, Clock, HelpCircle, LayoutGrid, Zap, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -50,6 +50,7 @@ export function CreateMarket() {
   const initialDate = resolutionDate ? new Date(resolutionDate) : addDays(new Date(), 1);
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(initialDate));
   const [selectedTime, setSelectedTime] = useState(format(initialDate, 'HH:mm'));
+  const [selectionMode, setSelectionMode] = useState<'day' | 'month' | 'year'>('day');
 
   const days = useMemo(() => {
     return eachDayOfInterval({
@@ -134,7 +135,7 @@ export function CreateMarket() {
           <div className="p-2 bg-electric-blue/10 rounded-sm">
             <LayoutGrid className="w-5 h-5 text-electric-blue" />
           </div>
-          <h1 className="text-4xl font-bold text-white tracking-tight">Create Market</h1>
+          <h1 className="text-4xl font-bold text-white tracking-tight">Create market</h1>
         </div>
       </div>
 
@@ -145,7 +146,7 @@ export function CreateMarket() {
             <label className="text-[10px] font-mono text-slate-500 uppercase tracking-widest flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <HelpCircle className="w-3.5 h-3.5 text-electric-blue" />
-                Market Question
+                Market question
               </span>
               {errors.question && (
                 <span className="text-red-400 flex items-center gap-1">
@@ -168,7 +169,7 @@ export function CreateMarket() {
             <label className="text-[10px] font-mono text-slate-500 uppercase tracking-widest flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <AlignLeft className="w-3.5 h-3.5 text-electric-blue" />
-                Additional Details (Optional)
+                Additional details (optional)
               </span>
             </label>
             <textarea
@@ -182,7 +183,7 @@ export function CreateMarket() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Category Selection */}
             <CustomSelect
-              label="Market Category"
+              label="Market category"
               value={watch('category')}
               onChange={(val) => setValue('category', val)}
               error={errors.category?.message}
@@ -206,7 +207,7 @@ export function CreateMarket() {
               <label className="text-[10px] font-mono text-slate-500 uppercase tracking-widest flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <Zap className="w-3.5 h-3.5 text-electric-blue" />
-                  Tags (Optional)
+                  Tags (optional)
                 </span>
               </label>
               <div className="space-y-3">
@@ -248,9 +249,14 @@ export function CreateMarket() {
               <label className="text-[10px] font-mono text-slate-500 uppercase tracking-widest flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <Calendar className="w-3.5 h-3.5 text-electric-blue" />
-                  Resolution Timeline
+                  Resolution timeline
                 </span>
-                {errors.resolutionDate && (
+                {watch('resolutionDate') && (
+                  <span className="text-electric-blue font-mono text-[10px] font-bold tracking-tight bg-electric-blue/5 px-2 py-1 border border-electric-blue/10 animate-in fade-in slide-in-from-right-2">
+                    {format(new Date(watch('resolutionDate')), 'EEEE, MMMM dd, yyyy h:mmaaa')}
+                  </span>
+                )}
+                {errors.resolutionDate && !watch('resolutionDate') && (
                   <span className="text-red-400 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" /> Required
                   </span>
@@ -282,11 +288,23 @@ export function CreateMarket() {
                     <div className="flex flex-col md:flex-row gap-12 items-start bg-slate-950/50 p-6 border border-white/5 rounded-sm">
                       {/* Calendar Section */}
                       <div className="flex-1 space-y-4 w-full">
-                        {/* Calendar Header */}
+                        {/* Selection Mode Selector */}
                         <div className="flex items-center justify-between px-2 mb-2">
-                          <span className="text-sm font-bold text-white uppercase tracking-widest font-mono">
-                            {format(currentMonth, 'MMMM yyyy')}
-                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setSelectionMode(selectionMode === 'month' ? 'day' : 'month')}
+                            className="text-sm font-bold text-white uppercase tracking-widest font-mono hover:text-electric-blue transition-colors"
+                          >
+                            {format(currentMonth, 'MMMM')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectionMode(selectionMode === 'year' ? 'day' : 'year')}
+                            className="text-sm font-bold text-white uppercase tracking-widest font-mono hover:text-electric-blue transition-colors"
+                          >
+                            {format(currentMonth, 'yyyy')}
+                          </button>
+                          
                           <div className="flex gap-2">
                             <button
                               type="button"
@@ -306,37 +324,99 @@ export function CreateMarket() {
                         </div>
 
                         {/* Day Grid */}
-                        <div className="grid grid-cols-7 gap-2">
-                          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-                            <div key={`${day}-${index}`} className="text-[10px] font-mono text-slate-600 text-center py-2 uppercase font-bold tracking-widest">
-                              {day}
-                            </div>
-                          ))}
-                          {days.map(day => {
-                            const isSelected = isSameDay(day, selectedDate);
-                            const isDisabled = isPast(day) && !isToday(day);
-                            return (
-                              <button
-                                key={day.toISOString()}
-                                type="button"
-                                disabled={isDisabled}
-                                onClick={() => handleDateChange(day)}
-                                className={`aspect-square flex items-center justify-center text-xs rounded-sm transition-all font-mono relative ${
-                                  isSelected
-                                    ? 'bg-electric-blue text-white font-bold shadow-[0_0_20px_rgba(59,130,246,0.3)] z-10'
-                                    : isDisabled
-                                    ? 'text-slate-800 opacity-10 cursor-not-allowed'
-                                    : 'text-slate-400 hover:bg-white/10 hover:text-white border border-transparent hover:border-white/10'
-                                }`}
-                              >
-                                {format(day, 'd')}
-                                {isToday(day) && !isSelected && (
-                                  <div className="absolute bottom-1 w-1 h-1 bg-electric-blue rounded-full" />
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
+                        {selectionMode === 'day' && (
+                          <div className="grid grid-cols-7 gap-2">
+                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+                              <div key={`${day}-${index}`} className="text-[10px] font-mono text-slate-600 text-center py-2 uppercase font-bold tracking-widest">
+                                {day}
+                              </div>
+                            ))}
+                            
+                            {/* Weekday Padding */}
+                            {Array.from({ length: getDay(startOfMonth(currentMonth)) }).map((_, i) => (
+                              <div key={`pad-${i}`} className="aspect-square" />
+                            ))}
+
+                            {days.map(day => {
+                              const isSelected = isSameDay(day, selectedDate);
+                              const isDisabled = isPast(day) && !isToday(day);
+                              return (
+                                <button
+                                  key={day.toISOString()}
+                                  type="button"
+                                  disabled={isDisabled}
+                                  onClick={() => handleDateChange(day)}
+                                  className={`aspect-square flex items-center justify-center text-xs rounded-sm transition-all font-mono relative ${
+                                    isSelected
+                                      ? 'bg-electric-blue text-white font-bold shadow-[0_0_20px_rgba(59,130,246,0.3)] z-10'
+                                      : isDisabled
+                                      ? 'text-slate-800 opacity-10 cursor-not-allowed'
+                                      : 'text-slate-400 hover:bg-white/10 hover:text-white border border-transparent hover:border-white/10'
+                                  }`}
+                                >
+                                  {format(day, 'd')}
+                                  {isToday(day) && !isSelected && (
+                                    <div className="absolute bottom-1 w-1 h-1 bg-electric-blue rounded-full" />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Month Selector Grid */}
+                        {selectionMode === 'month' && (
+                          <div className="grid grid-cols-3 gap-3">
+                            {Array.from({ length: 12 }).map((_, i) => {
+                              const month = setMonth(currentMonth, i);
+                              const isSelected = i === getMonth(currentMonth);
+                              return (
+                                <button
+                                  key={i}
+                                  type="button"
+                                  onClick={() => {
+                                    setCurrentMonth(month);
+                                    setSelectionMode('day');
+                                  }}
+                                  className={`py-4 rounded-sm text-[10px] font-mono uppercase tracking-widest transition-all ${
+                                    isSelected
+                                      ? 'bg-electric-blue text-white font-bold'
+                                      : 'bg-white/5 text-slate-500 hover:bg-white/10 hover:text-white'
+                                  }`}
+                                >
+                                  {format(month, 'MMM')}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Year Selector Grid */}
+                        {selectionMode === 'year' && (
+                          <div className="grid grid-cols-3 gap-3 h-48 overflow-y-auto pr-2 scrollbar-hide">
+                            {Array.from({ length: 12 }).map((_, i) => {
+                              const year = getYear(new Date()) + i;
+                              const isSelected = year === getYear(currentMonth);
+                              return (
+                                <button
+                                  key={year}
+                                  type="button"
+                                  onClick={() => {
+                                    setCurrentMonth(setYear(currentMonth, year));
+                                    setSelectionMode('day');
+                                  }}
+                                  className={`py-4 rounded-sm text-[10px] font-mono uppercase tracking-widest transition-all ${
+                                    isSelected
+                                      ? 'bg-electric-blue text-white font-bold'
+                                      : 'bg-white/5 text-slate-500 hover:bg-white/10 hover:text-white'
+                                  }`}
+                                >
+                                  {year}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
 
                       {/* Divider */}
@@ -372,12 +452,6 @@ export function CreateMarket() {
                 }}
               />
             </div>
-
-            <div className="space-y-8">
-            <div className="space-y-4">
-              {/* Optional: Add other settings here if needed */}
-            </div>
-            </div>
           </div>
         </div>
 
@@ -392,24 +466,24 @@ export function CreateMarket() {
             ) : (
               <Zap className="w-4 h-4" />
             )}
-            Launch Market
+            Launch market
           </button>
         </div>
       </form>
 
       <div className="mt-8 text-center">
         <TxSuccessModal 
-        isOpen={!!successData}
-        onClose={() => setSuccessData(null)}
-        txHash={successData?.txHash || ''}
-        title="Market Launched"
-        subtitle={`Successfully deployed "${successData?.question.slice(0, 50)}${successData?.question && successData.question.length > 50 ? '...' : ''}" to the Shadow Network.`}
-        primaryAction={successData?.slug ? {
-          label: 'View Market',
-          onClick: () => navigate(`/markets/${successData.slug}`)
-        } : undefined}
-      />
-    </div>
+          isOpen={!!successData}
+          onClose={() => setSuccessData(null)}
+          txHash={successData?.txHash || ''}
+          title="Market launched"
+          subtitle={`Successfully deployed "${successData?.question.slice(0, 50)}${successData?.question && successData.question.length > 50 ? '...' : ''}" to the Shadow Network at ${format(new Date(), 'EEEE, MMMM dd, yyyy h:mmaaa')}.`}
+          primaryAction={successData?.slug ? {
+            label: 'View market',
+            onClick: () => navigate(`/markets/${successData.slug}`)
+          } : undefined}
+        />
+      </div>
     </div>
   );
 }

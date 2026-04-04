@@ -76,7 +76,7 @@ export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
     const betAmount = parseFloat(amount);
     const minBet = 1; // Atomic unit minimum
     const maxBet = 1000000000; // Effectively unlimited for frontend validation
-    const userBalance = parseFloat(unshieldedNightBalance || '0');
+    const userBalance = parseFloat(unshieldedNightBalance || '0') / 1_000_000;
 
     if (betAmount < minBet) return `Minimum bet is ${minBet}`;
     if (betAmount > maxBet) return `Maximum bet is ${maxBet}`;
@@ -254,7 +254,7 @@ export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
                       key={pct}
                       type="button"
                       onClick={() => {
-                        const bal = parseFloat(unshieldedNightBalance || '0');
+                        const bal = parseFloat(unshieldedNightBalance || '0') / 1_000_000;
                         setValue('amount', ((bal * pct) / 100).toFixed(2));
                       }}
                       className="py-1.5 bg-white/5 border border-white/5 rounded-sm text-[10px] font-mono text-slate-500 hover:bg-white/10 hover:text-white transition-all uppercase"

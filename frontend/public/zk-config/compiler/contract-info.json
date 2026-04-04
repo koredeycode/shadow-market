@@ -36,9 +36,8 @@
         }
       ],
       "result-type": {
-        "type-name": "Tuple",
-        "types": [
-        ]
+        "type-name": "Uint",
+        "maxval": 18446744073709551615
       }
     },
     {
@@ -67,9 +66,8 @@
         }
       ],
       "result-type": {
-        "type-name": "Tuple",
-        "types": [
-        ]
+        "type-name": "Uint",
+        "maxval": 18446744073709551615
       }
     },
     {
@@ -112,9 +110,8 @@
         }
       ],
       "result-type": {
-        "type-name": "Tuple",
-        "types": [
-        ]
+        "type-name": "Uint",
+        "maxval": 18446744073709551615
       }
     },
     {

@@ -1,4 +1,4 @@
-import { CheckCircle2, Copy, X, ArrowRight, Zap, Terminal } from 'lucide-react';
+import { CheckCircle2, Copy, X, ArrowUpRight, Zap, Terminal } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface TxSuccessModalProps {
@@ -65,7 +65,7 @@ export function TxSuccessModal({
             <div className="flex justify-between items-center text-[10px] uppercase font-mono tracking-widest text-slate-500 underline decoration-electric-blue/30 underline-offset-4">
               <span className="flex items-center gap-2">
                 <Terminal className="w-3 h-3 text-electric-blue" />
-                Proof_Submission
+                Proof submission
               </span>
               <span className="text-success-green">SECURED</span>
             </div>
@@ -91,17 +91,17 @@ export function TxSuccessModal({
             {primaryAction && (
               <button
                 onClick={primaryAction.onClick}
-                className="w-full py-4 bg-electric-blue text-white rounded-sm font-bold text-xs tracking-[0.2em] uppercase hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(59,130,246,0.3)] group"
+                className="w-full py-4 bg-electric-blue text-white rounded-sm font-bold text-xs hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(59,130,246,0.3)] group/btn"
               >
-                {primaryAction.label}
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <span className="tracking-[0.1em]">View market</span>
+                <ArrowUpRight className="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
               </button>
             )}
             <button
               onClick={onClose}
-              className="w-full py-3 border border-white/5 hover:bg-white/5 text-[10px] font-mono font-bold text-slate-500 uppercase tracking-[0.3em] transition-all"
+              className="w-full py-3 border border-white/5 hover:bg-white/5 text-[10px] font-mono font-bold text-slate-500 transition-all"
             >
-              Close_Terminal
+              Close terminal
             </button>
           </div>
         </div>

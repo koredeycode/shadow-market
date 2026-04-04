@@ -126,7 +126,6 @@ class ContractManager {
    */
   private async executeTx<T = string>(
     txOperation: () => Promise<T>,
-    loadingMsg: string,
     successMsg: string,
     waitForUpdate?: (state: any) => boolean
   ): Promise<T> {
@@ -220,7 +219,6 @@ class ContractManager {
   async placeBet(marketId: string, betAmount: bigint, betOutcome: boolean): Promise<{ txHash: string; onchainId: string }> {
     return this.executeTx(
       () => (this.api as any).placeBet(marketId, betAmount, betOutcome),
-      'Transmitting bet proof...',
       'Bet finalized on-chain'
     );
   }
@@ -231,7 +229,6 @@ class ContractManager {
   async claimWinnings(betId: string): Promise<string> {
     return this.executeTx(
       () => (this.api as any).claimWinnings(betId),
-      'Verifying winning proof...',
       'Winnings claimed'
     );
   }
@@ -252,7 +249,6 @@ class ContractManager {
 
     return this.executeTx(
       () => (this.api as any).createMarket(question, resolutionTime),
-      'Generating market circuit...',
       'Market deployed successfully',
       (state) => state.marketCount > previousCount
     );
@@ -264,7 +260,6 @@ class ContractManager {
   async resolveMarket(marketId: string, outcome: boolean): Promise<string> {
     return this.executeTx(
       () => (this.api as any).resolveMarket(marketId, outcome),
-      'Transmitting resolution proof...',
       'Market resolved'
     );
   }
@@ -287,7 +282,6 @@ class ContractManager {
 
     return this.executeTx(
       () => (this.api as any).createWager(marketId, side, amount, oddsNumerator, oddsDenominator),
-      'Publishing P2P wager...',
       'Wager offering active',
       (state) => state.wagerCount > previousCount
     );
@@ -299,7 +293,6 @@ class ContractManager {
   async acceptWager(wagerId: string): Promise<string> {
     return this.executeTx(
       () => (this.api as any).acceptWager(wagerId),
-      'Accepting wager offer...',
       'Wager matched'
     );
   }
@@ -310,7 +303,6 @@ class ContractManager {
   async cancelWager(wagerId: string): Promise<string> {
     return this.executeTx(
       () => (this.api as any).cancelWager(wagerId),
-      'Processing cancellation...',
       'Wager offer withdrawn'
     );
   }
@@ -321,7 +313,6 @@ class ContractManager {
   async claimWagerWinnings(wagerId: string): Promise<string> {
     return this.executeTx(
       () => (this.api as any).claimWagerWinnings(wagerId),
-      'Finalizing payout...',
       'Payout received'
     );
   }
@@ -353,7 +344,6 @@ class ContractManager {
   async executeContractInitialize(): Promise<string> {
     return this.executeTx(
       () => (this.api as any).initialize(),
-      'Executing initialize() circuit...',
       'Contract initialized on-chain'
     );
   }

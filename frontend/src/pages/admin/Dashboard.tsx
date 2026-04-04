@@ -345,7 +345,7 @@ export function AdminDashboard() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link
-            to="/admin/markets"
+            to="/admin/market"
             className="p-4 bg-white/[0.02] border border-white/5 rounded-sm hover:bg-white/[0.05] hover:border-electric-blue/30 transition-all group"
           >
             <BarChart3 className="w-6 h-6 text-electric-blue mb-3" />

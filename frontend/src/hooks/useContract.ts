@@ -17,7 +17,7 @@ export function useContract() {
         throw new Error('Contract not initialized. Please reconnect your wallet.');
       }
 
-      const betAmount = BigInt(amount);
+      const betAmount = BigInt(Math.floor(amount * 1_000_000));
       const betOutcome = side === 'YES';
 
       // Call contract - returns { txHash, onchainId }
@@ -68,7 +68,7 @@ export function useContract() {
       }
 
       try {
-        const betAmount = BigInt(Math.floor(amount));
+        const betAmount = BigInt(Math.floor(amount * 1_000_000));
         const betSide = side === 'YES';
         const [num, den] = odds;
 

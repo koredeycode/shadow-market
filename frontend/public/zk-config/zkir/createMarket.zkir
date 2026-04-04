@@ -85,6 +85,7 @@
     { "op": "pi_skip", "guard": 3, "count": 1 },
     { "op": "load_imm", "imm": "A1" },
     { "op": "declare_pub_input", "var": 19 },
-    { "op": "pi_skip", "guard": 3, "count": 1 }
+    { "op": "pi_skip", "guard": 3, "count": 1 },
+    { "op": "output", "var": 11 }
   ]
 }

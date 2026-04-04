@@ -496,116 +496,77 @@ export class ShadowMarketAPI {
   private getDisclosedId(txData: any): string {
     console.log('DEBUG: >>> START DISCLOSED ID EXTRACTION <<<');
     
-    // Log full public data for user review as requested
-    if (txData.public) {
-      // Use a custom replacer to handle BigInts in txData for logging
-      console.log('DEBUG: Full txData.public:', JSON.stringify(txData.public, (k, v) => 
-        typeof v === 'bigint' ? v.toString() : v, 2));
+    /**
+     * DETERMINISTIC ID EXTRACTION
+     * We've updated the .compact circuits to explicitly RETURN the new IDs.
+     * This provides a 100% reliable source of truth that avoids any 'noisy' 
+     * disclosures from the ledger or struct updates in the transcript.
+     */
+
+    // 1. Check direct circuit result (from our explicit 'return newId' in .compact)
+    // The result is usually in txData.result or txData.public.result
+    const result = txData.result ?? txData.public?.result;
+    if (result !== undefined && result !== null) {
+      const val = this.extractValue(result);
+      if (val !== null && val !== undefined && val.toString() !== '') {
+        console.log('DEBUG: Found ID in circuit return value:', val.toString());
+        return val.toString();
+      }
     }
 
-    // 1. Collect all candidates from all possible locations
-    const candidates: any[] = [];
+    // 2. Fallback: Check the explicit 'disclosed' array 
+    // This is populated by both explicit disclosures and return values in order.
+    const disclosed = txData.public?.disclosed ?? txData.disclosed;
+    if (Array.isArray(disclosed) && disclosed.length > 0) {
+      // Typically the return value is the last element in the disclosed list 
+      // if it was passed through return statements in the circuit.
+      const val = this.extractValue(disclosed[disclosed.length - 1]);
+      if (val !== null) {
+        console.log('DEBUG: Found ID in disclosed array pool:', val.toString());
+        return val.toString();
+      }
+    }
+
+    console.warn('CRITICAL: No ID found in circuit result. The system may have been unable to identify the new entity ID.');
+    return '';
+  }
+
+  /**
+   * Internal helper to extract values from Midnight JS objects
+   */
+  private extractValue(val: any): any {
+    if (val === null || val === undefined) return null;
     
-    // Standard compact result locations
-    const standardLocs = [
-      { name: 'public.disclosed', val: txData.public?.disclosed },
-      { name: 'disclosed', val: txData.disclosed },
-      { name: 'result.disclosed', val: txData.result?.disclosed },
-      { name: 'result.events', val: txData.result?.events },
-      { name: 'public.args', val: txData.public?.args }
-    ];
-
-    standardLocs.forEach(loc => {
-      if (loc.val) {
-        console.log(`DEBUG: Found candidate in ${loc.name}:`, loc.val);
-        if (Array.isArray(loc.val)) candidates.push(...loc.val);
-        else candidates.push(loc.val);
-      }
-    });
-
-    // Transcript-based locations (POPEQ)
-    if (txData.public?.publicTranscript) {
-      console.log('DEBUG: Scanning publicTranscript...');
-      txData.public.publicTranscript.forEach((op: any, i: number) => {
-        if (op.popeq?.result?.value) {
-          console.log(`DEBUG: Found POPEQ [${i}] in publicTranscript:`, op.popeq.result.value);
-          candidates.push(op.popeq.result.value);
-        }
-      });
-    }
-
-    if (txData.public?.partitionedTranscript) {
-      console.log('DEBUG: Scanning partitionedTranscript...');
-      txData.public.partitionedTranscript.forEach((section: any, si: number) => {
-        if (section?.program) {
-          section.program.forEach((op: any, oi: number) => {
-            if (op.popeq?.result?.value) {
-              console.log(`DEBUG: Found POPEQ [${si}:${oi}] in partitionedTranscript:`, op.popeq.result.value);
-              candidates.push(op.popeq.result.value);
-            } else if (op.push?.value?.tag === 'cell' && op.push.value.content?.value) {
-               console.log(`DEBUG: Found push-cell [${si}:${oi}] in partitionedTranscript:`, op.push.value.content.value);
-               candidates.push(op.push.value.content.value);
-            }
-          });
-        }
-      });
-    }
-
-    // Extraction function for various Midnight JS object formats
-    const extractValue = (val: any): any => {
-      if (val === null || val === undefined) return null;
+    // Handle Uint8Array (common for IDs and hashes)
+    if (val instanceof Uint8Array || (typeof val === 'object' && val.constructor?.name === 'Uint8Array')) {
+      if (val.length === 0) return null;
       
-      if (val instanceof Uint8Array || (typeof val === 'object' && val.constructor?.name === 'Uint8Array')) {
-        if (val.length === 0) return null; // Ignore empty arrays as they are likely spacer/padding
-        
-        // Small arrays (<=8 bytes) are treated as numbers/counters (ID, endTime)
-        if (val.length <= 8) {
-          let res = 0n;
-          for (let i = 0; i < val.length; i++) res = (res << 8n) | BigInt(val[i]);
-          return res;
-        }
-        
-        // Larger arrays are hex strings (title, hash)
-        return Array.from(val).map((b: any) => b.toString(16).padStart(2, '0')).join('');
-      }
-
-      if (Array.isArray(val)) {
-        if (val.length === 0) return null;
-        if (val.length === 1) return extractValue(val[0]);
-        return extractValue(val[val.length - 1]);
+      // Values <= 8 bytes are treated as BigInts (IDs, tokens units, timestamps)
+      if (val.length <= 8) {
+        let res = 0n;
+        for (let i = 0; i < val.length; i++) res = (res << 8n) | BigInt(val[i]);
+        return res;
       }
       
-      if (typeof val === 'object') {
-        if ('0' in val && Object.keys(val).length === 1) return extractValue(val['0']);
-        if ('value' in val) return extractValue(val.value);
-        if ('tag' in val && 'value' in val) return extractValue(val.value);
-      }
-      
-      return val;
-    };
-
-    // Filter and map candidates to valid values
-    const validValues = candidates
-      .map(c => ({ raw: c, processed: extractValue(c) }))
-      .filter(item => {
-        const v = item.processed;
-        return v !== null && v !== undefined && v.toString().trim() !== '';
-      });
-
-    console.log('DEBUG: Filtered Valid ID Candidates:', validValues.map(v => v.processed.toString()));
-
-    if (validValues.length === 0) {
-      console.warn('CRITICAL: No valid ID candidates extracted from transaction!');
-      if (txData.public?.identifiers?.length > 1) return txData.public.identifiers[1].toString();
-      return '';
+      // Larger values are hex strings (32-byte hashes, keys)
+      return Array.from(val).map((b: any) => b.toString(16).padStart(2, '0')).join('');
     }
 
-    // Usually, the ID is the LAST counter disclosed in the circuit
-    const resultId = validValues[validValues.length - 1].processed.toString();
-    console.log('DEBUG: Selected result ID:', resultId);
-    console.log('DEBUG: >>> END DISCLOSED ID EXTRACTION <<<');
+    // Handle arrays (unwrap if single, or return array)
+    if (Array.isArray(val)) {
+      if (val.length === 0) return null;
+      if (val.length === 1) return this.extractValue(val[0]);
+      return val.map(v => this.extractValue(v)).filter(v => v !== null);
+    }
     
-    return resultId;
+    // Handle objects with 'value' or '0' keys (common in SDK output)
+    if (typeof val === 'object') {
+      if ('value' in val) return this.extractValue(val.value);
+      if ('tag' in val && 'value' in val) return this.extractValue(val.value);
+      if ('0' in val && Object.keys(val).length === 1) return this.extractValue(val['0']);
+    }
+    
+    return val;
   }
 }
 

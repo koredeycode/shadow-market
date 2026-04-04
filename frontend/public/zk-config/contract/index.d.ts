@@ -40,15 +40,15 @@ export type ImpureCircuits<PS> = {
   initialize(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
   createMarket(context: __compactRuntime.CircuitContext<PS>,
                endTime_0: bigint,
-               title_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
+               title_0: Uint8Array): __compactRuntime.CircuitResults<PS, bigint>;
   placeBet(context: __compactRuntime.CircuitContext<PS>,
            marketId_0: bigint,
-           side_0: number): __compactRuntime.CircuitResults<PS, []>;
+           side_0: number): __compactRuntime.CircuitResults<PS, bigint>;
   createWager(context: __compactRuntime.CircuitContext<PS>,
               marketId_0: bigint,
               side_0: number,
               oddsNumerator_0: bigint,
-              oddsDenominator_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+              oddsDenominator_0: bigint): __compactRuntime.CircuitResults<PS, bigint>;
   acceptWager(context: __compactRuntime.CircuitContext<PS>, wagerId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
   cancelWager(context: __compactRuntime.CircuitContext<PS>, wagerId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
   lockMarket(context: __compactRuntime.CircuitContext<PS>, marketId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
@@ -67,15 +67,15 @@ export type ProvableCircuits<PS> = {
   initialize(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
   createMarket(context: __compactRuntime.CircuitContext<PS>,
                endTime_0: bigint,
-               title_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
+               title_0: Uint8Array): __compactRuntime.CircuitResults<PS, bigint>;
   placeBet(context: __compactRuntime.CircuitContext<PS>,
            marketId_0: bigint,
-           side_0: number): __compactRuntime.CircuitResults<PS, []>;
+           side_0: number): __compactRuntime.CircuitResults<PS, bigint>;
   createWager(context: __compactRuntime.CircuitContext<PS>,
               marketId_0: bigint,
               side_0: number,
               oddsNumerator_0: bigint,
-              oddsDenominator_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+              oddsDenominator_0: bigint): __compactRuntime.CircuitResults<PS, bigint>;
   acceptWager(context: __compactRuntime.CircuitContext<PS>, wagerId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
   cancelWager(context: __compactRuntime.CircuitContext<PS>, wagerId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
   lockMarket(context: __compactRuntime.CircuitContext<PS>, marketId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
@@ -97,15 +97,15 @@ export type Circuits<PS> = {
   initialize(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
   createMarket(context: __compactRuntime.CircuitContext<PS>,
                endTime_0: bigint,
-               title_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
+               title_0: Uint8Array): __compactRuntime.CircuitResults<PS, bigint>;
   placeBet(context: __compactRuntime.CircuitContext<PS>,
            marketId_0: bigint,
-           side_0: number): __compactRuntime.CircuitResults<PS, []>;
+           side_0: number): __compactRuntime.CircuitResults<PS, bigint>;
   createWager(context: __compactRuntime.CircuitContext<PS>,
               marketId_0: bigint,
               side_0: number,
               oddsNumerator_0: bigint,
-              oddsDenominator_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+              oddsDenominator_0: bigint): __compactRuntime.CircuitResults<PS, bigint>;
   acceptWager(context: __compactRuntime.CircuitContext<PS>, wagerId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
   cancelWager(context: __compactRuntime.CircuitContext<PS>, wagerId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
   lockMarket(context: __compactRuntime.CircuitContext<PS>, marketId_0: bigint): __compactRuntime.CircuitResults<PS, []>;

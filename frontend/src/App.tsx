@@ -14,6 +14,7 @@ const Analytics = lazy(() => import('./pages/Analytics'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
 const HowItWorks = lazy(() => import('./pages/HowItWorks'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Admin pages
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
@@ -36,8 +37,9 @@ function App() {
             <Route path="/" element={<Layout />}>
               <Route index element={<Home />} />
               <Route path="markets" element={<Markets />} />
-              <Route path="markets/:slug" element={<MarketDetail />} />
               <Route path="markets/create" element={<CreateMarket />} />
+              <Route path="markets/:slug" element={<MarketDetail />} />
+              <Route path="markets/:slug/wagers" element={<MarketDetail />} />
               <Route path="portfolio" element={<Portfolio />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="privacy" element={<Privacy />} />
@@ -46,8 +48,11 @@ function App() {
 
               {/* Admin Routes */}
               <Route path="admin" element={<AdminDashboard />} />
-              <Route path="admin/markets" element={<AdminMarkets />} />
+              <Route path="admin/market" element={<AdminMarkets />} />
               <Route path="admin/contract-state" element={<AdminContractState />} />
+              
+              {/* 404 Route */}
+              <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
         </Suspense>

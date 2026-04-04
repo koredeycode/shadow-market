@@ -61,6 +61,9 @@ export interface PortfolioStats {
   winRate: number;
   activePositions: number;
   totalBets: number;
+  totalWins: number;
+  totalLosses: number;
+  averageBetSize: string;
   totalVolume: string;
 }
 
@@ -83,6 +86,15 @@ export interface DecryptedPosition {
   currentValue: string;
   profitLoss: string;
   isSettled: boolean;
+  entryTimestamp: Date;
+  settledAt?: Date;
+  payout?: string;
+}
+
+export interface Portfolio {
+  activePositions: DecryptedPosition[];
+  settledPositions: DecryptedPosition[];
+  stats: PortfolioStats;
 }
 
 // WebSocket events

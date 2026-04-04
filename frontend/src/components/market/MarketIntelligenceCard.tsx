@@ -1,6 +1,7 @@
-import { TrendingUp, Users, BarChart2, ArrowUpRight } from 'lucide-react';
+import { TrendingUp, Users, BarChart2, ArrowUpRight, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import type { Market } from '@/types';
+import { format } from 'date-fns';
+import type { Market } from '../../types';
 
 interface MarketIntelligenceCardProps {
   market: Market;
@@ -62,6 +63,12 @@ export function MarketIntelligenceCard({ market }: MarketIntelligenceCardProps) 
         >
           <h3 className="text-lg font-bold leading-tight mb-2 line-clamp-2">{market.question}</h3>
         </Link>
+        
+        <div className="flex items-center gap-2 mb-4 text-[10px] font-mono text-slate-500 uppercase">
+          <Clock className="w-3 h-3" />
+          <span>Ends: {format(new Date(market.endTime), 'EEEE, MMM dd, yyyy')}</span>
+        </div>
+
         <p className="text-slate-400 text-sm line-clamp-2 font-light mb-6">
           {market.description || 'No description available for this market.'}
         </p>
@@ -106,7 +113,7 @@ export function MarketIntelligenceCard({ market }: MarketIntelligenceCardProps) 
           to={`/markets/${market.slug || market.id}`}
           className="w-full flex items-center justify-center gap-2 py-3 bg-electric-blue/5 hover:bg-electric-blue text-electric-blue hover:text-white border border-electric-blue/20 hover:border-electric-blue rounded-sm text-xs font-bold transition-all duration-300 group/btn shadow-[0_4px_12px_rgba(59,130,246,0.1)] hover:shadow-[0_4px_20px_rgba(59,130,246,0.3)]"
         >
-          <span className="tracking-[0.1em]">VIEW MARKET</span>
+          <span className="tracking-[0.1em]">View market</span>
           <ArrowUpRight className="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
         </Link>
       </div>

@@ -56,7 +56,7 @@ export function Home() {
       <div className="flex flex-col items-center justify-center py-24 gap-4">
         <Loader2 className="w-10 h-10 text-electric-blue animate-spin" />
         <span className="text-xs font-mono text-slate-500 uppercase tracking-[0.3em]">
-          Synching with Network...
+          Syncing with network...
         </span>
       </div>
     );
@@ -67,7 +67,7 @@ export function Home() {
       <div className="p-12 border border-dashed border-red-500/20 bg-red-500/5 rounded-sm flex flex-col items-center gap-4 mx-4">
         <AlertTriangle className="w-8 h-8 text-red-500" />
         <p className="text-sm font-mono text-red-400 uppercase tracking-widest text-center">
-          Failed to Establish Peer-to-Peer Connection.
+          Failed to establish p2p connection.
           <br />
           <span className="text-[10px] opacity-60">Please check your network status.</span>
         </p>
@@ -92,13 +92,13 @@ export function Home() {
               >
                 <div className="absolute top-0 right-0 p-6 flex flex-wrap justify-end gap-2 z-10">
                   <span className="px-3 py-1 bg-amber-accent/20 text-amber-accent text-[10px] font-mono font-bold uppercase tracking-widest rounded-full border border-amber-accent/30 backdrop-blur-sm">
-                    FEATURED MARKET
+                    Featured market
                   </span>
                   <span className="px-3 py-1 bg-electric-blue/20 text-electric-blue text-[10px] font-mono font-bold uppercase tracking-widest rounded-full border border-electric-blue/30 backdrop-blur-sm">
                     {currentFeatured.category}
                   </span>
                   <span className="px-3 py-1 bg-success-green/20 text-success-green text-[10px] font-mono font-bold uppercase tracking-widest rounded-full border border-success-green/30 backdrop-blur-sm">
-                    LIVE
+                    Live
                   </span>
                 </div>
 
@@ -132,7 +132,7 @@ export function Home() {
                       className="flex flex-col items-center justify-center p-6 bg-success-green/5 border border-success-green/20 rounded-sm group/btn hover:bg-success-green/10 transition-all"
                     >
                       <span className="text-[9px] font-mono text-success-green uppercase mb-2 tracking-widest">
-                        Yes Price
+                        Yes price
                       </span>
                       <span className="text-4xl font-mono font-bold text-success-green">
                         {Math.round(parseFloat(currentFeatured.yesPrice))}%
@@ -143,7 +143,7 @@ export function Home() {
                       className="flex flex-col items-center justify-center p-6 bg-red-500/5 border border-red-500/20 rounded-sm group/btn hover:bg-red-500/10 transition-all"
                     >
                       <span className="text-[9px] font-mono text-red-400 uppercase mb-2 tracking-widest">
-                        No Price
+                        No price
                       </span>
                       <span className="text-4xl font-mono font-bold text-red-500">
                         {Math.round(parseFloat(currentFeatured.noPrice))}%
@@ -156,7 +156,7 @@ export function Home() {
                       to={`/markets/${currentFeatured.slug || currentFeatured.id}`}
                       className="inline-flex items-center gap-2 px-8 py-4 bg-electric-blue text-white rounded-sm font-bold tracking-[0.1em] uppercase text-xs hover:brightness-110 transition-all shadow-[0_0_30px_rgba(59,130,246,0.2)]"
                     >
-                      TRADE THIS MARKET
+                      Trade this market
                       <ChevronRight className="w-4 h-4" />
                     </Link>
                   </div>
@@ -164,7 +164,7 @@ export function Home() {
 
                 {/* Carousel Indicators */}
                 <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-                  {featuredForCarousel.map((_, idx) => (
+                  {featuredForCarousel.map((_: any, idx: number) => (
                     <button
                       key={idx}
                       onClick={() => setCurrentIndex(idx)}
@@ -193,7 +193,7 @@ export function Home() {
             <div className="p-4 border-b border-white/5">
               <h3 className="text-xs font-bold uppercase tracking-widest text-white flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-electric-blue" />
-                Trending Now
+                Trending now
               </h3>
             </div>
             <div className="flex-1">
@@ -231,10 +231,10 @@ export function Home() {
             <div className="p-4 border-b border-white/5 flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
                 <Zap className="w-4 h-4 text-amber-accent" />
-                Fresh Intel
+                Fresh intel
               </h3>
               <span className="text-[10px] font-mono text-electric-blue animate-pulse">
-                NEW DATA
+                New data
               </span>
             </div>
             <div className="px-2 pt-2 space-y-1">
@@ -261,7 +261,7 @@ export function Home() {
                 to="/markets"
                 className="block text-center py-2.5 text-[10px] font-mono font-bold text-electric-blue hover:underline uppercase tracking-[0.25em] bg-electric-blue/5 border border-electric-blue/10 rounded-sm"
               >
-                Explore Terminal
+                Explore terminal
               </Link>
             </div>
           </section>
@@ -273,18 +273,18 @@ export function Home() {
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
           <h2 className="text-xl font-bold text-white flex items-center gap-3">
             <div className="w-1 h-6 bg-electric-blue" />
-            Market Intelligence
+            Market intelligence
           </h2>
           <Link
             to="/markets"
             className="text-xs font-bold text-slate-500 hover:text-white transition-colors uppercase tracking-widest flex items-center gap-1"
           >
-            Browse All <ChevronRight className="w-4 h-4" />
+            Browse all <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {allFeaturedMarkets.slice(5).map(market => (
+          {allFeaturedMarkets.slice(5).map((market: Market) => (
             <MarketIntelligenceCard key={market.id} market={market} />
           ))}
           {/* Fallback if not enough featured markets */}
