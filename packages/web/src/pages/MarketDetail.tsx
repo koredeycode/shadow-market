@@ -1,21 +1,25 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLayoutEffect } from 'react';
 import { format } from 'date-fns';
-import { ArrowLeft, BarChart3, Clock, Info, Share2, Zap } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, BarChart3, Clock, Info, Share2, Zap, ThumbsUp, Wallet } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { marketsApi } from '../api/markets';
+import { betsApi } from '../api/bets';
 import { MarketChart } from '../components/market/MarketChart';
 import { MarketStats } from '../components/market/MarketStats';
 import { BettingTerminal } from '../components/wager/BettingTerminal';
 import { P2PWagersList } from '../components/wager/P2PWagersList';
 import { P2PActionTerminal } from '../components/wager/P2PActionTerminal';
 import { MarketStatus, Wager } from '../types';
+import { socket } from '../lib/socket';
 
 export function MarketDetail() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   
   // Determine active tab based on location path
   const activeTab = location.pathname.endsWith('/wagers') ? 'p2p' : 'chart';
@@ -34,6 +38,24 @@ export function MarketDetail() {
     refetchInterval: false,
     refetchOnWindowFocus: false,
   });
+
+  useLayoutEffect(() => {
+    if (!market?.id) return;
+
+    socket.emit('subscribe:market', { marketId: market.id });
+
+    const handleMarketUpdate = (updatedMarket: any) => {
+      console.log('Real-time market update received', updatedMarket);
+      queryClient.setQueryData(['market', slug], updatedMarket);
+    };
+
+    socket.on('market:updated', handleMarketUpdate);
+
+    return () => {
+      socket.emit('unsubscribe:market', { marketId: market.id });
+      socket.off('market:updated', handleMarketUpdate);
+    };
+  }, [market?.id, slug, queryClient]);
 
   const handleShare = async () => {
     if (!market) return;
@@ -56,6 +78,32 @@ export function MarketDetail() {
       if (err instanceof Error && err.name !== 'AbortError') {
         toast.error('Could not share market');
       }
+    }
+  };
+
+  const { data: portfolio } = useQuery({
+    queryKey: ['user-portfolio'],
+    queryFn: () => betsApi.getPortfolio(),
+    refetchInterval: 10000,
+  });
+
+  const marketPositions = useMemo(() => {
+    if (!portfolio || !market) return [];
+    return [...portfolio.activeBets, ...portfolio.settledBets].filter(bet => bet.marketId === market.id);
+  }, [portfolio, market]);
+
+  const handleUpvote = async () => {
+    if (!market) return;
+    try {
+      if (market.hasUpvoted) {
+        await marketsApi.removeUpvote(market.id);
+        toast.success('Upvote removed');
+      } else {
+        await marketsApi.upvote(market.id);
+        toast.success('Market upvoted');
+      }
+    } catch (err) {
+      toast.error('Could not process upvote');
     }
   };
 
@@ -131,13 +179,27 @@ export function MarketDetail() {
 
       {/* Title and Info Sections */}
       <div className="space-y-6">
-        <div className="flex items-center gap-2">
-          <span className="px-2 py-0.5 bg-electric-blue/10 text-electric-blue text-[9px] font-mono font-bold uppercase tracking-widest rounded-full border border-electric-blue/20">
-            {market.category}
-          </span>
-          <span className="text-[10px] text-slate-600 font-mono tracking-widest uppercase">
-            ID: {market.id}
-          </span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 bg-electric-blue/10 text-electric-blue text-[9px] font-mono font-bold uppercase tracking-widest rounded-full border border-electric-blue/20">
+              {market.category}
+            </span>
+            <span className="text-[10px] text-slate-600 font-mono tracking-widest uppercase">
+              ID: {market.id}
+            </span>
+          </div>
+          
+          <button
+            onClick={handleUpvote}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-mono font-bold uppercase tracking-widest transition-all ${
+              market.hasUpvoted
+                ? 'bg-electric-blue/20 border-electric-blue text-electric-blue'
+                : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:border-white/20'
+            }`}
+          >
+            <ThumbsUp className={`w-3 h-3 ${market.hasUpvoted ? 'fill-current' : ''}`} />
+            {market.upvotes}
+          </button>
         </div>
 
         <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight max-w-5xl">
@@ -294,13 +356,58 @@ export function MarketDetail() {
           </div>
         </div>
 
-        {/* Market Stats */}
-        <div className="lg:col-span-4 bg-slate-900/40 border border-white/5 p-8 rounded-sm space-y-8">
-          <h3 className="text-white font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 border-b border-white/5 pb-4">
-            <BarChart3 className="w-4 h-4 text-electric-blue" />
-            Market Statistics
-          </h3>
-          <MarketStats market={market} />
+        {/* Market Stats & User Positions */}
+        <div className="lg:col-span-4 space-y-8">
+          <div className="bg-slate-900/40 border border-white/5 p-8 rounded-sm space-y-8">
+            <h3 className="text-white font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 border-b border-white/5 pb-4">
+              <BarChart3 className="w-4 h-4 text-electric-blue" />
+              Market Statistics
+            </h3>
+            <MarketStats market={market} />
+          </div>
+
+          {marketPositions.length > 0 && (
+            <div className="bg-slate-900/40 border border-white/5 p-8 rounded-sm space-y-8">
+              <h3 className="text-white font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 border-b border-white/5 pb-4">
+                <Wallet className="w-4 h-4 text-success-green" />
+                Your Positions
+              </h3>
+              <div className="space-y-4">
+                {marketPositions.map(pos => (
+                  <div key={pos.id} className="border border-white/5 p-4 rounded-sm space-y-3 bg-black/20">
+                    <div className="flex justify-between items-center">
+                      <span className={`text-[10px] font-mono font-bold uppercase tracking-widest ${
+                        pos.side === 'yes' ? 'text-success-green' : 'text-danger-red'
+                      }`}>
+                        {pos.side} Position
+                      </span>
+                      <span className="text-[9px] text-slate-500 font-mono">
+                        {format(new Date(pos.entryTimestamp), 'MMM dd, HH:mm')}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <span className="text-[8px] text-slate-500 uppercase font-mono tracking-tighter">Amount</span>
+                        <div className="text-xs font-mono font-bold text-white">{pos.amount} NIGHT</div>
+                      </div>
+                      <div className="space-y-1 text-right">
+                        <span className="text-[8px] text-slate-500 uppercase font-mono tracking-tighter">Entry Price</span>
+                        <div className="text-xs font-mono font-bold text-white">{(parseFloat(pos.entryPrice) * 100).toFixed(1)}%</div>
+                      </div>
+                    </div>
+                    <div className="pt-2 border-t border-white/5 flex justify-between items-center">
+                       <span className="text-[8px] text-slate-500 uppercase font-mono tracking-tighter">P&L</span>
+                       <span className={`text-[10px] font-mono font-bold ${
+                         parseFloat(pos.profitLoss) >= 0 ? 'text-success-green' : 'text-danger-red'
+                       }`}>
+                         {parseFloat(pos.profitLoss) >= 0 ? '+' : ''}{pos.profitLoss} NIGHT
+                       </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

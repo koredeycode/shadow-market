@@ -7,10 +7,10 @@ interface MarketStatsProps {
 
 const formatVolume = (volume: string): string => {
   const num = parseFloat(volume);
-  if (isNaN(num)) return '$0';
-  if (num >= 1_000_000) return `$${(num / 1_000_000).toFixed(2)}M`;
-  if (num >= 1_000) return `$${(num / 1_000).toFixed(2)}K`;
-  return `$${num.toFixed(0)}`;
+  if (isNaN(num)) return '0 NIGHT';
+  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(2)}M NIGHT`;
+  if (num >= 1_000) return `${(num / 1_000).toFixed(2)}K NIGHT`;
+  return `${num.toFixed(0)} NIGHT`;
 };
 
 const getTimeRemaining = (dateStr: string): string => {
@@ -44,6 +44,12 @@ export function MarketStats({ market }: MarketStatsProps) {
       label: 'Positions',
       value: market.totalBets.toLocaleString(),
       textColor: 'text-white',
+    },
+    {
+      icon: <Users className="w-4 h-4 opacity-50" />,
+      label: 'Traders',
+      value: (market.uniqueTraders || market.totalBets).toLocaleString(),
+      textColor: 'text-slate-400',
     },
     {
       icon: <Clock className="w-4 h-4" />,

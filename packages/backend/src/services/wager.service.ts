@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { and, desc, eq, or, sql } from 'drizzle-orm';
 import { config } from '../config.js';
 import { db } from '../db/client.js';
-import { markets, bets, users, wagers } from '../db/schema.js';
+import { markets, bets, users, wagers, marketStats, pricePoints } from '../db/schema.js';
 import type {
   CreateP2PWagerRequest,
   DecryptedBet,
@@ -10,6 +10,7 @@ import type {
   PortfolioStats,
 } from '../types/index.js';
 import { decrypt, encrypt, generateId } from '../utils/crypto.js';
+import { broadcastToMarket } from '../websocket.js';
 
 export class WagerService {
   /**
@@ -47,7 +48,7 @@ export class WagerService {
     const commitmentInput = `${data.amount}:${data.side}:${nonceEncrypted}`;
     const commitment = createHash('sha256').update(commitmentInput).digest('hex');
 
-    // Determine entry price
+    // Determine entry price (using the price before this bet)
     const entryPrice = data.side === 'yes' ? market.yesPrice : market.noPrice;
 
     // Create bet
@@ -67,14 +68,100 @@ export class WagerService {
       })
       .returning();
 
-    // Update market stats (in real app, would come from contract)
+    // Calculate new volumes and prices
+    const amountNum = BigInt(data.amount);
+    const currentYesVol = BigInt(market.totalYesVolume || '0');
+    const currentNoVol = BigInt(market.totalNoVolume || '0');
+
+    let newYesVol = currentYesVol;
+    let newNoVol = currentNoVol;
+
+    if (data.side === 'yes') {
+      newYesVol += amountNum;
+    } else {
+      newNoVol += amountNum;
+    }
+
+    const totalVol = newYesVol + newNoVol;
+    
+    // Calculate new prices (avoid division by zero, though totalVol should be > 0 here)
+    const newYesPrice = totalVol > 0n 
+      ? (Number(newYesVol) / Number(totalVol)).toFixed(17) 
+      : '0.5';
+    const newNoPrice = totalVol > 0n 
+      ? (Number(newNoVol) / Number(totalVol)).toFixed(17) 
+      : '0.5';
+
+    // Update market table
     await db
       .update(markets)
       .set({
-        totalVolume: sql`${markets.totalVolume} + ${data.amount}`,
+        totalVolume: totalVol.toString(),
+        totalYesVolume: newYesVol.toString(),
+        totalNoVolume: newNoVol.toString(),
         totalBets: sql`${markets.totalBets} + 1`,
+        yesPrice: newYesPrice,
+        noPrice: newNoPrice,
       })
       .where(eq(markets.id, market.id));
+
+    // Update market_stats
+    const stats = await db.query.marketStats.findFirst({
+      where: eq(marketStats.marketId, market.id),
+    });
+
+    if (stats) {
+      // Check if this is a new trader for this market
+      const existingBet = await db.query.bets.findFirst({
+        where: and(eq(bets.marketId, market.id), eq(bets.userId, userId), sql`id != ${betId}`),
+      });
+
+      await db
+        .update(marketStats)
+        .set({
+          totalVolume: totalVol.toString(),
+          totalBets: sql`${marketStats.totalBets} + 1`,
+          uniqueTraders: existingBet ? undefined : sql`${marketStats.uniqueTraders} + 1`,
+          updatedAt: new Date(),
+        })
+        .where(eq(marketStats.id, stats.id));
+    } else {
+      await db.insert(marketStats).values({
+        id: generateId(),
+        marketId: market.id,
+        totalVolume: totalVol.toString(),
+        totalBets: 1,
+        uniqueTraders: 1,
+      });
+    }
+
+    // Add price point for charting
+    await db.insert(pricePoints).values({
+      id: generateId(),
+      marketId: market.id,
+      yesPrice: newYesPrice,
+      noPrice: newNoPrice,
+      volume: amountNum.toString(),
+      timestamp: new Date(),
+    });
+
+    // Broadcast market update
+    const updatedMarket = await db.query.markets.findFirst({
+      where: eq(markets.id, market.id),
+      with: {
+        creator: {
+          columns: { id: true, username: true, address: true, reputation: true },
+        },
+        stats: true,
+      }
+    });
+
+    if (updatedMarket) {
+      broadcastToMarket(market.id, 'market:updated', {
+        ...updatedMarket,
+        uniqueTraders: updatedMarket.stats?.uniqueTraders || 0,
+      });
+    }
 
     return bet;
   }

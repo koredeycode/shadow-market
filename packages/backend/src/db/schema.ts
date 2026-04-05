@@ -108,6 +108,10 @@ export const markets = pgTable(
 
     // Stats
     totalVolume: decimal('total_volume', { precision: 20, scale: 0 }).default('0').notNull(),
+    totalYesVolume: decimal('total_yes_volume', { precision: 20, scale: 0 })
+      .default('0')
+      .notNull(),
+    totalNoVolume: decimal('total_no_volume', { precision: 20, scale: 0 }).default('0').notNull(),
     totalBets: integer('total_bets').default(0).notNull(),
     yesPrice: decimal('yes_price', { precision: 18, scale: 17 }).default('0.5').notNull(),
     noPrice: decimal('no_price', { precision: 18, scale: 17 }).default('0.5').notNull(),
@@ -337,6 +341,17 @@ export const marketsRelations = relations(markets, ({ one, many }) => ({
   priceHistory: many(pricePoints),
   wagers: many(wagers),
   upvotedBy: many(marketUpvotes),
+  stats: one(marketStats, {
+    fields: [markets.id],
+    references: [marketStats.marketId],
+  }),
+}));
+
+export const marketStatsRelations = relations(marketStats, ({ one }) => ({
+  market: one(markets, {
+    fields: [marketStats.marketId],
+    references: [markets.id],
+  }),
 }));
 
 export const betsRelations = relations(bets, ({ one }) => ({

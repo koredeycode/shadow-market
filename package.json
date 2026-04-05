@@ -50,7 +50,7 @@
     "clean:all": "pnpm clean && rm -rf **/node_modules **/dist **/.turbo",
     "setup": "pnpm install && pnpm network:start && pnpm contracts:compile && pnpm db:migrate",
     "redeploy": "bash packages/scripts/redeploy.sh",
-    "generate:accounts": "tsx scripts/generate-accounts.ts",
+    "generate:accounts": "tsx packages/contracts/scripts/generate-accounts.ts",
     "copy-zkconfig": "mkdir -p packages/web/public/zk-config && rm -rf packages/web/public/zk-config/* && cp -r packages/contracts/src/managed/shadow-market/* packages/web/public/zk-config/"
   },
   "dependencies": {
@@ -67,7 +67,12 @@
     "@midnight-ntwrk/wallet-api": "5.0.0"
   },
   "devDependencies": {
+    "@midnight-ntwrk/ledger-v8": "8.0.3",
+    "@midnight-ntwrk/wallet-sdk-address-format": "3.0.1",
+    "@midnight-ntwrk/wallet-sdk-hd": "3.0.1",
+    "@midnight-ntwrk/wallet-sdk-unshielded-wallet": "2.1.0",
     "@playwright/test": "^1.49.0",
+    "@scure/bip39": "^2.0.1",
     "@types/node": "^22.10.0",
     "@types/supertest": "^7.2.0",
     "concurrently": "^9.1.0",

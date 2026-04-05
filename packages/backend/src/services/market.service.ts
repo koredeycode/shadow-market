@@ -94,7 +94,7 @@ export class MarketService {
   /**
    * Get single market by ID
    */
-  async getMarketById(marketId: string) {
+  async getMarketById(marketId: string, userId?: string) {
     const result = await db.query.markets.findFirst({
       where: or(
         eq(markets.id, marketId),
@@ -110,10 +110,21 @@ export class MarketService {
             reputation: true,
           },
         },
+        stats: true,
+        upvotedBy: userId ? {
+          where: eq(marketUpvotes.userId, userId),
+          limit: 1,
+        } : undefined,
       },
     });
 
-    return result;
+    if (!result) return null;
+
+    return {
+      ...result,
+      uniqueTraders: result.stats?.uniqueTraders || 0,
+      hasUpvoted: result.upvotedBy && result.upvotedBy.length > 0,
+    };
   }
 
   /**

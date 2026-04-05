@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { authenticate, type AuthRequest } from '../middleware/auth.js';
+import { authenticate, optionalAuth, type AuthRequest } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { MarketService } from '../services/market.service.js';
 import { WagerService } from '../services/wager.service.js';
@@ -160,9 +160,11 @@ marketsRouter.get(
  */
 marketsRouter.get(
   '/:id',
-  asyncHandler(async (req, res) => {
+  optionalAuth,
+  asyncHandler(async (req: AuthRequest, res) => {
     const { id } = req.params;
-    const market = await marketService.getMarketById(id);
+    const userId = req.user?.id;
+    const market = await marketService.getMarketById(id, userId);
 
     if (!market) {
       return res.status(404).json({

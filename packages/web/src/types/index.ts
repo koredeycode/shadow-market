@@ -17,6 +17,7 @@ export interface Market {
   resolutionSource: string;
   totalVolume: string;
   totalBets: number;
+  uniqueTraders?: number;
   yesPrice: string;
   noPrice: string;
   upvotes: number;

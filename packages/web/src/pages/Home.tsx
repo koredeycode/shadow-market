@@ -135,7 +135,7 @@ export function Home() {
                         Yes price
                       </span>
                       <span className="text-4xl font-mono font-bold text-success-green">
-                        {Math.round(parseFloat(currentFeatured.yesPrice))}%
+                        {Math.round(parseFloat(currentFeatured.yesPrice) * 100)}%
                       </span>
                     </Link>
                     <Link
@@ -146,7 +146,7 @@ export function Home() {
                         No price
                       </span>
                       <span className="text-4xl font-mono font-bold text-red-500">
-                        {Math.round(parseFloat(currentFeatured.noPrice))}%
+                        {Math.round(parseFloat(currentFeatured.noPrice) * 100)}%
                       </span>
                     </Link>
                   </div>
@@ -216,7 +216,7 @@ export function Home() {
                       </span>
                       <span className="text-slate-800">|</span>
                       <span className="text-success-green">
-                        {Math.round(parseFloat(market.yesPrice))}% YES
+                        {Math.round(parseFloat(market.yesPrice) * 100)}% YES
                       </span>
                     </div>
                   </div>

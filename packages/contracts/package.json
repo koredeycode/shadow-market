@@ -50,6 +50,7 @@
     "ws": "^8.19.0"
   },
   "devDependencies": {
+    "@midnight-ntwrk/wallet-sdk-address-format": "3.0.1",
     "@types/node": "^22.0.0",
     "@types/ws": "^8.18.1",
     "tsx": "^4.21.0",
