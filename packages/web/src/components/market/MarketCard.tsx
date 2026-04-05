@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Clock, BarChart3, TrendingUp, TrendingDown, ChevronRight } from 'lucide-react';
+import { Clock, BarChart3, TrendingUp, TrendingDown, ChevronRight, Heart } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Market } from '../../types';
 
@@ -40,6 +40,21 @@ export function MarketCard({ market }: MarketCardProps) {
           >
             {market.status}
           </span>
+          <button
+            className={`flex items-center gap-1 px-2 py-0.5 border rounded-sm text-[10px] font-bold transition-all ${
+              market.hasUpvoted
+                ? 'bg-red-500/10 border-red-500/30 text-red-500'
+                : 'bg-white/5 border-white/10 text-slate-500 hover:border-red-500/30 hover:text-red-500'
+            }`}
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              // Mutation logic would be here
+            }}
+          >
+            <Heart className={`w-3 h-3 ${market.hasUpvoted ? 'fill-current' : ''}`} />
+            <span>{market.upvotes || 0}</span>
+          </button>
         </div>
 
         {/* Question */}

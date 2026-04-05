@@ -108,7 +108,7 @@ export const markets = pgTable(
 
     // Stats
     totalVolume: decimal('total_volume', { precision: 20, scale: 0 }).default('0').notNull(),
-    totalPositions: integer('total_positions').default(0).notNull(),
+    totalBets: integer('total_bets').default(0).notNull(),
     yesPrice: decimal('yes_price', { precision: 18, scale: 17 }).default('0.5').notNull(),
     noPrice: decimal('no_price', { precision: 18, scale: 17 }).default('0.5').notNull(),
 
@@ -138,9 +138,9 @@ export const markets = pgTable(
   })
 );
 
-// Positions table
-export const positions = pgTable(
-  'positions',
+// Bets table
+export const bets = pgTable(
+  'bets',
   {
     id: text('id').primaryKey(),
     onchainId: varchar('onchain_id', { length: 255 }).unique(),
@@ -176,9 +176,9 @@ export const positions = pgTable(
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   table => ({
-    userIdx: index('positions_user_idx').on(table.userId),
-    marketIdx: index('positions_market_idx').on(table.marketId),
-    settledIdx: index('positions_settled_idx').on(table.isSettled),
+    userIdx: index('bets_user_idx').on(table.userId),
+    marketIdx: index('bets_market_idx').on(table.marketId),
+    settledIdx: index('bets_settled_idx').on(table.isSettled),
   })
 );
 
@@ -323,7 +323,7 @@ export const terminalSessions = pgTable('terminal_sessions', {
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   createdMarkets: many(markets),
-  positions: many(positions),
+  bets: many(bets),
   createdWagers: many(wagers, { relationName: 'creator' }),
   takenWagers: many(wagers, { relationName: 'taker' }),
 }));
@@ -333,19 +333,19 @@ export const marketsRelations = relations(markets, ({ one, many }) => ({
     fields: [markets.creatorId],
     references: [users.id],
   }),
-  positions: many(positions),
+  bets: many(bets),
   priceHistory: many(pricePoints),
   wagers: many(wagers),
   upvotedBy: many(marketUpvotes),
 }));
 
-export const positionsRelations = relations(positions, ({ one }) => ({
+export const betsRelations = relations(bets, ({ one }) => ({
   user: one(users, {
-    fields: [positions.userId],
+    fields: [bets.userId],
     references: [users.id],
   }),
   market: one(markets, {
-    fields: [positions.marketId],
+    fields: [bets.marketId],
     references: [markets.id],
   }),
 }));

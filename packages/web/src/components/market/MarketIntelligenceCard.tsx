@@ -87,7 +87,7 @@ export function MarketIntelligenceCard({ market }: MarketIntelligenceCardProps) 
               <span className="text-[10px] font-mono uppercase tracking-tight">Positions</span>
             </div>
             <div className="text-sm font-mono text-white">
-              {market.totalPositions.toLocaleString()}
+              {market.totalBets.toLocaleString()}
             </div>
           </div>
         </div>

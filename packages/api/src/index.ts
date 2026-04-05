@@ -24,7 +24,7 @@ import {
   type MarketProviders,
 } from './providers.js';
 import { stringToBytes32, safeRandomNonce, fromHex } from './utils.js';
-import { setBetContext, setWagerAmount } from './witnesses.js';
+import { setBetContext, setWagerAmount, createWitnessProviders } from './witnesses.js';
 
 /**
  * Configuration for connecting to a deployed contract

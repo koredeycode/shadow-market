@@ -113,13 +113,34 @@ async function handleLinkFlow() {
     const { code, expiresAt } = await backendClient.getLinkCode();
     codeSpinner.stop();
 
-    const linkUrl = `http://localhost:3001/auth/link?code=${code}`;
+    const webUrl = process.env.SHADOW_MARKET_WEB_URL || 'http://localhost:5173';
+    const linkUrl = `${webUrl}/auth/link?code=${code}`;
     
     console.log(chalk.bold.magenta('\n🔗 LINK YOUR ACCOUNT'));
     console.log(chalk.white('1. Open this URL in your browser:'));
     console.log(chalk.cyan.underline(linkUrl));
     console.log(chalk.white(`2. Enter code: ${chalk.bold.yellow(code)}`));
     console.log(chalk.gray(`(Valid for 10 minutes until ${new Date(expiresAt).toLocaleTimeString()})\n`));
+
+    // Offer to open automatically
+    try {
+      const { shouldOpen } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'shouldOpen',
+          message: 'Open browser automatically?',
+          default: true
+        }
+      ]);
+
+      if (shouldOpen) {
+        const { default: open } = await import('open');
+        await open(linkUrl);
+        console.log(chalk.green('✔ Browser opened.'));
+      }
+    } catch (err) {
+      // ignore if inquirer fails or cancelled
+    }
 
     const pollSpinner = ora('Waiting for browser authorization...').start();
     

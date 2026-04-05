@@ -2,10 +2,10 @@ import { createHash } from 'node:crypto';
 import { and, desc, eq, or, sql } from 'drizzle-orm';
 import { config } from '../config.js';
 import { db } from '../db/client.js';
-import { markets, positions, users, wagers } from '../db/schema.js';
+import { markets, bets, users, wagers } from '../db/schema.js';
 import type {
   CreateP2PWagerRequest,
-  DecryptedPosition,
+  DecryptedBet,
   PlaceBetRequest,
   PortfolioStats,
 } from '../types/index.js';
@@ -16,7 +16,7 @@ export class WagerService {
    * Place a bet on a market (AMM-based)
    */
   async placeBet(userId: string, data: PlaceBetRequest) {
-    const positionId = generateId();
+    const betId = generateId();
 
     // Get market
     let market = await db.query.markets.findFirst({
@@ -50,11 +50,11 @@ export class WagerService {
     // Determine entry price
     const entryPrice = data.side === 'yes' ? market.yesPrice : market.noPrice;
 
-    // Create position
-    const [position] = await db
-      .insert(positions)
+    // Create bet
+    const [bet] = await db
+      .insert(bets)
       .values({
-        id: positionId,
+        id: betId,
         onchainId: data.onchainId,
         txHash: data.txHash,
         userId,
@@ -72,11 +72,11 @@ export class WagerService {
       .update(markets)
       .set({
         totalVolume: sql`${markets.totalVolume} + ${data.amount}`,
-        totalPositions: sql`${markets.totalPositions} + 1`,
+        totalBets: sql`${markets.totalBets} + 1`,
       })
       .where(eq(markets.id, market.id));
 
-    return position;
+    return bet;
   }
 
   /**
@@ -174,17 +174,20 @@ export class WagerService {
   }
 
   /**
-   * Get user's positions (decrypted for privacy)
+   * Get user's bets (decrypted for privacy)
    */
-  async getUserPositions(userId: string): Promise<DecryptedPosition[]> {
-    const userPositions = await db.query.positions.findMany({
-      where: eq(positions.userId, userId),
+  async getUserBets(userId: string): Promise<DecryptedBet[]> {
+    const userBets = await db.query.bets.findMany({
+      where: eq(bets.userId, userId),
       with: {
         market: true,
+        user: {
+          columns: { username: true }
+        }
       },
     });
 
-    return userPositions.map(pos => {
+    return userBets.map(pos => {
       // Decrypt private data
       const amount = decrypt(pos.amountEncrypted, config.encryptionKey);
       const side = decrypt(pos.sideEncrypted, config.encryptionKey);
@@ -214,6 +217,7 @@ export class WagerService {
         entryTimestamp: pos.entryTimestamp,
         settledAt: pos.settledAt || undefined,
         payout: pos.payout || undefined,
+        username: pos.user?.username || undefined,
       };
     });
   }
@@ -247,12 +251,12 @@ export class WagerService {
    * Get full portfolio for a user
    */
   async getFullPortfolio(userId: string): Promise<any> {
-    const allPositions = await this.getUserPositions(userId);
+    const allBets = await this.getUserBets(userId);
     const stats = await this.getPortfolioStats(userId);
 
     return {
-      activePositions: allPositions.filter(p => !p.isSettled),
-      settledPositions: allPositions.filter(p => p.isSettled),
+      activeBets: allBets.filter(p => !p.isSettled),
+      settledBets: allBets.filter(p => p.isSettled),
       stats,
     };
   }
@@ -261,19 +265,19 @@ export class WagerService {
    * Get portfolio statistics
    */
   async getPortfolioStats(userId: string): Promise<PortfolioStats> {
-    const userPositions = await this.getUserPositions(userId);
+    const userBets = await this.getUserBets(userId);
 
-    const totalValue = userPositions.reduce((sum, pos) => sum + parseFloat(pos.currentValue), 0);
-    const totalProfitLoss = userPositions.reduce((sum, pos) => sum + parseFloat(pos.profitLoss), 0);
+    const totalValue = userBets.reduce((sum, pos) => sum + parseFloat(pos.currentValue), 0);
+    const totalProfitLoss = userBets.reduce((sum, pos) => sum + parseFloat(pos.profitLoss), 0);
 
-    const settledPositions = userPositions.filter(p => p.isSettled);
-    const wonPositions = settledPositions.filter(p => parseFloat(p.profitLoss) > 0);
-    const lostPositions = settledPositions.filter(p => parseFloat(p.profitLoss) < 0);
+    const settledBets = userBets.filter(p => p.isSettled);
+    const wonBets = settledBets.filter(p => parseFloat(p.profitLoss) > 0);
+    const lostBets = settledBets.filter(p => parseFloat(p.profitLoss) < 0);
     
-    const winRate = settledPositions.length > 0 ? (wonPositions.length / settledPositions.length) * 100 : 0;
+    const winRate = settledBets.length > 0 ? (wonBets.length / settledBets.length) * 100 : 0;
 
-    const averageBetSize = userPositions.length > 0
-      ? userPositions.reduce((sum, pos) => sum + parseFloat(pos.amount), 0) / userPositions.length
+    const averageBetSize = userBets.length > 0
+      ? userBets.reduce((sum, pos) => sum + parseFloat(pos.amount), 0) / userBets.length
       : 0;
 
     // Get user data
@@ -285,51 +289,51 @@ export class WagerService {
       totalValue: totalValue.toString(),
       totalProfitLoss: totalProfitLoss.toString(),
       winRate,
-      activePositions: userPositions.filter(p => !p.isSettled).length,
-      totalBets: userPositions.length,
-      totalWins: wonPositions.length,
-      totalLosses: lostPositions.length,
+      activeBets: userBets.filter(p => !p.isSettled).length,
+      totalBets: userBets.length,
+      totalWins: wonBets.length,
+      totalLosses: lostBets.length,
       averageBetSize: averageBetSize.toString(),
       totalVolume: user?.totalVolume || '0',
     };
   }
 
   /**
-   * Claim winnings for a settled position
+   * Claim winnings for a settled bet
    */
-  async claimWinnings(userId: string, positionId: string) {
-    const position = await db.query.positions.findFirst({
-      where: and(eq(positions.id, positionId), eq(positions.userId, userId)),
+  async claimWinnings(userId: string, betId: string) {
+    const bet = await db.query.bets.findFirst({
+      where: and(eq(bets.id, betId), eq(bets.userId, userId)),
       with: { market: true },
     });
 
-    if (!position) throw new Error('Position not found');
-    if (position.isSettled) throw new Error('Already claimed');
-    if (position.market.status !== 'RESOLVED') {
+    if (!bet) throw new Error('Bet not found');
+    if (bet.isSettled) throw new Error('Already claimed');
+    if (bet.market.status !== 'RESOLVED') {
       throw new Error('Market not resolved');
     }
 
-    // Decrypt position data
-    const amount = decrypt(position.amountEncrypted, config.encryptionKey);
-    const side = decrypt(position.sideEncrypted, config.encryptionKey);
+    // Decrypt bet data
+    const amount = decrypt(bet.amountEncrypted, config.encryptionKey);
+    const side = decrypt(bet.sideEncrypted, config.encryptionKey);
 
     // Check if user won
-    const outcome = position.market.outcome;
+    const outcome = bet.market.outcome;
     const won = (outcome === 1 && side === 'yes') || (outcome === 0 && side === 'no');
 
     const payout = won ? parseFloat(amount) * 2 : 0; // Simplified - would calculate from AMM
     const profitLoss = payout - parseFloat(amount);
 
-    // Update position
+    // Update bet
     const [updated] = await db
-      .update(positions)
+      .update(bets)
       .set({
         isSettled: true,
         settledAt: new Date(),
         payout: payout.toString(),
         profitLoss: profitLoss.toString(),
       })
-      .where(eq(positions.id, positionId))
+      .where(eq(bets.id, betId))
       .returning();
 
     // Update user stats
@@ -374,5 +378,59 @@ export class WagerService {
       },
       orderBy: [desc(wagers.createdAt)],
     });
+  }
+
+  /**
+   * Get thin details for a single bet
+   */
+  async getBetById(userId: string, betId: string): Promise<DecryptedBet> {
+    const bet = await db.query.bets.findFirst({
+      where: and(eq(bets.id, betId), eq(bets.userId, userId)),
+      with: { 
+        market: true,
+        user: {
+          columns: { username: true }
+        }
+      },
+    });
+
+    if (!bet) throw new Error('Bet not found');
+
+    const amount = decrypt(bet.amountEncrypted, config.encryptionKey);
+    const side = decrypt(bet.sideEncrypted, config.encryptionKey);
+    const currentValue = (parseFloat(amount) * parseFloat(side === 'yes' ? bet.market.yesPrice : bet.market.noPrice)).toString();
+    const profitLoss = (parseFloat(amount) * (parseFloat(side === 'yes' ? bet.market.yesPrice : bet.market.noPrice) - parseFloat(bet.entryPrice))).toString();
+
+    return {
+      id: bet.id,
+      marketId: bet.marketId,
+      marketSlug: bet.market.slug,
+      marketQuestion: bet.market.question,
+      amount,
+      side: side as 'yes' | 'no',
+      entryPrice: bet.entryPrice,
+      currentValue,
+      profitLoss,
+      isSettled: bet.isSettled,
+      entryTimestamp: bet.entryTimestamp,
+      username: bet.user?.username || undefined,
+    };
+  }
+
+  /**
+   * Get thin details for a single wager
+   */
+  async getWagerById(wagerId: string) {
+    const wager = await db.query.wagers.findFirst({
+      where: eq(wagers.id, wagerId),
+      with: {
+        market: true,
+        creator: true,
+        taker: true,
+      },
+    });
+
+    if (!wager) throw new Error('Wager not found');
+    return wager;
   }
 }

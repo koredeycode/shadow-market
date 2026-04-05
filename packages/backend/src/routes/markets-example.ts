@@ -69,9 +69,9 @@ marketsRouter.get(
       where: eq(markets.id, req.params.id),
       with: {
         creator: true,
-        positions: {
+        bets: {
           limit: 10,
-          orderBy: (positions, { desc }) => [desc(positions.entryTimestamp)],
+          orderBy: (bets, { desc }) => [desc(bets.entryTimestamp)],
         },
       },
     });

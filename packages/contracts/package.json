@@ -19,8 +19,8 @@
     "compile": "mkdir -p src/managed && compact compile compact/shadow-market.compact src/managed/shadow-market",
     "build": "rm -rf dist && tsc",
     "dev": "tsc --watch",
-    "deploy": "MIDNIGHT_NETWORK=local npx tsx src/deployment/deploy.ts",
-    "initialize": "MIDNIGHT_NETWORK=local npx tsx scripts/initialize-contract.ts",
+    "deploy": "npx tsx src/deployment/deploy.ts",
+    "initialize": "npx tsx scripts/initialize-contract.ts",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "clean": "rm -rf dist src/managed deployments",
@@ -43,8 +43,10 @@
     "@midnight-ntwrk/wallet-sdk-hd": "3.0.1",
     "@midnight-ntwrk/wallet-sdk-shielded": "2.1.0",
     "@midnight-ntwrk/wallet-sdk-unshielded-wallet": "2.1.0",
-    "rxjs": "^7.8.1",
     "@scure/bip39": "^2.0.1",
+    "@shadow-market/api": "workspace:*",
+    "chalk": "^5.6.2",
+    "rxjs": "^7.8.1",
     "ws": "^8.19.0"
   },
   "devDependencies": {

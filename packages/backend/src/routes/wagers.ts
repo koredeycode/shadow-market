@@ -38,11 +38,11 @@ wagersRouter.post(
   validate({ body: placeBetSchema }),
   asyncHandler(async (req: AuthRequest, res) => {
     const userId = req.user!.id;
-    const position = await wagerService.placeBet(userId, req.body);
+    const bet = await wagerService.placeBet(userId, req.body);
 
     res.status(201).json({
       success: true,
-      data: position,
+      data: bet,
       timestamp: Date.now(),
     });
   })
@@ -130,19 +130,19 @@ wagersRouter.get(
 );
 
 /**
- * GET /api/wagers/positions
- * Get user's positions
+ * GET /api/wagers/bets
+ * Get user's bets
  */
 wagersRouter.get(
-  '/positions',
+  '/bets',
   authenticate,
   asyncHandler(async (req: AuthRequest, res) => {
     const userId = req.user!.id;
-    const positions = await wagerService.getUserPositions(userId);
+    const bets = await wagerService.getUserBets(userId);
 
     res.json({
       success: true,
-      data: positions,
+      data: bets,
       timestamp: Date.now(),
     });
   })
@@ -178,11 +178,11 @@ wagersRouter.post(
     const userId = req.user!.id;
     const { id } = req.params;
 
-    const position = await wagerService.claimWinnings(userId, id);
+    const bet = await wagerService.claimWinnings(userId, id);
 
     res.json({
       success: true,
-      data: position,
+      data: bet,
       timestamp: Date.now(),
     });
   })
@@ -201,6 +201,23 @@ wagersRouter.get(
     res.json({
       success: true,
       data: wagers,
+      timestamp: Date.now(),
+    });
+  })
+);
+/**
+ * GET /api/wagers/:id
+ * Get single wager details
+ */
+wagersRouter.get(
+  '/:id',
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const wager = await wagerService.getWagerById(id);
+
+    res.json({
+      success: true,
+      data: wager,
       timestamp: Date.now(),
     });
   })

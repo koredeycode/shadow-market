@@ -237,7 +237,7 @@ export function Analytics() {
                             {formatCurrency(market.volume)}
                           </td>
                           <td className="py-4 text-right font-mono text-xs text-slate-400 pr-2">
-                            {market.totalPositions ?? '0'}
+                            {market.totalBets ?? '0'}
                           </td>
                         </tr>
                       ))}

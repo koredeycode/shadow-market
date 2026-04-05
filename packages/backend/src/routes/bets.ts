@@ -3,14 +3,14 @@ import { authenticate, type AuthRequest } from '../middleware/auth.js';
 import { WagerService } from '../services/wager.service.js';
 import { asyncHandler } from '../utils/async-handler.js';
 
-export const positionsRouter = Router();
+export const betsRouter = Router();
 const wagerService = new WagerService();
 
 /**
- * GET /api/positions
- * Get full user portfolio (active/settled positions + stats)
+ * GET /api/bets
+ * Get full user portfolio (active/settled bets + stats)
  */
-positionsRouter.get(
+betsRouter.get(
   '/',
   authenticate,
   asyncHandler(async (req: AuthRequest, res) => {
@@ -26,10 +26,10 @@ positionsRouter.get(
 );
 
 /**
- * GET /api/positions/stats
+ * GET /api/bets/stats
  * Get portfolio statistics only
  */
-positionsRouter.get(
+betsRouter.get(
   '/stats',
   authenticate,
   asyncHandler(async (req: AuthRequest, res) => {
@@ -45,22 +45,42 @@ positionsRouter.get(
 );
 
 /**
- * GET /api/positions/market/:marketId
- * Get user positions for a specific market
+ * GET /api/bets/market/:marketId
+ * Get user bets for a specific market
  */
-positionsRouter.get(
+betsRouter.get(
   '/market/:marketId',
   authenticate,
   asyncHandler(async (req: AuthRequest, res) => {
     const userId = req.user!.id;
     const { marketId } = req.params;
     
-    const allPositions = await wagerService.getUserPositions(userId);
-    const marketPositions = allPositions.filter(p => p.marketId === marketId);
+    const allBets = await wagerService.getUserBets(userId);
+    const marketBets = allBets.filter(p => p.marketId === marketId);
 
     res.json({
       success: true,
-      data: marketPositions,
+      data: marketBets,
+      timestamp: Date.now(),
+    });
+  })
+);
+
+/**
+ * GET /api/bets/:id
+ * Get single bet details
+ */
+betsRouter.get(
+  '/:id',
+  authenticate,
+  asyncHandler(async (req: AuthRequest, res) => {
+    const userId = req.user!.id;
+    const { id } = req.params;
+    const bet = await wagerService.getBetById(userId, id);
+
+    res.json({
+      success: true,
+      data: bet,
       timestamp: Date.now(),
     });
   })

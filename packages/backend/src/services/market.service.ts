@@ -1,6 +1,6 @@
 import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { markets, marketUpvotes, positions, pricePoints } from '../db/schema.js';
+import { markets, marketUpvotes, bets, pricePoints } from '../db/schema.js';
 import type {
   CreateMarketRequest,
   MarketFilters,
@@ -357,8 +357,8 @@ export class MarketService {
     // Get position count
     const [{ count: positionCount }] = await db
       .select({ count: sql<number>`count(*)` })
-      .from(positions)
-      .where(eq(positions.marketId, marketId));
+      .from(bets)
+      .where(eq(bets.marketId, marketId));
 
     return {
       marketId,

@@ -49,6 +49,7 @@ export function useWallet() {
     provider,
     isTransacting,
     autoConnect,
+    username: storeUsername,
     connect: storeConnect,
     disconnect: storeDisconnect,
     updateBalances,
@@ -111,12 +112,13 @@ export function useWallet() {
             const fullShieldedAddress = new ShieldedAddress(coinPublicKey, encryptionPublicKey);
             return ShieldedAddress.codec.encode(NETWORK_ID, fullShieldedAddress).toString();
           } else {
-            // For unshielded, we use the raw public key as the coin public key for encoding
             const coinPublicKey = ShieldedCoinPublicKey.fromHexString(hexAddr);
-            // Use dummy encryption key for unshielded
             const encryptionPublicKey = ShieldedEncryptionPublicKey.fromHexString('0000000000000000000000000000000000000000000000000000000000000000');
             const fullUnshieldedAddress = new ShieldedAddress(coinPublicKey, encryptionPublicKey);
-            return ShieldedAddress.codec.encode(NETWORK_ID, fullUnshieldedAddress).toString().replace('mn_shield-addr_', 'mn_addr_');
+            const encoded = ShieldedAddress.codec.encode(NETWORK_ID, fullUnshieldedAddress).toString();
+            // The codec should generate mn_ENVIRONMENT_shield-addr_1...
+            // We want to replace 'shield-addr_' with 'addr_' for unshielded display
+            return encoded.replace('shield-addr_', 'addr_');
           }
         } catch (e) {
           console.error(`Failed to format ${type} address:`, e);
@@ -188,13 +190,13 @@ export function useWallet() {
         dust: String(dustBalance),
       });
 
-      storeConnect(connectedAPI, { shielded: shieldedAddressVal, unshielded: unshieldedAddressVal }, NETWORK_ID);
-
+      let usernameVal = '';
       // Authenticate user with backend (create account if doesn't exist)
       try {
         const authAddress = unshieldedAddressVal || shieldedAddressVal;
         console.log('Authenticating user with backend using address:', authAddress);
         const authResponse = await authApi.authenticate({ address: authAddress });
+        usernameVal = authResponse.user.username || '';
 
         // Store JWT token in localStorage
         localStorage.setItem('authToken', authResponse.token);
@@ -209,6 +211,8 @@ export function useWallet() {
         // Don't fail wallet connection if auth fails - user can retry
         toast.error('Failed to authenticate with backend. Some features may not work.');
       }
+
+      storeConnect(connectedAPI, { shielded: shieldedAddressVal, unshielded: unshieldedAddressVal }, NETWORK_ID, usernameVal);
 
       // Initialize contract connection
       // Note: SDK v4 doesn't expose getPrivateStateProvider on ConnectedAPI
@@ -336,16 +340,20 @@ export function useWallet() {
     const addr = currentAddress;
     if (!addr) return '';
     
-    // For Midnight addresses, preserve the prefix (mn_addr_ or mn_shield-addr_)
-    if (addr.startsWith('mn_shield-addr_')) {
-      return `${addr.slice(0, 15)}...${addr.slice(-6)}`;
+    // Improved formatting for Midnight network prefixes (e.g., mn_shield-addr_preview1...)
+    if (addr.includes('shield-addr_')) {
+      const parts = addr.split('shield-addr_');
+      const networkPart = parts[1].split('1')[0];
+      return `${parts[0]}shield-${networkPart}...${addr.slice(-6)}`;
     }
-    if (addr.startsWith('mn_addr_')) {
-      return `${addr.slice(0, 8)}...${addr.slice(-6)}`;
+    if (addr.includes('addr_')) {
+      const parts = addr.split('addr_');
+      const networkPart = parts[1].split('1')[0];
+      return `${parts[0]}addr-${networkPart}...${addr.slice(-6)}`;
     }
 
     if (addr.length <= 20) return addr;
-    return `${addr.slice(0, 8)}...${addr.slice(-6)}`;
+    return `${addr.slice(0, 12)}...${addr.slice(-6)}`;
   }, [currentAddress]);
 
   // Setup event listeners for account/network changes
@@ -392,6 +400,7 @@ export function useWallet() {
     dustBalance,
     networkId,
     provider,
+    username: storeUsername,
     isWalletInstalled: isWalletInstalled(),
 
     // Computed

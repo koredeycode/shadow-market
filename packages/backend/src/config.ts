@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.resolve(__dirname, '..', '..');
+const rootDir = path.resolve(__dirname, '..', '..', '..');
 
 // Load environment files in priority order: .env.local > .env.NODE_ENV > .env
 const nodeEnv = process.env.NODE_ENV || 'development';

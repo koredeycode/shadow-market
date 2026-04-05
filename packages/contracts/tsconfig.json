@@ -19,9 +19,10 @@
     "sourceMap": true,
     "baseUrl": ".",
     "paths": {
-      "@midnight-ntwrk/ledger-v8": ["./node_modules/@midnight-ntwrk/ledger-v7"]
+      "@midnight-ntwrk/ledger-v8": ["./node_modules/@midnight-ntwrk/ledger-v7"],
+      "@shadow-market/api": ["../api/src/index.ts"]
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "src/managed/**/*.d.ts"]
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "src/managed/**/*.d.ts", "src/deployment/**/*"]
 }

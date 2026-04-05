@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1774857595331,
-      "tag": "0000_lonely_spitfire",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1775198015525,
-      "tag": "0001_strong_mole_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1775202035629,
-      "tag": "0002_young_luckman",
+      "when": 1775345082598,
+      "tag": "0000_absurd_amphibian",
       "breakpoints": true
     }
   ]

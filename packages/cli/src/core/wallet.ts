@@ -1,29 +1,16 @@
-import * as ledger from '@midnight-ntwrk/ledger-v8';
-import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
-import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
-import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
-import { setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
-import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
-import { fromHex, toHex } from '@midnight-ntwrk/midnight-js-utils';
-import { DustWallet } from '@midnight-ntwrk/wallet-sdk-dust-wallet';
-import { WalletFacade } from '@midnight-ntwrk/wallet-sdk-facade';
-import { HDWallet, Roles } from '@midnight-ntwrk/wallet-sdk-hd';
-import { ShieldedWallet } from '@midnight-ntwrk/wallet-sdk-shielded';
-import {
-    createKeystore,
-    InMemoryTransactionHistoryStorage,
-    PublicKey,
-    UnshieldedWallet
-} from '@midnight-ntwrk/wallet-sdk-unshielded-wallet';
 import * as bip39 from '@scure/bip39';
 import Conf from 'conf';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as Rx from 'rxjs';
-import { createWitnessProviders, ShadowMarketAPI } from '../../../api/src/index.js';
+import { createWitnessProviders, ShadowMarketAPI } from '@shadow-market/api';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+/**
+ * WalletManager - Optimized for CLI startup speed.
+ * Heavy Midnight SDK dependencies are loaded lazily.
+ */
 class WalletManager {
   private config = new Conf({ 
     projectName: 'shadow-market',
@@ -59,6 +46,7 @@ class WalletManager {
 
       if (method === 'mnemonic') {
         const seed = bip39.mnemonicToSeedSync(data);
+        const { toHex } = await import('@midnight-ntwrk/midnight-js-utils');
         seedHex = toHex(seed);
         mnemonic = data;
       } else if (method === 'hex') {
@@ -97,7 +85,11 @@ class WalletManager {
     }
     if (!this.currentContext) throw new Error('Not logged in');
 
-    const state = await Rx.firstValueFrom(this.currentContext.wallet.state()) as any;
+    const [ledger, state] = await Promise.all([
+      import('@midnight-ntwrk/ledger-v8'),
+      Rx.firstValueFrom(this.currentContext.wallet.state()) as any
+    ]);
+
     return {
       address: this.currentContext.address,
       network: 'local-network',
@@ -123,6 +115,26 @@ class WalletManager {
   }
 
   private async initWallet(seedHex: string) {
+    const [
+      ledger,
+      { fromHex },
+      { HDWallet, Roles },
+      { setNetworkId },
+      { createKeystore, InMemoryTransactionHistoryStorage, PublicKey, UnshieldedWallet },
+      { ShieldedWallet },
+      { DustWallet },
+      { WalletFacade }
+    ] = await Promise.all([
+      import('@midnight-ntwrk/ledger-v8'),
+      import('@midnight-ntwrk/midnight-js-utils'),
+      import('@midnight-ntwrk/wallet-sdk-hd'),
+      import('@midnight-ntwrk/midnight-js-network-id'),
+      import('@midnight-ntwrk/wallet-sdk-unshielded-wallet'),
+      import('@midnight-ntwrk/wallet-sdk-shielded'),
+      import('@midnight-ntwrk/wallet-sdk-dust-wallet'),
+      import('@midnight-ntwrk/wallet-sdk-facade')
+    ]);
+
     const seed = fromHex(seedHex);
     const hdWallet = HDWallet.fromSeed(seed);
     if (hdWallet.type !== 'seedOk') throw new Error('Failed to derive HDWallet from seed');
@@ -180,6 +192,18 @@ class WalletManager {
   }
 
   private async createMarketProviders(ctx: any) {
+    const [
+      { indexerPublicDataProvider },
+      { httpClientProofProvider },
+      { NodeZkConfigProvider },
+      { levelPrivateStateProvider }
+    ] = await Promise.all([
+      import('@midnight-ntwrk/midnight-js-indexer-public-data-provider'),
+      import('@midnight-ntwrk/midnight-js-http-client-proof-provider'),
+      import('@midnight-ntwrk/midnight-js-node-zk-config-provider'),
+      import('@midnight-ntwrk/midnight-js-level-private-state-provider')
+    ]);
+
     const witnesses = createWitnessProviders({ userSecretKey: ctx.zswapKey });
     const zkConfigPath = path.resolve(__dirname, '../../../../contracts/src/managed/shadow-market');
 

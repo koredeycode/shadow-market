@@ -50,8 +50,8 @@ export const App = () => {
     if (!walletManager.isLoggedIn() && !pairingSession && !loading) {
       const initPairing = async () => {
         try {
-          const session = await backendClient.createPairingSession();
-          setPairingSession(session);
+          const { code, expiresAt } = await backendClient.getLinkCode();
+          setPairingSession({ pairingCode: code, expiresAt } as any);
           setIsPairing(true);
         } catch (err) {
           console.error('Failed to create pairing session');
@@ -67,10 +67,10 @@ export const App = () => {
     if (isPairing && pairingSession?.pairingCode) {
       interval = setInterval(async () => {
         try {
-          const status = await backendClient.checkPairingStatus(pairingSession.pairingCode);
-          if (status?.status === 'AUTHORIZED') {
+          const statusResult = await backendClient.pollLinkStatus(pairingSession.pairingCode);
+          if (statusResult?.status === 'AUTHORIZED') {
             clearInterval(interval);
-            walletManager.setLinkedSession(status.token, status.walletAddress);
+            walletManager.setLinkedSession(statusResult.token, statusResult.walletAddress);
             setWalletStatus(await walletManager.getStatus());
             setIsPairing(false);
             setPairingSession(null);
@@ -97,6 +97,14 @@ export const App = () => {
       if (input === 'm') setActiveTab('markets');
       if (input === 'w') setActiveTab('wallet');
       if (input === 'b') setActiveTab('bet');
+      
+      // Automatic browser opening for pairing
+      if (input === 'o' && !walletStatus && pairingSession?.pairingCode) {
+        import('open').then(({ default: open }) => {
+          const webUrl = process.env.SHADOW_MARKET_WEB_URL || 'http://localhost:5173';
+          open(`${webUrl}/auth/link?code=${pairingSession.pairingCode}`);
+        }).catch(() => { /* silent fail */ });
+      }
     }
   });
 
@@ -175,8 +183,9 @@ export const App = () => {
                       <Text bold color="cyan">{pairingSession?.pairingCode || 'GENERATING...'}</Text>
                     </Box>
                     <Text dimColor>Waiting for wallet authorization...</Text>
-                    <Box marginTop={1}>
-                        <Text color="gray">This allows you to trade with your web-connected wallet.</Text>
+                    <Box marginTop={1} flexDirection="column" alignItems="center">
+                        <Text color="cyan" bold>Press [O] to open browser automatically</Text>
+                        <Text color="gray">This allows you to link your web-wallet effortlessly.</Text>
                     </Box>
                   </Box>
                 ) : (
@@ -246,6 +255,7 @@ export const App = () => {
                 <Text bold underline color="white">Wallet Details</Text>
                 {walletStatus ? (
                   <Box flexDirection="column" marginTop={1}>
+                    {walletStatus.username && <Text>Account: <Text color="magenta" bold>{walletStatus.username}</Text></Text>}
                     <Text>Address: <Text color="cyan">{walletStatus.address}</Text></Text>
                     <Text>Balance: <Text color="green">{walletStatus.balance.toString()} tNight</Text></Text>
                     <Text>DUST:    <Text color="yellow">{walletStatus.dust.toString()} tDUST</Text></Text>

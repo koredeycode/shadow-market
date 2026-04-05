@@ -14,9 +14,14 @@ export function loadEnvConfig(): Record<string, string> {
   const config: Record<string, string> = {};
 
   for (const file of envFiles) {
-    const envPath = path.resolve(__dirname, '..', '..', file);
+    // Look in current package root first, then project root
+    const packageEnvPath = path.resolve(__dirname, '..', '..', file);
+    const projectRootEnvPath = path.resolve(__dirname, '..', '..', '..', '..', file);
+    
+    const envPaths = [packageEnvPath, projectRootEnvPath];
 
-    if (fs.existsSync(envPath)) {
+    for (const envPath of envPaths) {
+      if (fs.existsSync(envPath)) {
       const envContent = fs.readFileSync(envPath, 'utf-8');
       envContent.split('\n').forEach(line => {
         const trimmed = line.trim();
@@ -29,6 +34,7 @@ export function loadEnvConfig(): Record<string, string> {
           config[key] = value;
         }
       });
+      }
     }
   }
 
@@ -100,21 +106,22 @@ export function getNetworkConfig(): NetworkConfig {
   const config = loadEnvConfig();
 
   return {
-    network: config.MIDNIGHT_NETWORK_ID || config.MIDNIGHT_NETWORK || process.env.MIDNIGHT_NETWORK_ID || process.env.MIDNIGHT_NETWORK || 'local',
+    network: process.env.MIDNIGHT_NETWORK_ID || process.env.MIDNIGHT_NETWORK || config.MIDNIGHT_NETWORK_ID || config.MIDNIGHT_NETWORK || 'local',
     indexer:
-      config.MIDNIGHT_INDEXER_URL ||
       process.env.MIDNIGHT_INDEXER_URL ||
+      config.MIDNIGHT_INDEXER_URL ||
       'http://127.0.0.1:8088/api/v4/graphql',
     indexerWS:
+      process.env.MIDNIGHT_INDEXER_WS ||
+      process.env.MIDNIGHT_INDEXER_WS_URL ||
       config.MIDNIGHT_INDEXER_WS ||
       config.MIDNIGHT_INDEXER_WS_URL ||
-      process.env.MIDNIGHT_INDEXER_WS ||
       'ws://127.0.0.1:8088/api/v4/graphql/ws',
     proofServer:
-      config.MIDNIGHT_PROOF_SERVER_URL ||
       process.env.MIDNIGHT_PROOF_SERVER_URL ||
+      config.MIDNIGHT_PROOF_SERVER_URL ||
       'http://127.0.0.1:6300',
-    nodeUrl: config.MIDNIGHT_NODE_URL || process.env.MIDNIGHT_NODE_URL || 'ws://127.0.0.1:9944',
+    nodeUrl: process.env.MIDNIGHT_NODE_URL || config.MIDNIGHT_NODE_URL || 'ws://127.0.0.1:9944',
   };
 }
 

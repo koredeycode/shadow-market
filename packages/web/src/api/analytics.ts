@@ -36,7 +36,7 @@ export interface TopMarket {
   slug?: string;
   question: string;
   volume: number;
-  totalPositions: number;
+  totalBets: number;
   category: string;
 }
 

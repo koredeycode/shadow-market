@@ -13,7 +13,8 @@ export function TopBar() {
     isConnected, 
     isConnecting, 
     formattedAddress, 
-    formattedUnshieldedNightBalance 
+    formattedUnshieldedNightBalance,
+    username 
   } = useWallet();
   const { isWalletModalOpen, setWalletModalOpen } = useWalletStore();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -75,24 +76,26 @@ export function TopBar() {
                     : 'border-white/10 hover:border-electric-blue/50'
                 }`}
               >
-                <div className="flex items-center gap-4 mr-1">
-                  <div className="flex flex-col items-end">
-                    <span className="text-[8px] text-slate-500 font-mono leading-none mb-1 uppercase tracking-tighter">
-                      Unshielded
-                    </span>
-                    <span className="text-[10px] text-white font-mono font-bold leading-none">
-                      {formattedUnshieldedNightBalance}
-                    </span>
-                  </div>
+                <div className="flex flex-col items-end mr-2">
+                   <span className="text-[8px] text-slate-500 font-mono leading-none mb-1 uppercase tracking-tighter">
+                     Unshielded Balance
+                   </span>
+                   <span className="text-[10px] text-white font-mono font-bold leading-none">
+                     {formattedUnshieldedNightBalance}
+                   </span>
                 </div>
                 <div className="h-8 w-[1px] bg-white/10 mx-1" />
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-electric-blue/20 rounded-full flex items-center justify-center border border-electric-blue/40">
-                    <Wallet className="w-3.5 h-3.5 text-electric-blue" />
+                <div className="flex items-center gap-2 text-left">
+                  <div className="flex flex-col items-start">
+                    {username && (
+                      <span className="text-[10px] text-electric-blue font-bold font-mono leading-none mb-1 uppercase tracking-wider">
+                        {username}
+                      </span>
+                    )}
+                    <span className="text-[10px] text-slate-300 font-mono font-bold group-hover:text-white transition-colors">
+                      {formattedAddress}
+                    </span>
                   </div>
-                  <span className="text-xs text-slate-300 font-mono font-bold group-hover:text-white transition-colors">
-                    {formattedAddress}
-                  </span>
                   <ChevronDown
                     className={`w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-all ${isDetailOpen ? 'rotate-180' : ''}`}
                   />

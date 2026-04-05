@@ -13,12 +13,13 @@ export interface WalletState {
   dustBalance: string | null;
   networkId: string | null;
   autoConnect: boolean;
+  username: string | null;
 
   // Wallet provider
   provider: any | null;
 
   // Actions
-  connect: (provider: any, addresses: { shielded: string; unshielded?: string }, networkId: string) => void;
+  connect: (provider: any, addresses: { shielded: string; unshielded?: string }, networkId: string, username?: string) => void;
   setAddressDisplayMode: (mode: 'shielded' | 'unshielded') => void;
   disconnect: () => void;
   updateBalances: (balances: { night: string; unshieldedNight: string; dust: string }) => void;
@@ -37,16 +38,17 @@ export const useWalletStore = create<WalletState>()(
       isConnecting: false,
       address: null,
       unshieldedAddress: null,
-      addressDisplayMode: 'unshielded', // Default to unshielded as per user preference
+      addressDisplayMode: 'unshielded',
       nightBalance: null,
       unshieldedNightBalance: null,
       dustBalance: null,
       networkId: null,
       provider: null,
       autoConnect: false,
+      username: null,
 
       // Actions
-      connect: (provider, addresses, networkId) => {
+      connect: (provider, addresses, networkId, username) => {
         set({
           isConnected: true,
           isConnecting: false,
@@ -55,6 +57,7 @@ export const useWalletStore = create<WalletState>()(
           networkId,
           provider,
           autoConnect: true,
+          username: username || null,
         });
       },
 
@@ -74,6 +77,7 @@ export const useWalletStore = create<WalletState>()(
           networkId: null,
           provider: null,
           autoConnect: false,
+          username: null,
         });
       },
 
@@ -106,6 +110,7 @@ export const useWalletStore = create<WalletState>()(
         addressDisplayMode: state.addressDisplayMode,
         networkId: state.networkId,
         autoConnect: state.autoConnect,
+        username: state.username,
       }),
     }
   )

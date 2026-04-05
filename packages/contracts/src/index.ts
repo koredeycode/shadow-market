@@ -8,6 +8,8 @@ export {
   Contract as ShadowMarketContract,
   ledger,
   pureCircuits,
+  type Market,
+  type Ledger,
 } from './managed/shadow-market/contract/index.js';
 
 export * from './types.js';

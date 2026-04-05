@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, ilike, or, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { adminActivityLog, markets, positions, users, wagers } from '../db/schema.js';
+import { adminActivityLog, markets, bets, users, wagers } from '../db/schema.js';
 import { generateId } from '../utils/crypto.js';
 import { shadowMarketContract } from './contract.service.js';
 import logger from '../utils/logger.js';
@@ -14,7 +14,7 @@ export interface AdminStats {
   volume24h: string;
   totalUsers: number;
   activeUsers24h: number;
-  totalPositions: number;
+  totalBets: number;
   totalWagers: number;
   platformFees: string;
   pendingReports: number;
@@ -93,12 +93,12 @@ export class AdminService {
       })
       .from(users);
 
-    // Position stats
-    const [positionStats] = await db
+    // Bet stats
+    const [betStats] = await db
       .select({
         total: sql<number>`count(*)`,
       })
-      .from(positions);
+      .from(bets);
 
     // Wager stats
     const [wagerStats] = await db
@@ -119,7 +119,7 @@ export class AdminService {
       volume24h: volume24hResult.volume,
       totalUsers: userStats.total,
       activeUsers24h: userStats.active24h,
-      totalPositions: positionStats.total,
+      totalBets: betStats.total,
       totalWagers: wagerStats.total,
       platformFees,
       pendingReports: 0, // TODO: Implement report system

@@ -7,7 +7,7 @@ import { api } from '../../lib/api';
 const LinkCLI = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { isConnected, connectWallet, address } = useMidnight();
+  const { isConnected, connectWallet } = useMidnight();
   const [status, setStatus] = useState<'IDLE' | 'AUTHORIZING' | 'SUCCESS' | 'ERROR'>('IDLE');
   const code = searchParams.get('code');
 

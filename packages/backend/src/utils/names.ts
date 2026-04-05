@@ -16,5 +16,5 @@ export function generateRandomUsername(): string {
   const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
   const number = Math.floor(Math.random() * 999) + 1;
   
-  return `${adjective}-${noun}-${number}`;
+  return `sm/${adjective}-${noun}-${number}`.toLowerCase();
 }

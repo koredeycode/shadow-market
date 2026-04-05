@@ -16,7 +16,7 @@ export interface Market {
   outcome?: number;
   resolutionSource: string;
   totalVolume: string;
-  totalPositions: number;
+  totalBets: number;
   yesPrice: string;
   noPrice: string;
   upvotes: number;
@@ -30,15 +30,30 @@ export interface Market {
   };
 }
 
-export interface Position {
+export interface Bet {
   id: string;
   marketId: string;
+  marketSlug?: string;
+  marketQuestion?: string;
+  marketEndTime: string;
+  marketStatus: string;
+  marketOutcome?: number;
   amount: string;
   side: 'yes' | 'no';
   entryPrice: string;
+  currentPrice?: number;
   currentValue: string;
   profitLoss: string;
   isSettled: boolean;
+  payout?: string;
+  username?: string;
+  entryTimestamp: string;
+}
+
+export interface Portfolio {
+  activeBets: Bet[];
+  settledBets: Bet[];
+  stats: PortfolioStats;
 }
 
 export interface Wager {
@@ -74,8 +89,11 @@ export interface PortfolioStats {
   totalValue: string;
   totalProfitLoss: string;
   winRate: number;
-  activePositions: number;
+  activeBets: number;
   totalBets: number;
+  totalWins: number;
+  totalLosses: number;
+  averageBetSize: string;
   totalVolume: string;
 }
 
@@ -107,7 +125,7 @@ export interface AdminStats {
   activeMarkets: number;
   totalVolume: string;
   totalUsers: number;
-  totalPositions: number;
+  totalBets: number;
   totalWagers: number;
   platformFees: string;
   last24hVolume: string;
@@ -128,7 +146,7 @@ export interface AdminUser {
   email?: string;
   reputation: number;
   totalVolume: string;
-  totalPositions: number;
+  totalBets: number;
   winRate: number;
   createdAt: string;
   lastActive: string;

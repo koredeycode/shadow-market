@@ -28,16 +28,18 @@ import {
   UnshieldedWallet,
 } from '@midnight-ntwrk/wallet-sdk-unshielded-wallet';
 import { CompiledContract } from '@midnight-ntwrk/compact-js';
+import chalk from 'chalk';
 
 // Shared config
 import { getAdminWalletSeed, getNetworkConfig } from './config.js';
-import { ShadowMarketAPI } from '../../api/src/index.js';
+import { ShadowMarketAPI } from '@shadow-market/api';
 
 // Enable WebSocket for GraphQL subscriptions
 // @ts-expect-error Required for wallet sync
 globalThis.WebSocket = WebSocket;
 
 const NETWORK_CONFIG = getNetworkConfig();
+console.log(chalk.gray(`  Network: ${NETWORK_CONFIG.network}`));
 setNetworkId(NETWORK_CONFIG.network === 'local' || NETWORK_CONFIG.network === 'undeployed' ? 'undeployed' : 'testnet');
 
 const CONFIG = {
@@ -47,6 +49,14 @@ const CONFIG = {
   proofServer: NETWORK_CONFIG.proofServer,
   faucetUrl: 'http://localhost:8080', // Default local faucet
 };
+
+interface WalletContext {
+  wallet: WalletFacade;
+  shieldedSecretKeys: ledger.ZswapSecretKeys;
+  dustSecretKey: ledger.DustSecretKey;
+  unshieldedKeystore: any; // Using any for brevity if needed or exact type
+  hexAddress: string;
+}
 
 // --- Proof Server Health Check ---
 
@@ -73,7 +83,7 @@ async function waitForProofServer(maxAttempts = 30, delayMs = 2000): Promise<boo
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const zkConfigPath = path.resolve(__dirname, '..', 'src', 'managed', 'shadow-market');
+const zkConfigPath = path.resolve(__dirname, '..', 'managed', 'shadow-market');
 
 // Load compiled contract
 const contractPath = path.join(zkConfigPath, 'contract', 'index.js');
@@ -114,7 +124,7 @@ const compiledContract = CompiledContract.make('shadow-market', ShadowMarket.Con
 // --- Wallet Functions ---
 
 const baseConfiguration = {
-  networkId: (NETWORK_CONFIG.network === 'local' || NETWORK_CONFIG.network === 'undeployed') ? ('undeployed' as const) : ('testnet' as const),
+  networkId: (NETWORK_CONFIG.network === 'local' || NETWORK_CONFIG.network === 'undeployed' ? 'undeployed' : 'testnet') as any,
   costParameters: {
     additionalFeeOverhead: 300_000_000_000_000n,
     feeBlocksMargin: 5,
@@ -124,10 +134,17 @@ const baseConfiguration = {
     indexerWsUrl: CONFIG.indexerWS,
   },
 };
+console.log(chalk.gray(`  BaseConfiguration NetworkId: ${baseConfiguration.networkId}`));
 
 // --- Wallet Functions ---
+import { getNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 
-async function initWalletWithSeed(seed: Uint8Array) {
+async function initWalletWithSeed(seed: Uint8Array): Promise<WalletContext> {
+  const currentNetworkId = (NETWORK_CONFIG.network === 'local' || NETWORK_CONFIG.network === 'undeployed' ? 'undeployed' : 'testnet');
+  setNetworkId(currentNetworkId);
+  console.log(chalk.gray(`  Config NetworkId: ${baseConfiguration.networkId}`));
+  console.log(chalk.gray(`  Current NetworkId: ${currentNetworkId}`));
+  console.log(chalk.gray(`  SDK Global NetworkId: ${getNetworkId()}`));
   const hdWallet = HDWallet.fromSeed(seed);
   if (hdWallet.type !== 'seedOk') {
     throw new Error('Failed to initialize HDWallet');
@@ -148,7 +165,7 @@ async function initWalletWithSeed(seed: Uint8Array) {
   const dustSecretKey = ledger.DustSecretKey.fromSeed(derivationResult.keys[Roles.Dust]);
   const unshieldedKeystore = createKeystore(
     derivationResult.keys[Roles.NightExternal],
-    baseConfiguration.networkId
+    currentNetworkId
   );
 
   const shieldedWallet = (await import('@midnight-ntwrk/wallet-sdk-shielded'))
@@ -179,7 +196,13 @@ async function initWalletWithSeed(seed: Uint8Array) {
   });
 
   await facade.start(shieldedSecretKeys, dustSecretKey);
-  return { wallet: facade, shieldedSecretKeys, dustSecretKey, unshieldedKeystore };
+  return { 
+    wallet: facade, 
+    shieldedSecretKeys, 
+    dustSecretKey, 
+    unshieldedKeystore,
+    hexAddress: unshieldedKeystore.getAddress()
+  };
 }
 
 // Workaround for wallet SDK signRecipe bug
@@ -262,6 +285,56 @@ async function createProviders(walletCtx: Awaited<ReturnType<typeof initWalletWi
 
 // --- Main Deploy Script ---
 
+// --- Genesis Funding Helpers ---
+const GENESIS_SEED = '0000000000000000000000000000000000000000000000000000000000000001';
+
+async function fundFromGenesis(toHexAddress: string, amount: bigint) {
+  console.log(`  Attempting to fund ${toHexAddress} from genesis account...`);
+  const genesisSeed = Buffer.from(GENESIS_SEED, 'hex');
+  const genesisWallet = await initWalletWithSeed(genesisSeed);
+  
+  const state = await Rx.firstValueFrom(genesisWallet.wallet.state().pipe(Rx.filter(s => s.isSynced))) as any;
+  const balance = state.unshielded.balances[unshieldedToken().raw] ?? 0n;
+  
+  if (balance < amount) {
+    console.log(`  Genesis balance too low (${balance}). Faucet might be empty or wallet not synced.`);
+    await genesisWallet.wallet.stop();
+    return false;
+  }
+
+  const recipe = await genesisWallet.wallet.transferTransaction(
+    [
+      {
+        type: 'unshielded',
+        outputs: [
+          { 
+            receiverAddress: { data: Buffer.from(toHexAddress, 'hex') } as any, 
+            amount, 
+            type: unshieldedToken().raw 
+          }
+        ]
+      }
+    ],
+    {
+      shieldedSecretKeys: genesisWallet.shieldedSecretKeys,
+      dustSecretKey: genesisWallet.dustSecretKey,
+    },
+    { ttl: new Date(Date.now() + 15 * 60 * 1000) }
+  );
+
+  const signedRecipe = await genesisWallet.wallet.signRecipe(recipe, payload => genesisWallet.unshieldedKeystore.signData(payload));
+  await genesisWallet.wallet.submitTransaction(await genesisWallet.wallet.finalizeRecipe(signedRecipe));
+  
+  console.log(`  Genesis funding transaction submitted. Waiting for confirmation...`);
+  await Rx.firstValueFrom(genesisWallet.wallet.state().pipe(
+    Rx.throttleTime(5000),
+    Rx.filter(s => s.isSynced)
+  ));
+  
+  await genesisWallet.wallet.stop();
+  return true;
+}
+
 async function main() {
   console.log('\n+--------------------------------------------------------------+');
   console.log('|           Deploy Shadow Market to Midnight Network           |');
@@ -288,13 +361,24 @@ async function main() {
     console.log(`\n  Wallet Address: ${address}`);
     console.log(`  Balance: ${balance.toLocaleString()} tNight\n`);
 
-    // Fund wallet if needed (for local network)
-    if (balance === 0n && NETWORK_CONFIG.network === 'local') {
+    // Fund wallet if needed (for local/undeployed network)
+    if (balance === 0n && (NETWORK_CONFIG.network === 'undeployed' || NETWORK_CONFIG.network === 'local')) {
       console.log('─── Step: Fund Your Wallet ─────────────────────────────────────\n');
-      console.log(`  Visit: ${CONFIG.faucetUrl}`);
-      console.log(`  Address: ${address}\n`);
-      console.log('  Waiting for funds...');
+      
+      // Attempt automatic funding from genesis
+      try {
+        const funded = await fundFromGenesis(walletCtx.hexAddress, 100_000n * 1_000_000_000n);
+        if (funded) {
+          console.log('  Automatic funding successful!\n');
+        } else {
+          console.log(`  Please fund manually to: ${address}\n`);
+        }
+      } catch (err) {
+        console.error('  Automatic funding failed:', err);
+        console.log(`  Please fund manually to: ${address}\n`);
+      }
 
+      console.log('  Waiting for balance update...');
       await Rx.firstValueFrom(
         walletCtx.wallet.state().pipe(
           Rx.throttleTime(10000),
@@ -303,7 +387,7 @@ async function main() {
           Rx.filter(b => b > 0n)
         )
       );
-      console.log('  Funds received!\n');
+      console.log('  Funds verified!\n');
     }
 
     // Register for DUST

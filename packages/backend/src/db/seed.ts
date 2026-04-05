@@ -4,7 +4,6 @@ import 'dotenv/config';
 import { db } from './client.js';
 import {
   markets,
-  positions,
   pricePoints,
   users,
   wagers,
@@ -22,13 +21,13 @@ export async function clearDatabase() {
   const tables = [
     'price_points',
     'wagers',
-    'positions',
+    'bets',
     'market_stats',
     'market_upvotes',
     'admin_activity_log',
+    'terminal_sessions',
     'markets',
-    'users',
-    'drizzle_migrations' // Ensure we clear migration tracking
+    'users'
   ];
 
   for (const table of tables) {

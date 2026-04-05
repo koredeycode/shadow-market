@@ -1,5 +1,5 @@
 {
-  "id": "671a6210-9fe1-4583-9cdf-6ba61a525f4f",
+  "id": "351b55e2-b334-471f-a7e3-fcb43c04e0aa",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
@@ -99,6 +99,179 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
+    },
+    "bets": {
+      "name": "bets",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "onchain_id": {
+          "name": "onchain_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tx_hash": {
+          "name": "tx_hash",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "market_id": {
+          "name": "market_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount_encrypted": {
+          "name": "amount_encrypted",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "side_encrypted": {
+          "name": "side_encrypted",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nonce_encrypted": {
+          "name": "nonce_encrypted",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "commitment": {
+          "name": "commitment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entry_price": {
+          "name": "entry_price",
+          "type": "numeric(18, 17)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entry_timestamp": {
+          "name": "entry_timestamp",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "is_settled": {
+          "name": "is_settled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "settled_at": {
+          "name": "settled_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "payout": {
+          "name": "payout",
+          "type": "numeric(20, 0)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "profit_loss": {
+          "name": "profit_loss",
+          "type": "numeric(20, 0)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "bets_user_idx": {
+          "name": "bets_user_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        },
+        "bets_market_idx": {
+          "name": "bets_market_idx",
+          "columns": [
+            "market_id"
+          ],
+          "isUnique": false
+        },
+        "bets_settled_idx": {
+          "name": "bets_settled_idx",
+          "columns": [
+            "is_settled"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "bets_user_id_users_id_fk": {
+          "name": "bets_user_id_users_id_fk",
+          "tableFrom": "bets",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "bets_market_id_markets_id_fk": {
+          "name": "bets_market_id_markets_id_fk",
+          "tableFrom": "bets",
+          "tableTo": "markets",
+          "columnsFrom": [
+            "market_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "bets_onchain_id_unique": {
+          "name": "bets_onchain_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "onchain_id"
+          ]
+        }
+      }
     },
     "market_stats": {
       "name": "market_stats",
@@ -263,6 +436,12 @@
         },
         "onchain_id": {
           "name": "onchain_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
@@ -287,7 +466,7 @@
         },
         "category": {
           "name": "category",
-          "type": "varchar(100)",
+          "type": "category",
           "primaryKey": false,
           "notNull": true
         },
@@ -335,18 +514,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "min_bet": {
-          "name": "min_bet",
-          "type": "numeric(20, 0)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "max_bet": {
-          "name": "max_bet",
-          "type": "numeric(20, 0)",
-          "primaryKey": false,
-          "notNull": true
-        },
         "total_volume": {
           "name": "total_volume",
           "type": "numeric(20, 0)",
@@ -354,15 +521,8 @@
           "notNull": true,
           "default": "'0'"
         },
-        "total_liquidity": {
-          "name": "total_liquidity",
-          "type": "numeric(20, 0)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'0'"
-        },
-        "total_positions": {
-          "name": "total_positions",
+        "total_bets": {
+          "name": "total_bets",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -446,6 +606,13 @@
           ],
           "isUnique": false
         },
+        "markets_slug_idx": {
+          "name": "markets_slug_idx",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": false
+        },
         "markets_end_time_idx": {
           "name": "markets_end_time_idx",
           "columns": [
@@ -484,167 +651,15 @@
           "columns": [
             "onchain_id"
           ]
+        },
+        "markets_slug_unique": {
+          "name": "markets_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
         }
       }
-    },
-    "positions": {
-      "name": "positions",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "tx_hash": {
-          "name": "tx_hash",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "market_id": {
-          "name": "market_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "amount_encrypted": {
-          "name": "amount_encrypted",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "side_encrypted": {
-          "name": "side_encrypted",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "nonce_encrypted": {
-          "name": "nonce_encrypted",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "commitment": {
-          "name": "commitment",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "entry_price": {
-          "name": "entry_price",
-          "type": "numeric(18, 17)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "entry_timestamp": {
-          "name": "entry_timestamp",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "is_settled": {
-          "name": "is_settled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "settled_at": {
-          "name": "settled_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "payout": {
-          "name": "payout",
-          "type": "numeric(20, 0)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "profit_loss": {
-          "name": "profit_loss",
-          "type": "numeric(20, 0)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "positions_user_idx": {
-          "name": "positions_user_idx",
-          "columns": [
-            "user_id"
-          ],
-          "isUnique": false
-        },
-        "positions_market_idx": {
-          "name": "positions_market_idx",
-          "columns": [
-            "market_id"
-          ],
-          "isUnique": false
-        },
-        "positions_settled_idx": {
-          "name": "positions_settled_idx",
-          "columns": [
-            "is_settled"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "positions_user_id_users_id_fk": {
-          "name": "positions_user_id_users_id_fk",
-          "tableFrom": "positions",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "positions_market_id_markets_id_fk": {
-          "name": "positions_market_id_markets_id_fk",
-          "tableFrom": "positions",
-          "tableTo": "markets",
-          "columnsFrom": [
-            "market_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
     },
     "price_points": {
       "name": "price_points",
@@ -717,6 +732,100 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
+    "terminal_sessions": {
+      "name": "terminal_sessions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PENDING'"
+        },
+        "pairing_code": {
+          "name": "pairing_code",
+          "type": "varchar(12)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "signature": {
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wallet_address": {
+          "name": "wallet_address",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "authorized_at": {
+          "name": "authorized_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "terminal_sessions_user_id_users_id_fk": {
+          "name": "terminal_sessions_user_id_users_id_fk",
+          "tableFrom": "terminal_sessions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "terminal_sessions_pairing_code_unique": {
+          "name": "terminal_sessions_pairing_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "pairing_code"
+          ]
+        }
+      }
+    },
     "users": {
       "name": "users",
       "schema": "",
@@ -782,13 +891,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
-        },
-        "kyc_status": {
-          "name": "kyc_status",
-          "type": "kyc_status",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'NONE'"
         },
         "total_volume": {
           "name": "total_volume",
@@ -1055,19 +1157,25 @@
     }
   },
   "enums": {
-    "kyc_status": {
-      "name": "kyc_status",
+    "category": {
+      "name": "category",
       "values": {
-        "NONE": "NONE",
-        "PENDING": "PENDING",
-        "APPROVED": "APPROVED",
-        "REJECTED": "REJECTED"
+        "Politics": "Politics",
+        "Sports": "Sports",
+        "Crypto": "Crypto",
+        "Finance": "Finance",
+        "Geopolitics": "Geopolitics",
+        "Tech": "Tech",
+        "Culture": "Culture",
+        "Economy": "Economy",
+        "Weather": "Weather",
+        "Elections": "Elections",
+        "Others": "Others"
       }
     },
     "market_status": {
       "name": "market_status",
       "values": {
-        "PENDING": "PENDING",
         "OPEN": "OPEN",
         "LOCKED": "LOCKED",
         "RESOLVED": "RESOLVED",
@@ -1079,8 +1187,8 @@
       "values": {
         "OPEN": "OPEN",
         "MATCHED": "MATCHED",
-        "RESOLVED": "RESOLVED",
-        "CANCELLED": "CANCELLED"
+        "CANCELLED": "CANCELLED",
+        "SETTLED": "SETTLED"
       }
     }
   },

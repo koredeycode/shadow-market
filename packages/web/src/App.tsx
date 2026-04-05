@@ -16,6 +16,8 @@ const Terms = lazy(() => import('./pages/Terms'));
 const HowItWorks = lazy(() => import('./pages/HowItWorks'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const LinkCLI = lazy(() => import('./pages/auth/LinkCLI'));
+const BetDetails = lazy(() => import('./pages/BetDetails'));
+const WagerDetails = lazy(() => import('./pages/BetDetails')); // Use same for now since we're viewing bets/wagers
 
 // Admin pages
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
@@ -42,6 +44,8 @@ function App() {
               <Route path="markets/:slug" element={<MarketDetail />} />
               <Route path="markets/:slug/wagers" element={<MarketDetail />} />
               <Route path="portfolio" element={<Portfolio />} />
+              <Route path="portfolio/bets/:id" element={<BetDetails />} />
+              <Route path="portfolio/wagers/:id" element={<WagerDetails />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="privacy" element={<Privacy />} />
               <Route path="terms" element={<Terms />} />

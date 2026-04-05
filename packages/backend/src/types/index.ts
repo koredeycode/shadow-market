@@ -59,7 +59,7 @@ export interface PortfolioStats {
   totalValue: string;
   totalProfitLoss: string;
   winRate: number;
-  activePositions: number;
+  activeBets: number;
   totalBets: number;
   totalWins: number;
   totalLosses: number;
@@ -74,8 +74,8 @@ export interface PricePoint {
   volume: string;
 }
 
-// Decrypted position data (only for authorized user)
-export interface DecryptedPosition {
+// Decrypted bet data (only for authorized user)
+export interface DecryptedBet {
   id: string;
   marketId: string;
   marketSlug: string;
@@ -89,11 +89,12 @@ export interface DecryptedPosition {
   entryTimestamp: Date;
   settledAt?: Date;
   payout?: string;
+  username?: string;
 }
 
 export interface Portfolio {
-  activePositions: DecryptedPosition[];
-  settledPositions: DecryptedPosition[];
+  activeBets: DecryptedBet[];
+  settledBets: DecryptedBet[];
   stats: PortfolioStats;
 }
 
@@ -117,7 +118,7 @@ export interface WebSocketEvents {
     outcome: number;
     timestamp: number;
   };
-  'position:update': {
+  'bet:update': {
     marketId: string;
     value: string;
     profitLoss: string;

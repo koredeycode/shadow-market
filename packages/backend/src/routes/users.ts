@@ -185,7 +185,8 @@ usersRouter.get('/link/code', async (req, res, next) => {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
     await db.insert(terminalSessions).values({
-      id: code,
+      id: `session_${code}_${Date.now()}`,
+      pairingCode: code,
       status: 'PENDING',
       expiresAt,
     });

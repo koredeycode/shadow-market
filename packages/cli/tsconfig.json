@@ -13,10 +13,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
-    "paths": {
-      "@shadow-market/api": ["../api/src/index.ts"]
-    }
+    "baseUrl": "."
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

@@ -12,9 +12,9 @@ import {
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Portfolio as PortfolioData, positionsApi } from '../api/positions';
+import { Portfolio as PortfolioData, betsApi } from '../api/bets';
 import { ExportDataButton } from '../components/analytics/ExportDataButton';
-import { PositionsList } from '../components/portfolio/PositionsList';
+import { BetsList } from '../components/portfolio/BetsList';
 
 interface StatCardProps {
   title: string;
@@ -61,7 +61,7 @@ export function Portfolio() {
     refetch,
   } = useQuery<PortfolioData>({
     queryKey: ['portfolio'],
-    queryFn: () => positionsApi.getPortfolio(),
+    queryFn: () => betsApi.getPortfolio(),
     refetchInterval: 15000,
   });
 
@@ -106,7 +106,7 @@ export function Portfolio() {
     );
   }
 
-  const { activePositions, settledPositions, stats } = portfolio;
+  const { activeBets, settledBets, stats } = portfolio;
 
   const formatCurrency = (value: string) => {
     const num = parseFloat(value || '0');
@@ -203,7 +203,7 @@ export function Portfolio() {
                 }`}
               >
                 <Activity className="w-3 h-3" />
-                Active units ({activePositions.length})
+                Active units ({activeBets.length})
               </button>
               <button
                 onClick={() => setActiveTab('settled')}
@@ -214,13 +214,13 @@ export function Portfolio() {
                 }`}
               >
                 <ShieldCheck className="w-3 h-3" />
-                Settled history ({settledPositions.length})
+                Settled history ({settledBets.length})
               </button>
             </div>
 
             <div className="p-0">
-              <PositionsList
-                positions={activeTab === 'active' ? activePositions : settledPositions}
+              <BetsList
+                bets={activeTab === 'active' ? activeBets : settledBets}
                 isActive={activeTab === 'active'}
                 onClaimSuccess={() => refetch()}
               />

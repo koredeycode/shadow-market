@@ -42,7 +42,7 @@ export function MarketStats({ market }: MarketStatsProps) {
     {
       icon: <Users className="w-4 h-4" />,
       label: 'Positions',
-      value: market.totalPositions.toLocaleString(),
+      value: market.totalBets.toLocaleString(),
       textColor: 'text-white',
     },
     {

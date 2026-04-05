@@ -2,9 +2,8 @@ version: '3.8'
 
 services:
   # ==============================================
-  # Midnight Network Services
+  # Midnight Network Services (Local Stack)
   # ==============================================
-
   midnight-node:
     image: midnightntwrk/midnight-node:0.22.3
     container_name: shadow-midnight-node
@@ -46,60 +45,85 @@ services:
       - shadow-network
 
   # ==============================================
-  # Backend Services (Using Local Instances)
+  # Local Environment Infrastructure (Port 5434)
   # ==============================================
-  # PostgreSQL and Redis services are commented out because
-  # local instances are already running on the host machine.
-  #
-  # Uncomment these if you want to use containerized services instead:
-  #
-  # postgres:
-  #   image: postgres:16-alpine
-  #   container_name: shadow-postgres
-  #   restart: unless-stopped
-  #   ports:
-  #     - '5432:5432'
-  #   environment:
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: postgres
-  #     POSTGRES_DB: shadowmarket
-  #     POSTGRES_HOST_AUTH_METHOD: trust
-  #   volumes:
-  #     - postgres-data:/var/lib/postgresql/data
-  #   healthcheck:
-  #     test: ['CMD-SHELL', 'pg_isready -U postgres']
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 5
-  #   networks:
-  #     - shadow-network
-  #
-  # redis:
-  #   image: redis:7-alpine
-  #   container_name: shadow-redis
-  #   restart: unless-stopped
-  #   ports:
-  #     - '6379:6379'
-  #   command: redis-server --appendonly yes
-  #   volumes:
-  #     - redis-data:/data
-  #   healthcheck:
-  #     test: ['CMD', 'redis-cli', 'ping']
-  #     interval: 5s
-  #     timeout: 3s
-  #     retries: 5
-  #   networks:
-  #     - shadow-network
+  postgres-local:
+    image: postgres:16-alpine
+    container_name: shadow-postgres-local
+    restart: unless-stopped
+    ports:
+      - '5434:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: shadowmarket_undeployed
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres-local-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shadow-network
+
+  # ==============================================
+  # Preview Environment Infrastructure (Port 5435)
+  # ==============================================
+  postgres-preview:
+    image: postgres:16-alpine
+    container_name: shadow-postgres-preview
+    restart: unless-stopped
+    ports:
+      - '5435:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: shadowmarket_preview
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres-preview-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shadow-network
+
+  # ==============================================
+  # Prepod Environment Infrastructure (Port 5436)
+  # ==============================================
+  postgres-prepod:
+    image: postgres:16-alpine
+    container_name: shadow-postgres-prepod
+    restart: unless-stopped
+    ports:
+      - '5436:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: shadowmarket_prepod
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres-prepod-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shadow-network
 
 networks:
   shadow-network:
     driver: bridge
 
-# Volumes are commented out since we're using local PostgreSQL and Redis
-# Uncomment if you enable the containerized services:
-#
-# volumes:
-#   postgres-data:
-#     driver: local
-#   redis-data:
-#     driver: local
+volumes:
+  postgres-local-data:
+    driver: local
+  postgres-preview-data:
+    driver: local
+  postgres-prepod-data:
+    driver: local

@@ -86,13 +86,17 @@ export class BackendClient {
     return response.data.data;
   }
 
-  async createPairingSession() {
+  async getLinkCode() {
     const response = await axios.post(`${this.baseUrl}/sessions/create`);
-    return response.data.data;
+    const session = response.data.data;
+    return {
+      code: session.pairingCode,
+      expiresAt: session.expiresAt
+    };
   }
 
-  async checkPairingStatus(pairingCode: string) {
-    const response = await axios.get(`${this.baseUrl}/sessions/${pairingCode}/status`);
+  async pollLinkStatus(code: string) {
+    const response = await axios.get(`${this.baseUrl}/sessions/${code}/status`);
     return response.data.data;
   }
 

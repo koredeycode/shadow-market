@@ -275,7 +275,7 @@ export function AdminDashboard() {
             <Activity className="w-4 h-4 text-slate-500" />
           </div>
           <p className="text-2xl font-bold font-mono text-white">
-            {stats.totalPositions.toLocaleString()}
+            {stats.totalBets.toLocaleString()}
           </p>
         </div>
         <div className="glass-shine p-6 border border-white/5 rounded-sm">

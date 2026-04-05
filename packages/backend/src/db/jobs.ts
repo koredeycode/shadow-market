@@ -2,22 +2,42 @@ import { eq } from 'drizzle-orm';
 import logger from '../utils/logger.js';
 import { broadcastToMarket, broadcastToUser } from '../websocket.js';
 import { db } from './client.js';
-import { markets, positions } from './schema.js';
+import { markets, bets } from './schema.js';
+
+import { OnChainService } from '../services/onchain.service.js';
 
 /**
  * Background job to sync market data from blockchain
- * In production, this would listen to on-chain events
  */
 export async function syncMarketPrices() {
   try {
-    // Get all open markets
+    // Get latest ledger from Midnight Indexer
+    const ledger = await OnChainService.getLatestLedger();
+    if (!ledger) return;
+
+    // Get all open markets from local DB
     const openMarkets = await db.query.markets.findMany({
       where: eq(markets.status, 'OPEN'),
     });
 
     for (const market of openMarkets) {
-      // In production, fetch from contract
-      // For now, simulate price updates
+      // Lookup on-chain state for this market
+      const onchainMarket = ledger.markets.get(market.onchainId);
+      if (!onchainMarket) continue;
+
+      // Update local DB with on-chain volume and pool totals
+      await db.update(markets)
+        .set({
+          totalVolume: (onchainMarket.yesTotal + onchainMarket.noTotal).toString(),
+          yesPrice: onchainMarket.yesTotal > 0n 
+            ? (Number(onchainMarket.yesTotal) / Number(onchainMarket.yesTotal + onchainMarket.noTotal)).toFixed(2)
+            : '0.50',
+          noPrice: onchainMarket.noTotal > 0n
+            ? (Number(onchainMarket.noTotal) / Number(onchainMarket.yesTotal + onchainMarket.noTotal)).toFixed(2)
+            : '0.50',
+          status: onchainMarket.status.toString() as any, // Sync status if it changed
+        })
+        .where(eq(markets.id, market.id));
 
       // Broadcast update to subscribed clients
       broadcastToMarket(market.id, 'market:update', {
@@ -27,38 +47,38 @@ export async function syncMarketPrices() {
       });
     }
 
-    logger.debug('Market prices synced', { count: openMarkets.length });
+    logger.debug('Market prices synced from chain', { count: openMarkets.length });
   } catch (error) {
     logger.error('Market sync failed', { error });
   }
 }
 
 /**
- * Update user positions with current prices
+ * Update user bets with current prices
  */
-export async function updatePositionValues() {
+export async function updateBetValues() {
   try {
-    // Get all unsettled positions
-    const activePositions = await db.query.positions.findMany({
-      where: eq(positions.isSettled, false),
+    // Get all unsettled bets
+    const activeBets = await db.query.bets.findMany({
+      where: eq(bets.isSettled, false),
       with: { market: true },
     });
 
-    for (const position of activePositions) {
-      if (position.market.status === 'OPEN') {
+    for (const bet of activeBets) {
+      if (bet.market.status === 'OPEN') {
         // Calculate current value based on market price
         // In production, decrypt and calculate actual values
 
-        // Notify user of position update
-        broadcastToUser(position.userId, 'position:update', {
-          marketId: position.marketId,
+        // Notify user of bet update
+        broadcastToUser(bet.userId, 'bet:update', {
+          marketId: bet.marketId,
           value: '0', // Calculate from market price
           profitLoss: '0', // Calculate P&L
         });
       }
     }
 
-    logger.debug('Position values updated', { count: activePositions.length });
+    logger.debug('Bet values updated', { count: activeBets.length });
   } catch (error) {
     logger.error('Position update failed', { error });
   }
@@ -71,11 +91,11 @@ export function startBackgroundJobs() {
   // Sync market prices every 10 seconds
   setInterval(syncMarketPrices, 10000);
 
-  // Update position values every 30 seconds
-  setInterval(updatePositionValues, 30000);
+  // Update bet values every 30 seconds
+  setInterval(updateBetValues, 30000);
 
   logger.info('Background jobs started', {
     syncInterval: '10s',
-    positionUpdateInterval: '30s',
+    betUpdateInterval: '30s',
   });
 }

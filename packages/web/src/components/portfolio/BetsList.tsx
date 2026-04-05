@@ -3,20 +3,21 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
-import { Position, positionsApi } from '../../api/positions';
+import { betsApi } from '../../api/bets';
+import type { Bet } from '../../types';
 
-interface PositionCardProps {
-  position: Position;
+interface BetRowProps {
+  bet: Bet;
   isActive: boolean;
   onClaimSuccess: () => void;
 }
 
-function PositionRow({ position, isActive: _isActive, onClaimSuccess }: PositionCardProps) {
+function BetRow({ bet, isActive: _isActive, onClaimSuccess }: BetRowProps) {
   const queryClient = useQueryClient();
   const [claiming, setClaiming] = useState(false);
 
   const claimMutation = useMutation({
-    mutationFn: () => positionsApi.claimWinnings(position.id),
+    mutationFn: () => betsApi.claimWinnings(bet.id),
     onSuccess: data => {
       toast.success(`Successfully claimed ${formatCurrency(data.amount)}!`);
       queryClient.invalidateQueries({ queryKey: ['portfolio'] });
@@ -47,17 +48,17 @@ function PositionRow({ position, isActive: _isActive, onClaimSuccess }: Position
   };
 
   const calculatePnL = () => {
-    if (position.isSettled && position.profitLoss) {
-      return parseFloat(position.profitLoss);
+    if (bet.isSettled && bet.profitLoss) {
+      return parseFloat(bet.profitLoss);
     }
-    const currentValue = parseFloat(position.amount) * position.currentPrice;
-    const entryValue = parseFloat(position.amount) * position.entryPrice;
+    const currentValue = Number(bet.amount) * (bet.currentPrice || 0);
+    const entryValue = Number(bet.amount) * Number(bet.entryPrice);
     return currentValue - entryValue;
   };
 
   const calculateROI = () => {
     const pnl = calculatePnL();
-    const investment = parseFloat(position.amount) * position.entryPrice;
+    const investment = Number(bet.amount) * Number(bet.entryPrice);
     return (pnl / Math.max(investment, 0.01)) * 100;
   };
 
@@ -76,41 +77,41 @@ function PositionRow({ position, isActive: _isActive, onClaimSuccess }: Position
     return `${hours}h`;
   };
 
-  const canClaim = position.isSettled && position.payout && parseFloat(position.payout) > 0;
+  const canClaim = bet.isSettled && bet.payout && parseFloat(bet.payout) > 0;
 
   const outcomeWon =
-    position.marketStatus === 'resolved' &&
-    ((position.side === 'yes' && position.marketOutcome === 1) ||
-      (position.side === 'no' && position.marketOutcome === 0));
+    bet.marketStatus === 'resolved' &&
+    ((bet.side === 'yes' && bet.marketOutcome === 1) ||
+      (bet.side === 'no' && bet.marketOutcome === 0));
 
   return (
-    <div className="group border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-      <Link to={`/markets/${position.marketSlug || position.marketId}`} className="block">
+    <div className="group border-b border-white/5 hover:bg-white/[0.02] transition-colors relative">
+      <Link to={`/portfolio/bets/${bet.id}`} className="block">
         {/* Desktop View */}
         <div className="hidden lg:grid grid-cols-12 gap-4 items-center px-6 py-4">
           <div className="col-span-4 space-y-1">
             <h4 className="text-xs font-bold text-white group-hover:text-electric-blue transition-colors truncate">
-              {position.marketQuestion}
+              {bet.marketQuestion}
             </h4>
             <div className="flex items-center gap-2">
               <span
                 className={`text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-sm border ${
-                  position.side === 'yes'
+                  bet.side === 'yes'
                     ? 'border-success-green/30 text-success-green bg-success-green/5'
                     : 'border-red-500/30 text-red-500 bg-red-500/5'
                 }`}
               >
-                {position.side}
+                {bet.side}
               </span>
               <span className="text-[9px] font-mono text-slate-600 uppercase">
-                ID: {position.marketId.slice(0, 8)}
+                ID: {bet.marketId.slice(0, 8)}
               </span>
             </div>
           </div>
 
           <div className="col-span-2 text-center flex flex-col items-center">
             <span className="text-[9px] font-mono text-slate-500 uppercase mb-1">Status</span>
-            {position.marketStatus === 'resolved' ? (
+            {bet.marketStatus === 'resolved' ? (
               <div
                 className={`flex items-center gap-1.5 text-[10px] font-bold font-mono ${outcomeWon ? 'text-success-green' : 'text-red-500'}`}
               >
@@ -120,17 +121,17 @@ function PositionRow({ position, isActive: _isActive, onClaimSuccess }: Position
             ) : (
               <div className="flex items-center gap-1.5 text-[10px] font-bold font-mono text-amber-500">
                 <Clock className="w-3 h-3" />
-                {formatTimeRemaining(position.marketEndTime)}
+                {formatTimeRemaining(bet.marketEndTime)}
               </div>
             )}
           </div>
 
           <div className="col-span-2 text-right space-y-1">
             <p className="text-[11px] font-mono text-white font-bold">
-              {formatCurrency(position.amount)}
+              {formatCurrency(bet.amount)}
             </p>
             <p className="text-[9px] font-mono text-slate-500">
-              @{(position.entryPrice * 100).toFixed(1)}%
+              @{(Number(bet.entryPrice) * 100).toFixed(1)}%
             </p>
           </div>
 
@@ -173,16 +174,16 @@ function PositionRow({ position, isActive: _isActive, onClaimSuccess }: Position
         <div className="lg:hidden p-4 space-y-4">
           <div className="flex justify-between items-start">
             <h4 className="text-xs font-bold text-white pr-4 leading-relaxed">
-              {position.marketQuestion}
+              {bet.marketQuestion}
             </h4>
             <span
               className={`text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-sm shrink-0 ${
-                position.side === 'yes'
+                bet.side === 'yes'
                   ? 'border border-success-green/30 text-success-green'
                   : 'border border-red-500/30 text-red-500'
               }`}
             >
-              {position.side}
+              {bet.side}
             </span>
           </div>
 
@@ -190,7 +191,7 @@ function PositionRow({ position, isActive: _isActive, onClaimSuccess }: Position
             <div className="space-y-1">
               <span className="text-[8px] font-mono text-slate-500 uppercase">Amount</span>
               <p className="text-[10px] font-mono text-white font-bold">
-                {formatCurrency(position.amount)}
+                {formatCurrency(bet.amount)}
               </p>
             </div>
             <div className="space-y-1">
@@ -204,7 +205,7 @@ function PositionRow({ position, isActive: _isActive, onClaimSuccess }: Position
             <div className="space-y-1 text-right">
               <span className="text-[8px] font-mono text-slate-500 uppercase">Status</span>
               <p className="text-[10px] font-mono text-white font-bold uppercase">
-                {position.marketStatus === 'resolved' ? (outcomeWon ? 'WON' : 'LOST') : 'OPEN'}
+                {bet.marketStatus === 'resolved' ? (outcomeWon ? 'WON' : 'LOST') : 'OPEN'}
               </p>
             </div>
           </div>
@@ -215,7 +216,7 @@ function PositionRow({ position, isActive: _isActive, onClaimSuccess }: Position
               disabled={claiming || claimMutation.isPending}
               className="w-full py-2.5 bg-success-green text-black text-[10px] font-bold font-mono uppercase tracking-widest rounded-sm hover:bg-success-green/90 transition-all flex items-center justify-center gap-2"
             >
-              Claim {formatCurrency(position.payout!)}
+              Claim {formatCurrency(bet.payout!)}
             </button>
           )}
         </div>
@@ -224,14 +225,14 @@ function PositionRow({ position, isActive: _isActive, onClaimSuccess }: Position
   );
 }
 
-interface PositionsListProps {
-  positions: Position[];
+interface BetsListProps {
+  bets: Bet[];
   isActive: boolean;
   onClaimSuccess: () => void;
 }
 
-export function PositionsList({ positions, isActive, onClaimSuccess }: PositionsListProps) {
-  if (positions.length === 0) {
+export function BetsList({ bets, isActive, onClaimSuccess }: BetsListProps) {
+  if (bets.length === 0) {
     return (
       <div className="py-20 flex flex-col items-center justify-center text-center space-y-4">
         <div className="p-4 bg-white/[0.02] border border-white/5 rounded-full text-slate-600">
@@ -243,7 +244,7 @@ export function PositionsList({ positions, isActive, onClaimSuccess }: Positions
           </h4>
           <p className="text-slate-500 text-[10px] font-mono max-w-[200px] leading-relaxed">
             {isActive
-              ? 'Initiate on-chain wagers to begin tracking positions.'
+              ? 'Initiate on-chain wagers to begin tracking bets.'
               : 'Resolved wagers will be archived here upon market settlement.'}
           </p>
         </div>
@@ -261,10 +262,10 @@ export function PositionsList({ positions, isActive, onClaimSuccess }: Positions
         <div className="col-span-2 text-right">Execution</div>
       </div>
       <div>
-        {positions.map(position => (
-          <PositionRow
-            key={position.id}
-            position={position}
+        {bets.map(bet => (
+          <BetRow
+            key={bet.id}
+            bet={bet}
             isActive={isActive}
             onClaimSuccess={onClaimSuccess}
           />

@@ -96,7 +96,7 @@ export function HeaderSearch() {
                     </span>
                     <span className="flex items-center gap-1">
                       <Users className="w-3 h-3" />
-                      {market.totalPositions} Traders
+                      {market.totalBets} Traders
                     </span>
                   </div>
                 </button>

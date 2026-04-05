@@ -8,7 +8,7 @@ export function Privacy() {
     },
     {
       title: 'Data Usage',
-      content: 'Any data processed is strictly for the purpose of executing decentralized smart contracts and verifying market outcomes. We utilize Midnight ZK-technology to ensure your individual positions and transaction history remain confidential.',
+      content: 'Any data processed is strictly for the purpose of executing decentralized smart contracts and verifying market outcomes. We utilize Midnight ZK-technology to ensure your individual bets and transaction history remain confidential.',
     },
     {
       title: 'Cookies and Tracking',

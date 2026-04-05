@@ -99,7 +99,7 @@ export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
     onSuccess: data => {
       toast.success(`Trade Executed! Position: ${data.positionId.slice(0, 8)}...`);
       queryClient.invalidateQueries({ queryKey: ['market', market.id] });
-      queryClient.invalidateQueries({ queryKey: ['positions'] });
+      queryClient.invalidateQueries({ queryKey: ['bets'] });
       reset();
       onClose();
     },
