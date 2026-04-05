@@ -113,7 +113,7 @@ export function Home() {
                     <div className="flex items-center gap-2">
                       <BarChart3 className="w-4 h-4 text-electric-blue" />
                       <span>
-                        ${(parseFloat(currentFeatured.totalVolume) / 1000).toFixed(1)}K Vol
+                        {(parseFloat(currentFeatured.totalVolume) / 1000).toFixed(1)}K NIGHT Vol
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -212,7 +212,7 @@ export function Home() {
                     </p>
                     <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500 uppercase mt-1">
                       <span className="text-electric-blue">
-                        ${(parseFloat(market.totalVolume) / 1000).toFixed(1)}K Vol
+                        {(parseFloat(market.totalVolume) / 1000).toFixed(1)}K NIGHT Vol
                       </span>
                       <span className="text-slate-800">|</span>
                       <span className="text-success-green">

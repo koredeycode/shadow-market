@@ -105,29 +105,29 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
         console.log('Placing bet ON-CHAIN (required)...');
 
         // Step 1: REQUIRED - Execute on-chain transaction first
-        const result = await placeBet(
-          market.onchainId || market.id,
-          data.side.toUpperCase() as 'YES' | 'NO',
-          parseFloat(data.amount)
-        );
+          const result = await placeBet(
+            market.onchainId || market.id,
+            data.side.toUpperCase() as 'YES' | 'NO',
+            parseFloat(data.amount)
+          );
 
-        if (!result) throw new Error('Transaction failed or was cancelled');
-        const { txHash, onchainId } = result;
+          if (!result) throw new Error('Transaction failed or was cancelled');
+          const { txHash, onchainId: contractOnchainId } = result;
 
-        console.log('On-chain transaction successful! Hash:', txHash);
+          console.log(`[DEBUG] BettingTerminal: Contract returned onchainId=${contractOnchainId}, txHash=${txHash}`);
 
-        // Step 2: Update backend database for caching/indexing (after on-chain success)
-        console.log('Syncing to database...');
-        try {
-          const dbResult = await wagersApi.placeBet({
-            marketId: market.id,
-            amount: data.amount,
-            side: data.side,
-            slippage: data.slippage,
-            txHash,
-            onchainId,
-            skipRedirect: true,
-          });
+          // Step 2: Update backend database for caching/indexing (after on-chain success)
+          console.log('Syncing to database...');
+          try {
+            const dbResult = await wagersApi.placeBet({
+              marketId: market.id,
+              amount: data.amount,
+              side: data.side,
+              slippage: data.slippage,
+              txHash,
+              onchainId: contractOnchainId,
+              skipRedirect: true,
+            });
 
           console.log('Database synced successfully');
           return { ...dbResult, txId: txHash, contractSuccess: true };

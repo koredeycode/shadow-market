@@ -110,12 +110,10 @@ export function Portfolio() {
 
   const formatCurrency = (value: string) => {
     const num = parseFloat(value || '0');
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(num);
+    if (isNaN(num)) return '0 NIGHT';
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M NIGHT`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K NIGHT`;
+    return `${num.toFixed(0)} NIGHT`;
   };
 
   const totalPnLNum = parseFloat(stats?.totalProfitLoss || '0');

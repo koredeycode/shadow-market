@@ -218,7 +218,10 @@ export class WagerService {
    */
   async acceptP2PWager(userId: string, wagerId: string) {
     const wager = await db.query.wagers.findFirst({
-      where: eq(wagers.id, wagerId),
+      where: or(
+        eq(wagers.id, wagerId),
+        eq(wagers.onchainId, wagerId)
+      ),
     });
 
     if (!wager) throw new Error('Wager not found');
@@ -233,7 +236,7 @@ export class WagerService {
         status: 'MATCHED',
         matchedAt: new Date(),
       })
-      .where(eq(wagers.id, wagerId))
+      .where(or(eq(wagers.id, wagerId), eq(wagers.onchainId, wagerId)))
       .returning();
 
     return updated;
@@ -244,7 +247,10 @@ export class WagerService {
    */
   async cancelWager(userId: string, wagerId: string) {
     const wager = await db.query.wagers.findFirst({
-      where: eq(wagers.id, wagerId),
+      where: or(
+        eq(wagers.id, wagerId),
+        eq(wagers.onchainId, wagerId)
+      ),
     });
 
     if (!wager) throw new Error('Wager not found');
@@ -390,7 +396,10 @@ export class WagerService {
    */
   async claimWinnings(userId: string, betId: string) {
     const bet = await db.query.bets.findFirst({
-      where: and(eq(bets.id, betId), eq(bets.userId, userId)),
+      where: and(
+        or(eq(bets.id, betId), eq(bets.onchainId, betId)),
+        eq(bets.userId, userId)
+      ),
       with: { market: true },
     });
 

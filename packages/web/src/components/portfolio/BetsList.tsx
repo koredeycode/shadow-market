@@ -40,11 +40,8 @@ function BetRow({ bet, isActive: _isActive, onClaimSuccess }: BetRowProps) {
 
   const formatCurrency = (value: string) => {
     const num = parseFloat(value);
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(num);
+    if (isNaN(num)) return '0 NIGHT';
+    return `${num.toLocaleString()} NIGHT`;
   };
 
   const calculatePnL = () => {

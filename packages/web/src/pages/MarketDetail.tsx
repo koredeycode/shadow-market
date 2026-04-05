@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLayoutEffect } from 'react';
 import { format } from 'date-fns';
-import { ArrowLeft, BarChart3, Clock, Info, Share2, Zap, ThumbsUp, Wallet } from 'lucide-react';
+import { ArrowLeft, BarChart3, Clock, Info, Share2, Zap, ChevronUp, Wallet } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -94,8 +94,20 @@ export function MarketDetail() {
 
   const handleUpvote = async () => {
     if (!market) return;
+    
+    // Optimistic update
+    const previousMarket = queryClient.getQueryData(['market', slug]);
+    const isUpvoted = market.hasUpvoted;
+    const newUpvotes = isUpvoted ? market.upvotes - 1 : market.upvotes + 1;
+    
+    queryClient.setQueryData(['market', slug], {
+      ...market,
+      hasUpvoted: !isUpvoted,
+      upvotes: newUpvotes,
+    });
+
     try {
-      if (market.hasUpvoted) {
+      if (isUpvoted) {
         await marketsApi.removeUpvote(market.id);
         toast.success('Upvote removed');
       } else {
@@ -103,6 +115,8 @@ export function MarketDetail() {
         toast.success('Market upvoted');
       }
     } catch (err) {
+      // Rollback on error
+      queryClient.setQueryData(['market', slug], previousMarket);
       toast.error('Could not process upvote');
     }
   };
@@ -197,7 +211,7 @@ export function MarketDetail() {
                 : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:border-white/20'
             }`}
           >
-            <ThumbsUp className={`w-3 h-3 ${market.hasUpvoted ? 'fill-current' : ''}`} />
+            <ChevronUp className={`w-3.5 h-3.5 ${market.hasUpvoted ? 'text-white' : ''}`} />
             {market.upvotes}
           </button>
         </div>

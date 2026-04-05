@@ -97,25 +97,27 @@ export function CreateP2PWagerModal({ open, onClose, market }: CreateP2PWagerMod
       
       // Step 1: REQUIRED - Execute on-chain contract call
       console.log('DEBUG: Initiating on-chain P2P wager creation...');
-      const txHash = await createWager(
+      const result = await createWager(
         market.onchainId || market.id,
         data.side.toUpperCase() as 'YES' | 'NO',
         parseFloat(data.amount),
         [data.oddsNumerator, data.oddsDenominator]
       );
 
-      if (!txHash) throw new Error('On-chain wager creation failed or was cancelled');
+      if (!result) throw new Error('On-chain wager creation failed or was cancelled');
+      const { txHash, onchainId } = result;
 
       // Step 2: Sync to backend for indexing
-      console.log('DEBUG: Syncing P2P wager to backend with txHash:', txHash);
+      console.log('DEBUG: Syncing P2P wager to backend with txHash:', txHash, 'onchainId:', onchainId);
       return await wagersApi.createP2PWager({
         marketId: market.id,
         amount: data.amount,
         side: data.side,
         odds: [data.oddsNumerator, data.oddsDenominator],
         duration: data.durationHours * 3600,
-        txHash, // Pass txHash if API supports it
-      } as any);
+        txHash,
+        onchainId,
+      });
     },
     onSuccess: (data, variables) => {
       setSuccessData({

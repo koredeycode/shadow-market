@@ -117,9 +117,9 @@ export function MarketCard({ market }: MarketCardProps) {
 function formatVolume(volume: string): string {
   const num = parseFloat(volume);
   if (num >= 1000000) {
-    return `$${(num / 1000000).toFixed(1)}M`;
+    return `${(num / 1000000).toFixed(1)}M NIGHT`;
   } else if (num >= 1000) {
-    return `$${(num / 1000).toFixed(1)}K`;
+    return `${(num / 1000).toFixed(1)}K NIGHT`;
   }
-  return `$${num.toFixed(0)}`;
+  return `${num.toFixed(0)} NIGHT`;
 }

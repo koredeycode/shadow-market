@@ -482,40 +482,41 @@ export class ShadowMarketAPI {
    * depending on the Compact version, Indexer configuration, and the type of call.
    */
   private getDisclosedId(txData: any): string {
-    // console.log('DEBUG: >>> START DISCLOSED ID EXTRACTION <<<');
-    
-    /**
-     * DETERMINISTIC ID EXTRACTION
-     * We've updated the .compact circuits to explicitly RETURN the new IDs.
-     * This provides a 100% reliable source of truth that avoids any 'noisy' 
-     * disclosures from the ledger or struct updates in the transcript.
-     */
+    // console.log('DEBUG: Full txData response:', JSON.stringify(txData, (key, value) => 
+    //   typeof value === 'bigint' ? value.toString() : value, 2));
 
     // 1. Check direct circuit result (from our explicit 'return newId' in .compact)
-    // The result is usually in txData.result or txData.public.result
     const result = txData.result ?? txData.public?.result ?? txData.private?.result;
     if (result !== undefined && result !== null) {
       const val = this.extractValue(result);
       if (val !== null && val !== undefined && val.toString() !== '') {
-        // console.log('DEBUG: Found ID in circuit return value:', val.toString());
+        // console.log('[DEBUG] getDisclosedId: Found in result:', val.toString());
         return val.toString();
       }
     }
 
     // 2. Fallback: Check the explicit 'disclosed' array 
-    // This is populated by both explicit disclosures and return values in order.
     const disclosed = txData.public?.disclosed ?? txData.disclosed;
     if (Array.isArray(disclosed) && disclosed.length > 0) {
-      // Typically the return value is the last element in the disclosed list 
-      // if it was passed through return statements in the circuit.
-      const val = this.extractValue(disclosed[disclosed.length - 1]);
-      if (val !== null) {
-        // console.log('DEBUG: Found ID in disclosed array pool:', val.toString());
-        return val.toString();
+      // Filter for small values that look like IDs (length <= 8 which is up to Uint64)
+      // Crytographic hashes (32 bytes) are ignored.
+      const idLikeValues = disclosed
+        .map(v => this.extractValue(v))
+        .filter(v => 
+          v !== null && 
+          v !== undefined && 
+          (typeof v === 'number' || typeof v === 'bigint' || (typeof v === 'string' && v.length < 16))
+        );
+
+      if (idLikeValues.length > 0) {
+        // The last ID-like value is almost always the newly created ID in our circuits
+        const lastId = idLikeValues[idLikeValues.length - 1];
+        // console.log('[DEBUG] getDisclosedId: Found in pool (filtered):', lastId.toString());
+        return lastId.toString();
       }
     }
 
-    console.warn('CRITICAL: No ID found in circuit result. The system may have been unable to identify the new entity ID.');
+    console.warn('CRITICAL: No ID found in circuit result.');
     return '';
   }
 

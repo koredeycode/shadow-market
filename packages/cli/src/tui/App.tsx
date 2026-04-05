@@ -249,7 +249,7 @@ export const App = () => {
 
       setSubmitStatus('Success! Syncing backend...');
       await backendClient.placeBet(selectedMarket.id, {
-          onchainId: selectedMarket.onchainId,
+          onchainId: res.onchainId,
           side: betSide.toLowerCase(),
           amount: finalAmount,
           txHash: res.txHash
