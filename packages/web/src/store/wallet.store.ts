@@ -28,6 +28,8 @@ export interface WalletState {
   setWalletModalOpen: (isOpen: boolean) => void;
   isTransacting: boolean;
   setTransacting: (isTransacting: boolean) => void;
+  isTerminalModalOpen: boolean;
+  setTerminalModalOpen: (isOpen: boolean) => void;
 }
 
 export const useWalletStore = create<WalletState>()(
@@ -99,6 +101,10 @@ export const useWalletStore = create<WalletState>()(
       isTransacting: false,
       setTransacting: isTransacting => {
         set({ isTransacting });
+      },
+      isTerminalModalOpen: false,
+      setTerminalModalOpen: isOpen => {
+        set({ isTerminalModalOpen: isOpen });
       },
     }),
     {

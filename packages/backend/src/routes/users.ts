@@ -9,8 +9,10 @@ import { authenticate, type AuthRequest } from '../middleware/auth.js';
 import logger from '../utils/logger.js';
 import { generateRandomUsername } from '../utils/names.js';
 import { terminalSessions } from '../db/schema.js';
+import { WagerService } from '../services/wager.service.js';
 
 export const usersRouter = Router();
+const wagerService = new WagerService();
 
 /**
  * POST /api/users/auth
@@ -176,86 +178,42 @@ usersRouter.patch('/me', authenticate, async (req: AuthRequest, res, next) => {
 });
 
 /**
- * GET /api/users/link/code
- * Generate a code for linking CLI
+ * GET /api/users/me/bets
+ * Get current user bets
  */
-usersRouter.get('/link/code', async (req, res, next) => {
+usersRouter.get('/me/bets', authenticate, async (req: AuthRequest, res, next) => {
   try {
-    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
-
-    await db.insert(terminalSessions).values({
-      id: `session_${code}_${Date.now()}`,
-      pairingCode: code,
-      status: 'PENDING',
-      expiresAt,
-    });
-
-    res.json({ success: true, data: { code, expiresAt: expiresAt.toISOString() } });
+    const bets = await wagerService.getUserBets(req.user!.id);
+    res.json({ success: true, data: bets });
   } catch (error) {
     next(error);
   }
 });
 
 /**
- * POST /api/users/link/authorize
- * Authorize a CLI code (authenticated)
+ * GET /api/users/me/wagers
+ * Get current user wagers
  */
-usersRouter.post('/link/authorize', authenticate, async (req: AuthRequest, res, next) => {
+usersRouter.get('/me/wagers', authenticate, async (req: AuthRequest, res, next) => {
   try {
-    const { code } = req.body;
-    const userId = req.user!.id;
-
-    const session = await db.query.terminalSessions.findFirst({
-      where: eq(terminalSessions.id, code),
-    });
-
-    if (!session || session.status !== 'PENDING' || session.expiresAt < new Date()) {
-      return res.status(400).json({ success: false, error: 'Invalid or expired code' });
-    }
-
-    const token = jwt.sign(
-      { userId, address: req.user!.address, terminalSessionId: session.id },
-      config.jwtSecret,
-      { expiresIn: '30d' }
-    );
-
-    await db.update(terminalSessions)
-      .set({ status: 'AUTHORIZED', userId, token, authorizedAt: new Date() })
-      .where(eq(terminalSessions.id, code));
-
-    res.json({ success: true, data: { status: 'AUTHORIZED' } });
+    const wagers = await wagerService.getUserWagers(req.user!.id);
+    res.json({ success: true, data: wagers });
   } catch (error) {
     next(error);
   }
 });
 
 /**
- * GET /api/users/link/poll/:code
- * Poll for CLI session status
+ * GET /api/users/me/portfolio
+ * Get current user full portfolio
  */
-usersRouter.get('/link/poll/:code', async (req, res, next) => {
+usersRouter.get('/me/portfolio', authenticate, async (req: AuthRequest, res, next) => {
   try {
-    const { code } = req.params;
-
-    const session = await db.query.terminalSessions.findFirst({
-      where: eq(terminalSessions.id, code),
-    });
-
-    if (!session) {
-      return res.status(404).json({ success: false, error: 'Session not found' });
-    }
-
-    if (session.status === 'AUTHORIZED') {
-      return res.json({ success: true, data: { status: 'AUTHORIZED', token: session.token } });
-    }
-
-    if (session.expiresAt < new Date()) {
-      return res.json({ success: true, data: { status: 'EXPIRED' } });
-    }
-
-    res.json({ success: true, data: { status: 'PENDING' } });
+    const portfolio = await wagerService.getFullPortfolio(req.user!.id);
+    res.json({ success: true, data: portfolio });
   } catch (error) {
     next(error);
   }
 });
+
+// End of usersRouter

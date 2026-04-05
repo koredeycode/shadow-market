@@ -314,7 +314,7 @@ export const terminalSessions = pgTable('terminal_sessions', {
   pairingCode: varchar('pairing_code', { length: 12 }).unique().notNull(), // Human-readable e.g. SHADOW-1234
   token: text('token'), // High-entropy ID
   signature: text('signature'), // Proof of identity from web
-  walletAddress: varchar('wallet_address', { length: 255 }),
+  walletAddress: varchar('wallet_address', { length: 255 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   authorizedAt: timestamp('authorized_at'),
   expiresAt: timestamp('expires_at').notNull(),

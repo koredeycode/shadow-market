@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import toast from 'react-hot-toast';
 import { sessionService } from '../../services/session.service.js';
+import { useWallet } from '../../hooks/useWallet';
 
 const pairingSchema = z.object({
   code: z.string().regex(/^SHADOW-[A-Z0-9]{4}$/, 'Invalid format (e.g. SHADOW-ABCD)'),
@@ -14,6 +15,7 @@ type PairingForm = z.infer<typeof pairingSchema>;
 export const TerminalPairingModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const [loading, setLoading] = useState(false);
 
+  const { unshieldedAddress, isConnected } = useWallet();
   const {
     register,
     handleSubmit,
@@ -27,10 +29,21 @@ export const TerminalPairingModal = ({ isOpen, onClose }: { isOpen: boolean; onC
   if (!isOpen) return null;
 
   const onSubmit = async (data: PairingForm) => {
+    if (!isConnected) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
+
     setLoading(true);
     const loadToast = toast.loading('Authorizing terminal session...');
     try {
-      await sessionService.authorizeTerminal(data.code);
+      // First verify status to check address match
+      const statusRes = await sessionService.getSessionStatus(data.code);
+      if (statusRes.walletAddress !== unshieldedAddress) {
+        throw new Error('Address mismatch: This session belongs to a different wallet.');
+      }
+
+      await sessionService.authorizeTerminal(data.code, unshieldedAddress!);
       toast.success('Terminal paired successfully!', { id: loadToast });
       reset();
       onClose();
@@ -42,8 +55,14 @@ export const TerminalPairingModal = ({ isOpen, onClose }: { isOpen: boolean; onC
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+    <div 
+      className="fixed inset-0 z-[200] grid place-items-center w-screen h-screen bg-black/80 backdrop-blur-sm p-4 transition-all duration-300 animate-in fade-in"
+      onClick={onClose}
+    >
+      <div 
+        className="relative bg-slate-900 border border-white/10 rounded-sm w-full max-w-md p-6 shadow-2xl overflow-hidden animate-in zoom-in duration-300"
+        onClick={e => e.stopPropagation()}
+      >
         <h2 className="text-2xl font-bold text-white mb-2">Link Terminal Head</h2>
         <p className="text-slate-400 text-sm mb-6">
           Enter the code displayed on your Terminal (TUI) to authorize the session with your wallet.

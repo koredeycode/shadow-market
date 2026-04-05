@@ -1,16 +1,17 @@
+import jwt from 'jsonwebtoken';
 import { eq, and, gt } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { terminalSessions, users } from '../db/schema.js';
 import { generateId } from '../utils/crypto.js';
+import { config } from '../config.js';
 
 export class SessionService {
   /**
    * Create a new pending session for the TUI
    */
-  async createSession() {
+  async createSession(walletAddress: string) {
     const sessionId = generateId();
     const pairingCode = this.generatePairingCode();
-    const token = generateId(); // High entropy token
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
 
     const [session] = await db
@@ -19,7 +20,7 @@ export class SessionService {
         id: sessionId,
         status: 'PENDING',
         pairingCode,
-        token,
+        walletAddress,
         expiresAt,
       })
       .returning();
@@ -44,6 +45,10 @@ export class SessionService {
       throw new Error('Invalid or expired pairing code');
     }
 
+    if (session.walletAddress !== walletAddress) {
+       throw new Error(`Address mismatch: Expected ${session.walletAddress}, got ${walletAddress}`);
+    }
+
     // 2. Find or create user for this wallet address
     let user = await db.query.users.findFirst({
       where: eq(users.address, walletAddress),
@@ -56,12 +61,24 @@ export class SessionService {
       }).returning();
     }
 
-    // 3. Update session to AUTHORIZED
+    // 3. Generate a JWT token for the CLI/TUI session
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        address: user.address,
+        terminalSessionId: session.id,
+      },
+      config.jwtSecret,
+      { expiresIn: '30d' }
+    );
+
+    // 4. Update session to AUTHORIZED
     const [updatedSession] = await db
       .update(terminalSessions)
       .set({
         status: 'AUTHORIZED',
         userId: user.id,
+        token,
         walletAddress,
         signature,
         authorizedAt: new Date(),

@@ -1,15 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Info, Zap, Loader2, X, DollarSign } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
+import toast from 'react-hot-toast';
 import { wagersApi } from '../../api/wagers';
 import { useContract } from '../../hooks/useContract';
 import { useWallet } from '../../hooks/useWallet';
 import { Market, Wager } from '../../types';
 import { CustomSelect } from '../common/CustomSelect';
-import { TxSuccessModal } from '../common/TxSuccessModal';
 
 const p2pWagerSchema = z.object({
   amount: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
@@ -34,7 +34,6 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
   const { isConnected, formattedUnshieldedNightBalance, address } = useWallet();
   const { createWager, acceptWager, cancelWager, claimWagerWinnings, isInitialized } = useContract();
   const queryClient = useQueryClient();
-  const [successData, setSuccessData] = useState<{ txHash: string; title: string; subtitle: string } | null>(null);
 
   const isUserCreator = selectedWager && address === selectedWager.creatorId;
 
@@ -77,15 +76,11 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
       if (!selectedWager || !isConnected || !isInitialized) throw new Error('Ready state failure');
       const txHash = await acceptWager(selectedWager.id);
       if (!txHash) throw new Error('Transaction failed');
-      await wagersApi.acceptWager(selectedWager.id, { txHash, wagerId: selectedWager.id });
+      await wagersApi.acceptWager(market.id, selectedWager.id, { txHash });
       return txHash;
     },
-    onSuccess: (txHash) => {
-      setSuccessData({
-        txHash,
-        title: 'Position Matched',
-        subtitle: 'Successfully accepted the P2P wager terms and locked funds in the ZK-escrow.'
-      });
+    onSuccess: (_txHash) => {
+      toast.success('Position Matched! Successfully accepted the P2P wager and synced to reservoir.');
       queryClient.invalidateQueries({ queryKey: ['market', market.id] });
       queryClient.invalidateQueries({ queryKey: ['p2p-wagers', market.id] });
       if (onClearSelection) onClearSelection();
@@ -100,12 +95,8 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
       await wagersApi.cancelWager(selectedWager.id);
       return txHash;
     },
-    onSuccess: (txHash) => {
-      setSuccessData({
-        txHash,
-        title: 'Protocol Terminated',
-        subtitle: 'Wager offer has been successfully withdrawn from the decentralized matcher.'
-      });
+    onSuccess: (_txHash) => {
+      toast.success('Protocol Terminated. Wager offer has been successfully withdrawn.');
       queryClient.invalidateQueries({ queryKey: ['p2p-wagers', market.id] });
       if (onClearSelection) onClearSelection();
     }
@@ -118,12 +109,8 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
       if (!txHash) throw new Error('Transaction failed or was cancelled');
       return txHash;
     },
-    onSuccess: (txHash) => {
-      setSuccessData({
-        txHash,
-        title: 'Winnings Dispersed',
-        subtitle: 'Protocol payout has been successfully transferred to your shielded balance.'
-      });
+    onSuccess: (_txHash) => {
+      toast.success('Winnings Dispersed! Protocol payout has been successfully transferred.');
       queryClient.invalidateQueries({ queryKey: ['p2p-wagers', market.id] });
     }
   });
@@ -156,12 +143,8 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
 
       return { txHash, onchainId };
     },
-    onSuccess: (result, variables) => {
-      setSuccessData({
-        txHash: result.txHash,
-        title: 'Protocol Broadcast',
-        subtitle: `Successfully published your ${variables.amount} NIGHT ${variables.side.toUpperCase()} wager offer.`
-      });
+    onSuccess: (_result, variables) => {
+      toast.success(`Protocol Broadcast! Successfully published your ${variables.amount} NIGHT ${variables.side.toUpperCase()} wager.`);
       queryClient.invalidateQueries({ queryKey: ['market', market.id] });
       queryClient.invalidateQueries({ queryKey: ['p2p-wagers', market.id] });
       reset();
@@ -377,23 +360,6 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
             </>
         )}
       </form>
-      <TxSuccessModal 
-        isOpen={!!successData}
-        onClose={() => {
-          setSuccessData(null);
-          if (onClearSelection) onClearSelection();
-        }}
-        txHash={successData?.txHash || ''}
-        title={successData?.title || 'Success'}
-        subtitle={successData?.subtitle || ''}
-        primaryAction={{
-          label: 'Acknowledge',
-          onClick: () => {
-             setSuccessData(null);
-             if (onClearSelection) onClearSelection();
-          }
-        }}
-      />
     </div>
   );
 }

@@ -1,9 +1,9 @@
 import * as bip39 from '@scure/bip39';
+import { createWitnessProviders, ShadowMarketAPI } from '@shadow-market/api';
 import Conf from 'conf';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as Rx from 'rxjs';
-import { createWitnessProviders, ShadowMarketAPI } from '@shadow-market/api';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -14,44 +14,54 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 class WalletManager {
   private config = new Conf({ 
     projectName: 'shadow-market',
-    encryptionKey: 'shadow-market-cli-session-v1'
+    projectSuffix: '', // No -nodejs suffix
   });
   private api: ShadowMarketAPI | null = null;
   private currentContext: any = null;
 
+  getSession(): any {
+    return this.config.get('session');
+  }
+
   setLinkedSession(token: string, address: string) {
+    const session = this.config.get('session') as any;
     this.config.set('session', {
-      address,
+      ...session,
+      address, // Update to the authorized address from backend
       token,
       linked: true
     });
   }
 
   isLoggedIn(): boolean {
-    return !!this.config.get('session');
+    const session = this.config.get('session') as any;
+    return !!(session && session.seed);
   }
 
   isLinked(): boolean {
-    return !!this.config.get('session.linked');
+    const session = this.config.get('session') as any;
+    return !!(session && session.linked && session.token);
   }
 
   getAddress(): string {
-    return this.config.get('session.address') as string || 'Unknown';
+    const session = this.config.get('session') as any;
+    return session?.address || 'Unknown';
   }
 
   async login(method: string, data: string): Promise<boolean> {
     try {
       let seedHex = '';
       let mnemonic = '';
+      const normalizedMethod = method.toLowerCase();
 
-      if (method === 'mnemonic') {
+      if (normalizedMethod === 'mnemonic') {
         const seed = bip39.mnemonicToSeedSync(data);
         const { toHex } = await import('@midnight-ntwrk/midnight-js-utils');
         seedHex = toHex(seed);
         mnemonic = data;
-      } else if (method === 'hex') {
+      } else if (normalizedMethod === 'hex' || normalizedMethod === 'key') {
         seedHex = data;
-      } else if (method === 'env') {
+      } else if (normalizedMethod === 'env') {
         seedHex = process.env.ADMIN_SEED || '';
         mnemonic = process.env.ADMIN_MNEMONIC || '';
         if (!seedHex) throw new Error('ADMIN_SEED not found in .env');
@@ -59,7 +69,9 @@ class WalletManager {
 
       const ctx = await this.initWallet(seedHex);
       
+      const currentSession = this.config.get('session') as any;
       this.config.set('session', {
+        ...currentSession,
         address: ctx.address,
         seed: seedHex,
         mnemonic: mnemonic
@@ -150,17 +162,18 @@ class WalletManager {
     const dustSecretKey = ledger.DustSecretKey.fromSeed(derivationResult.keys[Roles.Dust]);
     const unshieldedSecretKey = derivationResult.keys[Roles.NightExternal];
     
-    setNetworkId('undeployed');
+    const networkId = (process.env.MIDNIGHT_NETWORK_ID || process.env.NETWORK_ID || 'undeployed') as any;
+    setNetworkId(networkId);
     
     const baseConfiguration = {
-      networkId: 'undeployed' as const,
+      networkId: networkId,
       costParameters: { additionalFeeOverhead: 1_000_000_000n, feeBlocksMargin: 5 },
       indexerClientConnection: { 
-        indexerHttpUrl: process.env.MIDNIGHT_INDEXER_URI || 'http://localhost:8088', 
-        indexerWsUrl: process.env.MIDNIGHT_INDEXER_WS_URI || 'ws://localhost:8088'
+        indexerHttpUrl: process.env.MIDNIGHT_INDEXER_URL || 'http://localhost:8088/api/v4/graphql', 
+        indexerWsUrl: process.env.MIDNIGHT_INDEXER_WS || 'ws://localhost:8088/api/v4/graphql/ws'
       },
-      relayURL: new URL(process.env.MIDNIGHT_NODE_URI || 'http://localhost:8080'),
-      provingServerUrl: new URL(process.env.MIDNIGHT_PROOF_SERVER_URI || 'http://localhost:8081'),
+      relayURL: new URL(process.env.MIDNIGHT_NODE_URL || 'http://localhost:9944'),
+      provingServerUrl: new URL(process.env.MIDNIGHT_PROOF_SERVER_URL || 'http://localhost:6300'),
       txHistoryStorage: new InMemoryTransactionHistoryStorage(),
     };
 
@@ -196,16 +209,22 @@ class WalletManager {
       { indexerPublicDataProvider },
       { httpClientProofProvider },
       { NodeZkConfigProvider },
+      { FetchZkConfigProvider },
       { levelPrivateStateProvider }
     ] = await Promise.all([
       import('@midnight-ntwrk/midnight-js-indexer-public-data-provider'),
       import('@midnight-ntwrk/midnight-js-http-client-proof-provider'),
       import('@midnight-ntwrk/midnight-js-node-zk-config-provider'),
+      import('@midnight-ntwrk/midnight-js-fetch-zk-config-provider'),
       import('@midnight-ntwrk/midnight-js-level-private-state-provider')
     ]);
 
     const witnesses = createWitnessProviders({ userSecretKey: ctx.zswapKey });
-    const zkConfigPath = path.resolve(__dirname, '../../../../contracts/src/managed/shadow-market');
+    
+    // ZK Config handling (Remote URL only for portability)
+    // Always fetch from the frontend public folder to ensure consistency across environments
+    const zkConfigUrl = 'http://localhost:5173/zk-config';
+    const zkConfigProvider = new FetchZkConfigProvider(zkConfigUrl, fetch);
 
     const walletProvider = {
       getCoinPublicKey: () => ctx.shieldedSecretKeys.coinPublicKey,
@@ -229,13 +248,13 @@ class WalletManager {
         accountId: ctx.address,
       }),
       publicDataProvider: indexerPublicDataProvider(
-        process.env.MIDNIGHT_INDEXER_URI || 'http://localhost:8088',
-        process.env.MIDNIGHT_INDEXER_WS_URI || 'ws://localhost:8088'
+        process.env.MIDNIGHT_INDEXER_URL || 'http://localhost:8088/api/v4/graphql',
+        process.env.MIDNIGHT_INDEXER_WS || 'ws://localhost:8088/api/v4/graphql/ws'
       ),
-      zkConfigProvider: new NodeZkConfigProvider(zkConfigPath),
+      zkConfigProvider,
       proofProvider: httpClientProofProvider(
-        process.env.MIDNIGHT_PROOF_SERVER_URI || 'http://localhost:8081',
-        new NodeZkConfigProvider(zkConfigPath)
+        process.env.MIDNIGHT_PROOF_SERVER_URL || 'http://localhost:6300',
+        zkConfigProvider
       ),
       walletProvider,
       midnightProvider: walletProvider,

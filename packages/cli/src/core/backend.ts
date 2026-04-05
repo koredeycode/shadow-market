@@ -34,7 +34,14 @@ export class BackendClient {
       params: filters,
       headers: this.getHeaders()
     });
-    return response.data.data;
+    
+    // Check if the response matches PaginatedResponse structure
+    const data = response.data.data;
+    if (data && typeof data === 'object' && Array.isArray(data.items)) {
+      return data.items;
+    }
+    
+    return Array.isArray(data) ? data : [];
   }
 
   async createMarket(marketData: any) {
@@ -44,8 +51,8 @@ export class BackendClient {
     return response.data.data;
   }
 
-  async placeBet(betData: any) {
-    const response = await axios.post(`${this.baseUrl}/markets/bet`, betData, {
+  async placeBet(marketId: string, betData: any) {
+    const response = await axios.post(`${this.baseUrl}/markets/${marketId}/bets`, betData, {
       headers: this.getHeaders()
     });
     return response.data.data;
@@ -59,35 +66,28 @@ export class BackendClient {
   }
 
   async getWagers(marketId: string) {
-    const response = await axios.get(`${this.baseUrl}/wagers/market/${marketId}`, {
+    const response = await axios.get(`${this.baseUrl}/markets/${marketId}/wagers`, {
       headers: this.getHeaders()
     });
     return response.data.data;
   }
 
-  async createP2PWager(wagerData: any) {
-    const response = await axios.post(`${this.baseUrl}/wagers/p2p`, wagerData, {
+  async createP2PWager(marketId: string, wagerData: any) {
+    const response = await axios.post(`${this.baseUrl}/markets/${marketId}/wagers`, wagerData, {
       headers: this.getHeaders()
     });
     return response.data.data;
   }
 
-  async acceptP2PWager(id: string, txHash?: string) {
-    const response = await axios.post(`${this.baseUrl}/wagers/p2p/${id}/accept`, { txHash }, {
+  async updateWagerSync(marketId: string, wagerId: string, updateData: any) {
+    const response = await axios.patch(`${this.baseUrl}/markets/${marketId}/wagers/${wagerId}`, updateData, {
       headers: this.getHeaders()
     });
     return response.data.data;
   }
 
-  async cancelWager(id: string) {
-    const response = await axios.delete(`${this.baseUrl}/wagers/p2p/${id}`, {
-      headers: this.getHeaders()
-    });
-    return response.data.data;
-  }
-
-  async getLinkCode() {
-    const response = await axios.post(`${this.baseUrl}/sessions/create`);
+  async getLinkCode(walletAddress: string) {
+    const response = await axios.post(`${this.baseUrl}/sessions/create`, { walletAddress });
     const session = response.data.data;
     return {
       code: session.pairingCode,
@@ -102,6 +102,20 @@ export class BackendClient {
 
   async getMe() {
     const response = await axios.get(`${this.baseUrl}/users/me`, {
+      headers: this.getHeaders()
+    });
+    return response.data.data;
+  }
+
+  async getPortfolio() {
+    const response = await axios.get(`${this.baseUrl}/users/me/portfolio`, {
+      headers: this.getHeaders()
+    });
+    return response.data.data;
+  }
+
+  async getUserWagers() {
+    const response = await axios.get(`${this.baseUrl}/users/me/wagers`, {
       headers: this.getHeaders()
     });
     return response.data.data;

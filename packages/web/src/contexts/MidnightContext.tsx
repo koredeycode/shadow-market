@@ -8,6 +8,7 @@ interface MidnightContextType {
   isConnected: boolean;
   isConnecting: boolean;
   address: string | null;
+  unshieldedAddress: string | null;
   unshieldedNightBalance: string | null;
   formattedUnshieldedNightBalance: string;
   dustBalance: string | null;
@@ -56,6 +57,7 @@ export const MidnightProvider: React.FC<{ children: ReactNode }> = ({ children }
     isConnected: wallet.isConnected,
     isConnecting: wallet.isConnecting,
     address: wallet.address,
+    unshieldedAddress: wallet.unshieldedAddress,
     unshieldedNightBalance: wallet.unshieldedNightBalance,
     formattedUnshieldedNightBalance: wallet.formattedUnshieldedNightBalance,
     dustBalance: wallet.dustBalance,

@@ -47,29 +47,32 @@ walletCommands
         name: 'choice',
         message: 'How would you like to login?',
         choices: [
-          { name: '🌐 Link with Browser (Secure)', value: 'link' },
-          { name: '📝 Enter Seed Phrase', value: 'mnemonic' },
-          { name: '🔑 Enter Private Key', value: 'key' },
-          { name: '⚙️  Use .env credentials', value: 'env' }
+          { name: 'Seed Phrase', value: 'mnemonic' },
+          { name: 'Private Key', value: 'key' }
         ]
       }
     ]);
 
-    if (choice === 'link') {
-      await handleLinkFlow();
-    } else if (choice === 'env') {
-      const success = await walletManager.login('env', '');
-      if (success) console.log(chalk.green('✔ Logged in.'));
-    } else {
-      const { data } = await inquirer.prompt([
-        {
-          type: 'password',
-          name: 'data',
-          message: choice === 'mnemonic' ? 'Enter seed phrase:' : 'Enter private key:'
+    const isMnemonic = choice === 'mnemonic';
+    const { data } = await inquirer.prompt([
+      {
+        type: 'password',
+        name: 'data',
+        message: isMnemonic ? 'Enter seed phrase (12+ words):' : 'Enter 128-char Master Hex Seed:',
+        validate: (input) => {
+          if (isMnemonic) return input.split(' ').length >= 12 || 'Invalid phrase';
+          return input.length === 128 || `Invalid length: Hex seed must be exactly 128 characters (64 bytes). You entered ${input.length} characters.`;
         }
-      ]);
-      const success = await walletManager.login(choice, data);
-      if (success) console.log(chalk.green('✔ Logged in.'));
+      }
+    ]);
+
+    const success = await walletManager.login(choice, data);
+    if (success) {
+      console.log(chalk.green('✔ Successfully logged in.'));
+      console.log(chalk.cyan(`Address: ${walletManager.getAddress()}`));
+      
+      // Auto-trigger link flow silently to sync with backend
+      await handleLinkFlow();
     }
   });
 
@@ -108,9 +111,17 @@ walletCommands
   });
 
 async function handleLinkFlow() {
-  const codeSpinner = ora('Generating link code...').start();
+  if (!walletManager.isLoggedIn()) {
+    console.log(chalk.red('\n✖ Error: You must be logged in to your local wallet first.'));
+    console.log(chalk.white('Please run ') + chalk.cyan('shadow-market wallet login') + chalk.white(' and select "Mnemonic" or "Key" first.'));
+    console.log(chalk.gray('Linking verifies your local wallet against your web profile.\n'));
+    return;
+  }
+
+  const address = walletManager.getAddress();
+  const codeSpinner = ora(`Generating link code for ${chalk.cyan(address)}...`).start();
   try {
-    const { code, expiresAt } = await backendClient.getLinkCode();
+    const { code, expiresAt } = await backendClient.getLinkCode(address);
     codeSpinner.stop();
 
     const webUrl = process.env.SHADOW_MARKET_WEB_URL || 'http://localhost:5173';

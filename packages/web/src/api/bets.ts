@@ -5,18 +5,18 @@ export type { ApiResponse, Bet, Portfolio, PortfolioStats };
 
 class BetsApi {
   async getPortfolio(): Promise<Portfolio> {
-    const { data } = await api.get<ApiResponse<Portfolio>>('/bets');
+    const { data } = await api.get<ApiResponse<Portfolio>>('/users/me/portfolio');
     return data.data!;
   }
 
   async getBetsByMarket(marketId: string): Promise<Bet[]> {
-    const { data } = await api.get<ApiResponse<Bet[]>>(`/bets/market/${marketId}`);
+    const { data } = await api.get<ApiResponse<Bet[]>>(`/markets/${marketId}/bets`);
     return data.data!;
   }
 
   async getStats(): Promise<PortfolioStats> {
-    const { data } = await api.get<ApiResponse<PortfolioStats>>('/bets/stats');
-    return data.data!;
+    const { data } = await api.get<ApiResponse<Portfolio>>('/users/me/portfolio');
+    return data.data!.stats;
   }
 
   async getBetById(id: string): Promise<Bet> {

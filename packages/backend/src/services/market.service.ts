@@ -96,7 +96,11 @@ export class MarketService {
    */
   async getMarketById(marketId: string) {
     const result = await db.query.markets.findFirst({
-      where: eq(markets.id, marketId),
+      where: or(
+        eq(markets.id, marketId),
+        eq(markets.slug, marketId),
+        sql`${markets.onchainId}::text = ${marketId}`
+      ),
       with: {
         creator: {
           columns: {

@@ -21,7 +21,11 @@ const authorizeSessionSchema = z.object({
 sessionsRouter.post(
   '/create',
   asyncHandler(async (req, res) => {
-    const session = await sessionService.createSession();
+    const { walletAddress } = req.body;
+    if (!walletAddress) {
+      return res.status(400).json({ success: false, error: 'Wallet address is required' });
+    }
+    const session = await sessionService.createSession(walletAddress);
     res.status(201).json({
       success: true,
       data: session,
@@ -72,6 +76,7 @@ sessionsRouter.get(
         status: session.status,
         walletAddress: session.walletAddress,
         userId: session.userId,
+        token: session.status === 'AUTHORIZED' ? session.token : undefined,
         authorizedAt: session.authorizedAt,
       },
       timestamp: Date.now(),

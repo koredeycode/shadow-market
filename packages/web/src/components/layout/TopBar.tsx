@@ -1,4 +1,4 @@
-import { Wallet, Moon, ChevronDown, Zap, Monitor } from 'lucide-react';
+import { Wallet, Moon, ChevronDown, Zap } from 'lucide-react';
 import { useWallet } from '../../hooks/useWallet';
 import { Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
@@ -14,11 +14,12 @@ export function TopBar() {
     isConnecting, 
     formattedAddress, 
     formattedUnshieldedNightBalance,
-    username 
+    username,
+    isTerminalModalOpen,
+    setTerminalModalOpen
   } = useWallet();
   const { isWalletModalOpen, setWalletModalOpen } = useWalletStore();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [isPairingOpen, setIsPairingOpen] = useState(false);
   const detailRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -61,13 +62,6 @@ export function TopBar() {
                 <Zap className="w-3.5 h-3.5" />
                 Create
               </Link>
-              <button
-                onClick={() => setIsPairingOpen(true)}
-                className="hidden sm:flex px-4 py-2 bg-slate-800 text-white border border-white/5 rounded-sm font-bold text-[10px] tracking-[0.2em] uppercase hover:bg-slate-700 transition-all items-center gap-2 mr-2 h-10"
-              >
-                <Monitor className="w-3.5 h-3.5" />
-                Link Terminal
-              </button>
               <button
                 onClick={() => setIsDetailOpen(!isDetailOpen)}
                 className={`flex items-center gap-3 pl-4 pr-2 py-1.5 bg-slate-900 border rounded-sm transition-all group ${
@@ -121,7 +115,7 @@ export function TopBar() {
       </div>
 
       <WalletModal isOpen={isWalletModalOpen} onClose={() => setWalletModalOpen(false)} />
-      <TerminalPairingModal isOpen={isPairingOpen} onClose={() => setIsPairingOpen(false)} />
+      <TerminalPairingModal isOpen={isTerminalModalOpen} onClose={() => setTerminalModalOpen(false)} />
     </header>
   );
 }

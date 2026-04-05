@@ -153,12 +153,11 @@ export circuit placeBet(
   
   receiveUnshielded(default<Bytes<32>>, amount);
   
-  const commitmentData = persistentHash<Vector<3, Field>>([
-    amount as Field,
-    disclosedSide as Field,
-    persistentHash<Bytes<32>>(nonce) as Field
+  const commitment = persistentHash<[Uint<128>, Outcome, Bytes<32>]>([
+    amount,
+    disclosedSide,
+    nonce
   ]);
-  const commitment = commitmentData as Bytes<32>;
   
   const newBetId = (betCount + 1) as Uint<64>;
   betCount = newBetId;
@@ -345,12 +344,12 @@ export circuit claimPoolWinnings(betId: Uint<64>, user_addr: UserAddress): [] {
   assert(bet.userKey == userKey, "Not your bet");
   assert(bet.claimed == ClaimStatus.UNCLAIMED, "Already claimed");
   
-  const commitmentData = persistentHash<Vector<3, Field>>([
-    amount as Field,
-    side as Field,
-    persistentHash<Bytes<32>>(nonce) as Field
+  const commitment = persistentHash<[Uint<128>, Outcome, Bytes<32>]>([
+    amount,
+    side,
+    nonce
   ]);
-  assert(bet.commitment == commitmentData as Bytes<32>, "Invalid commitment");
+  assert(bet.commitment == commitment, "Invalid commitment");
   
   const market = markets.lookup(bet.marketId);
   assert(market.status == MarketStatus.RESOLVED, "Market not resolved");

@@ -32,10 +32,10 @@ wagerCommands
       wagers.forEach((w: any) => {
         table.push([
           w.onchainId || w.id.split('-')[0],
-          w.side.toUpperCase() === 'YES' ? chalk.green('YES') : chalk.red('NO'),
+          w.creatorSide.toUpperCase() === 'YES' ? chalk.green('YES') : chalk.red('NO'),
           formatCurrency(Number(w.amount)),
-          `${w.oddsNumerator}:${w.oddsDenominator}`,
-          `${w.duration}h`
+          `${w.odds[0]}:${w.odds[1]}`,
+          `${w.expiresAt ? Math.floor((new Date(w.expiresAt).getTime() - Date.now()) / 3600000) : 0}h`
         ]);
       });
 
@@ -110,23 +110,32 @@ wagerCommands
       const syncSpinner = ora('Syncing wager metadata...').start();
       try {
         const address = walletManager.getAddress();
-        if (!backendClient.getToken()) await backendClient.login(address);
+        const session = walletManager.getSession();
+        if (session?.token) {
+          backendClient.setToken(session.token);
+        } else if (!backendClient.getToken()) {
+          await backendClient.login(address);
+        }
 
-        await backendClient.createP2PWager({
-          marketId,
+        await backendClient.createP2PWager(marketId, {
           amount: answers.amount.toString(),
           side: answers.side.toLowerCase(),
           odds: [Number(numerator), Number(denominator)],
-          duration: 24, // Default 24h
+          duration: 24, 
           onchainId: result.onchainId,
           txHash: result.txHash
         });
         syncSpinner.succeed(chalk.green('Wager listed on backend. Others can now accept it.'));
+
+        const webUrl = process.env.SHADOW_MARKET_WEB_URL || 'http://localhost:5173';
+        console.log(`\n${chalk.white('View Market & Wagers:')}  ${chalk.cyan.underline(`${webUrl}/markets/${marketId}`)}`);
       } catch (syncErr: any) {
         syncSpinner.fail(chalk.yellow(`On-chain success, but backend sync failed: ${syncErr.message}`));
       }
     } catch (err: any) {
       console.error(chalk.red(`\n❌ Error creating P2P wager: ${err.message}`));
+    } finally {
+      process.exit(0);
     }
   });
 
@@ -152,12 +161,19 @@ wagerCommands
       try {
         const address = walletManager.getAddress();
         if (!backendClient.getToken()) await backendClient.login(address);
-        await backendClient.acceptP2PWager(wagerId, txHash);
+        await backendClient.updateWagerSync("any", wagerId, { status: "MATCHED", takerId: address, txHash: txHash });
         syncSpinner.succeed(chalk.green('Position finalized. Luck be with you!'));
+
+        // Note: For aceptación, marketId isn't easily available from arguments alone, but in many cases on-chain ID works. 
+        // We'll show the portfolio link instead which is always relevant.
+        const webUrl = process.env.SHADOW_MARKET_WEB_URL || 'http://localhost:5173';
+        console.log(`\n${chalk.white('View your Portfolio:')}  ${chalk.cyan.underline(`${webUrl}/portfolio`)}`);
       } catch (syncErr: any) {
         syncSpinner.fail(chalk.yellow(`On-chain success, but sync failed: ${syncErr.message}`));
       }
     } catch (err: any) {
       spinner.fail(chalk.red(`Failed to accept wager: ${err.message}`));
+    } finally {
+      process.exit(0);
     }
   });

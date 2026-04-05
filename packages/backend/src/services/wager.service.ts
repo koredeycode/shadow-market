@@ -351,32 +351,67 @@ export class WagerService {
    * Get open wagers for a market
    */
   async getMarketWagers(marketId: string) {
-    // Resolve market ID if onchainId is provided
-    let market = await db.query.markets.findFirst({
-      where: eq(markets.id, marketId),
+    const market = await db.query.markets.findFirst({
+      where: or(
+        eq(markets.id, marketId),
+        eq(markets.slug, marketId),
+        sql`${markets.onchainId}::text = ${marketId}`
+      ),
     });
     
-    if (!market) {
-      try {
-        const potentialOnchainId = BigInt(marketId);
-        market = await db.query.markets.findFirst({
-          where: eq(markets.onchainId, potentialOnchainId),
-        });
-      } catch (e) {
-        // Not a bigint
-      }
-    }
+    if (!market) throw new Error('Market not found');
     
-    const resolvedId = market ? market.id : marketId;
-
     return await db.query.wagers.findMany({
-      where: and(eq(wagers.marketId, resolvedId), eq(wagers.status, 'OPEN')),
+      where: and(eq(wagers.marketId, market.id), eq(wagers.status, 'OPEN')),
       with: {
         creator: {
-          columns: { id: true, username: true, reputation: true },
+          columns: { id: true, username: true, reputation: true, address: true },
         },
       },
       orderBy: [desc(wagers.createdAt)],
+    });
+  }
+
+  /**
+   * Get all bets for a specific market
+   */
+  async getMarketBets(marketId: string) {
+    const market = await db.query.markets.findFirst({
+      where: or(
+        eq(markets.id, marketId),
+        eq(markets.slug, marketId),
+        sql`${markets.onchainId}::text = ${marketId}`
+      ),
+    });
+    
+    if (!market) throw new Error('Market not found');
+
+    const marketBets = await db.query.bets.findMany({
+      where: eq(bets.marketId, market.id),
+      with: {
+        user: {
+          columns: { username: true, address: true }
+        }
+      },
+      orderBy: [desc(bets.entryTimestamp)],
+    });
+
+    return marketBets.map(pos => {
+      const amount = decrypt(pos.amountEncrypted, config.encryptionKey);
+      const side = decrypt(pos.sideEncrypted, config.encryptionKey);
+
+      return {
+        id: pos.id,
+        onchainId: pos.onchainId,
+        txHash: pos.txHash,
+        amount,
+        side: side as 'yes' | 'no',
+        entryPrice: pos.entryPrice,
+        entryTimestamp: pos.entryTimestamp,
+        username: pos.user?.username,
+        address: pos.user?.address,
+        isSettled: pos.isSettled,
+      };
     });
   }
 
@@ -418,19 +453,46 @@ export class WagerService {
   }
 
   /**
-   * Get thin details for a single wager
+   * Get single wager details
    */
   async getWagerById(wagerId: string) {
     const wager = await db.query.wagers.findFirst({
-      where: eq(wagers.id, wagerId),
+      where: or(
+        eq(wagers.id, wagerId),
+        eq(wagers.onchainId, wagerId)
+      ),
       with: {
         market: true,
-        creator: true,
-        taker: true,
+        creator: {
+          columns: { id: true, username: true, address: true },
+        },
+        taker: {
+          columns: { id: true, username: true, address: true },
+        },
       },
     });
 
     if (!wager) throw new Error('Wager not found');
     return wager;
+  }
+
+  /**
+   * Sync update for a wager after on-chain action (accept/cancel)
+   */
+  async updateWagerSync(wagerId: string, data: { status: string; takerId?: string; txHash?: string }) {
+    const [updated] = await db
+      .update(wagers)
+      .set({
+        status: data.status as any,
+        takerId: data.takerId,
+        txHash: data.txHash || sql`tx_hash`,
+        matchedAt: data.status === 'MATCHED' ? new Date() : sql`matched_at`,
+        settledAt: data.status === 'SETTLED' ? new Date() : sql`settled_at`,
+      })
+      .where(or(eq(wagers.id, wagerId), eq(wagers.onchainId, wagerId)))
+      .returning();
+
+    if (!updated) throw new Error('Wager not found');
+    return updated;
   }
 }

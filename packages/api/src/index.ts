@@ -201,9 +201,9 @@ export class ShadowMarketAPI {
         outcomeEnum
       );
 
-      console.log('Bet placed! Transaction:', txData.public.txHash);
-      console.log('DEBUG: Full txData response:', JSON.stringify(txData, (key, value) => 
-        typeof value === 'bigint' ? value.toString() : value, 2));
+      // console.log('Bet placed! Transaction:', txData.public.txHash);
+      // console.log('DEBUG: Full txData response:', JSON.stringify(txData, (key, value) => 
+      //   typeof value === 'bigint' ? value.toString() : value, 2));
 
       // Use the last disclosed value for on-chain ID
       const onchainId = this.getDisclosedId(txData);
@@ -259,8 +259,8 @@ export class ShadowMarketAPI {
         titleBytes
       );
       
-      console.log('DEBUG: Full txData response:', JSON.stringify(txData, (key, value) => 
-        typeof value === 'bigint' ? value.toString() : value, 2));
+      // console.log('DEBUG: Full txData response:', JSON.stringify(txData, (key, value) => 
+      //   typeof value === 'bigint' ? value.toString() : value, 2));
 
       const onchainId = this.getDisclosedId(txData);
       console.log('Disclosed Market ID:', onchainId);
@@ -336,9 +336,9 @@ export class ShadowMarketAPI {
         oddsDenominator
       );
 
-      console.log('Wager created! Transaction:', txData.public.txHash);
-      console.log('DEBUG: Full txData response:', JSON.stringify(txData, (key, value) => 
-        typeof value === 'bigint' ? value.toString() : value, 2));
+      // console.log('Wager created! Transaction:', txData.public.txHash);
+      // console.log('DEBUG: Full txData response:', JSON.stringify(txData, (key, value) => 
+      //   typeof value === 'bigint' ? value.toString() : value, 2));
       
       const onchainId = this.getDisclosedId(txData);
       console.log('Disclosed Wager ID:', onchainId);
@@ -482,7 +482,7 @@ export class ShadowMarketAPI {
    * depending on the Compact version, Indexer configuration, and the type of call.
    */
   private getDisclosedId(txData: any): string {
-    console.log('DEBUG: >>> START DISCLOSED ID EXTRACTION <<<');
+    // console.log('DEBUG: >>> START DISCLOSED ID EXTRACTION <<<');
     
     /**
      * DETERMINISTIC ID EXTRACTION
@@ -493,11 +493,11 @@ export class ShadowMarketAPI {
 
     // 1. Check direct circuit result (from our explicit 'return newId' in .compact)
     // The result is usually in txData.result or txData.public.result
-    const result = txData.result ?? txData.public?.result;
+    const result = txData.result ?? txData.public?.result ?? txData.private?.result;
     if (result !== undefined && result !== null) {
       const val = this.extractValue(result);
       if (val !== null && val !== undefined && val.toString() !== '') {
-        console.log('DEBUG: Found ID in circuit return value:', val.toString());
+        // console.log('DEBUG: Found ID in circuit return value:', val.toString());
         return val.toString();
       }
     }
@@ -510,7 +510,7 @@ export class ShadowMarketAPI {
       // if it was passed through return statements in the circuit.
       const val = this.extractValue(disclosed[disclosed.length - 1]);
       if (val !== null) {
-        console.log('DEBUG: Found ID in disclosed array pool:', val.toString());
+        // console.log('DEBUG: Found ID in disclosed array pool:', val.toString());
         return val.toString();
       }
     }

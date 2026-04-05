@@ -7,16 +7,32 @@ import { api } from '../../lib/api';
 const LinkCLI = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { isConnected, connectWallet } = useMidnight();
+  const { isConnected, connectWallet, unshieldedAddress } = useMidnight();
   const [status, setStatus] = useState<'IDLE' | 'AUTHORIZING' | 'SUCCESS' | 'ERROR'>('IDLE');
+  const [sessionData, setSessionData] = useState<any>(null);
   const code = searchParams.get('code');
 
   useEffect(() => {
     if (!code) {
       toast.error('Invalid or missing linking code');
       navigate('/');
+      return;
     }
+
+    const fetchSession = async () => {
+      try {
+        const response = await api.get(`/sessions/${code}/status`);
+        setSessionData(response.data.data);
+      } catch (err: any) {
+        toast.error('Terminal session not found or expired');
+        setStatus('ERROR');
+      }
+    };
+
+    fetchSession();
   }, [code, navigate]);
+
+  const isAddressMismatch = isConnected && sessionData && sessionData.walletAddress !== unshieldedAddress;
 
   const handleAuthorize = async () => {
     if (!isConnected) {
@@ -25,11 +41,20 @@ const LinkCLI = () => {
       return;
     }
 
+    if (isAddressMismatch) {
+      toast.error('Incorrect wallet connected. Please switch to the specified address.');
+      return;
+    }
+
     setStatus('AUTHORIZING');
     const loadingToast = toast.loading('Authorizing terminal session...');
 
     try {
-      const response = await api.post('/users/link/authorize', { code });
+      const response = await api.post('/sessions/authorize', { 
+        pairingCode: code,
+        walletAddress: unshieldedAddress,
+        signature: 'WEB_PROOF_SUCCESS' // Placeholder, in production this would be a real proof/sig
+      });
       
       if (response.data.success) {
         setStatus('SUCCESS');
@@ -40,7 +65,8 @@ const LinkCLI = () => {
     } catch (err: any) {
       console.error('Authorization error:', err);
       setStatus('ERROR');
-      toast.error(err.response?.data?.error || err.message, { id: loadingToast });
+      const msg = err.response?.data?.error || err.message;
+      toast.error(msg, { id: loadingToast });
     }
   };
 
@@ -68,6 +94,12 @@ const LinkCLI = () => {
             <div className="text-4xl font-mono font-bold tracking-[0.1em] text-white">
               {code || '------'}
             </div>
+            {sessionData && (
+              <div className="mt-4 pt-4 border-t border-white/5 w-full text-center">
+                 <span className="text-[8px] uppercase tracking-widest text-slate-500">Linked to Address:</span>
+                 <p className="text-[10px] font-mono text-electric-blue truncate mt-1">{sessionData.walletAddress}</p>
+              </div>
+            )}
           </div>
 
           {status === 'SUCCESS' ? (
@@ -87,9 +119,15 @@ const LinkCLI = () => {
             </div>
           ) : (
             <div className="w-full space-y-4">
+              {isAddressMismatch && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-[11px] text-red-500 text-center font-medium leading-relaxed mb-4">
+                  Wallet address mismatch! Your current wallet does not match the address for which this code was generated.
+                </div>
+              )}
+              
               <button
                 onClick={handleAuthorize}
-                disabled={status === 'AUTHORIZING'}
+                disabled={status === 'AUTHORIZING' || isAddressMismatch || !sessionData}
                 className="w-full h-12 bg-gradient-to-r from-electric-blue to-magenta hover:opacity-90 disabled:opacity-50 text-white font-bold rounded-lg transition-all duration-300 shadow-lg shadow-electric-blue/10 flex items-center justify-center gap-3 active:scale-[0.98]"
               >
                 {status === 'AUTHORIZING' ? (

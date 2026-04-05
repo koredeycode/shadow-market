@@ -3,10 +3,12 @@ import { z } from 'zod';
 import { authenticate, type AuthRequest } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { MarketService } from '../services/market.service.js';
+import { WagerService } from '../services/wager.service.js';
 import { asyncHandler } from '../utils/async-handler.js';
 
 export const marketsRouter = Router();
 const marketService = new MarketService();
+const wagerService = new WagerService();
 
 // Validation schemas
 const createMarketSchema = z.object({
@@ -17,6 +19,28 @@ const createMarketSchema = z.object({
   endTime: z.string().transform(val => new Date(val)),
   resolutionSource: z.string().min(1),
   onchainId: z.string().optional(),
+  txHash: z.string().optional(),
+});
+
+const placeBetSchema = z.object({
+  amount: z.string(),
+  side: z.enum(['yes', 'no']),
+  txHash: z.string().optional(),
+  onchainId: z.string().optional(),
+});
+
+const createP2PWagerSchema = z.object({
+  amount: z.string(),
+  odds: z.tuple([z.number().positive(), z.number().positive()]),
+  side: z.enum(['yes', 'no']),
+  duration: z.number().positive(),
+  txHash: z.string().optional(),
+  onchainId: z.string().optional(),
+});
+
+const updateWagerSchema = z.object({
+  status: z.enum(['OPEN', 'MATCHED', 'SETTLED', 'CANCELLED']),
+  takerId: z.string().optional(),
   txHash: z.string().optional(),
 });
 
@@ -138,12 +162,7 @@ marketsRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    let market = await marketService.getMarketById(id);
-
-    if (!market) {
-      // Try fetching by slug if not found by ID
-      market = await marketService.getMarketBySlug(id);
-    }
+    const market = await marketService.getMarketById(id);
 
     if (!market) {
       return res.status(404).json({
@@ -237,5 +256,81 @@ marketsRouter.delete(
       data: market,
       timestamp: Date.now(),
     });
+  })
+);
+
+/**
+ * GET /api/markets/:id/bets
+ * List all AMM bets for a market
+ */
+marketsRouter.get(
+  '/:id/bets',
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const bets = await wagerService.getMarketBets(id);
+    res.json({ success: true, data: bets });
+  })
+);
+
+/**
+ * POST /api/markets/:id/bets
+ * Sync a new AMM bet for a market
+ */
+marketsRouter.post(
+  '/:id/bets',
+  authenticate,
+  validate({ body: placeBetSchema }),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { id } = req.params;
+    const userId = req.user!.id;
+    const bet = await wagerService.placeBet(userId, { ...req.body, marketId: id });
+    res.status(201).json({ success: true, data: bet });
+  })
+);
+
+/**
+ * GET /api/markets/:id/wagers
+ * List all open P2P wagers for a market
+ */
+marketsRouter.get(
+  '/:id/wagers',
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const wagers = await wagerService.getMarketWagers(id);
+    res.json({ success: true, data: wagers });
+  })
+);
+
+/**
+ * POST /api/markets/:id/wagers
+ * Sync a new P2P wager for a market
+ */
+marketsRouter.post(
+  '/:id/wagers',
+  authenticate,
+  validate({ body: createP2PWagerSchema }),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { id } = req.params;
+    const userId = req.user!.id;
+    const wager = await wagerService.createP2PWager(userId, { ...req.body, marketId: id });
+    res.status(201).json({ success: true, data: wager });
+  })
+);
+
+/**
+ * PATCH /api/markets/:id/wagers/:wagerId
+ * Update P2P wager status/taker after on-chain action
+ */
+marketsRouter.patch(
+  '/:id/wagers/:wagerId',
+  authenticate,
+  validate({ body: updateWagerSchema }),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { wagerId } = req.params;
+    const { status, takerId, txHash } = req.body;
+    
+    // Sync-only logic after client action
+    const wager = await wagerService.updateWagerSync(wagerId, { status, takerId, txHash });
+    res.json({ success: true, data: wager });
   })
 );

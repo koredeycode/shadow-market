@@ -7,9 +7,7 @@ import { httpLogger, responseTimeMiddleware } from './middleware/morgan-logger.j
 import { adminRouter } from './routes/admin.js';
 import { marketsRouter } from './routes/markets.js';
 import { oraclesRouter } from './routes/oracles.js';
-import { betsRouter } from './routes/bets.js';
 import { usersRouter } from './routes/users.js';
-import { wagersRouter } from './routes/wagers.js';
 import { sessionsRouter } from './routes/sessions.js';
 
 // Create Express app
@@ -33,10 +31,8 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/admin', adminRouter);
 app.use('/api/markets', marketsRouter);
-app.use('/api/bets', betsRouter);
 app.use('/api/oracles', oraclesRouter);
 app.use('/api/users', usersRouter);
-app.use('/api/wagers', wagersRouter);
 app.use('/api/sessions', sessionsRouter);
 
 // 404 handler

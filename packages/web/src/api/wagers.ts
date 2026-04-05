@@ -33,7 +33,7 @@ export interface CreateP2PWagerRequest {
 }
 
 export interface AcceptWagerRequest {
-  wagerId: string;
+  wagerId?: string;
   txHash?: string;
 }
 
@@ -44,8 +44,8 @@ export interface ClaimWinningsRequest {
 export const wagersApi = {
   // Place a bet on market (AMM)
   placeBet: async (data: PlaceBetRequest): Promise<PlaceBetResponse> => {
-    const { skipRedirect, ...payload } = data;
-    const response = await api.post('/wagers', payload, {
+    const { skipRedirect, marketId, ...payload } = data;
+    const response = await api.post(`/markets/${marketId}/bets`, payload, {
       ['_skipRedirect' as any]: skipRedirect,
     } as any);
     return response.data.data;
@@ -53,19 +53,24 @@ export const wagersApi = {
 
   // Create P2P wager offer
   createP2PWager: async (data: CreateP2PWagerRequest) => {
-    const response = await api.post('/wagers/p2p', data);
+    const { marketId, ...payload } = data;
+    const response = await api.post(`/markets/${marketId}/wagers`, payload);
     return response.data.data;
   },
 
-  // Accept P2P wager
-  acceptWager: async (wagerId: string, data: AcceptWagerRequest) => {
-    const response = await api.post(`/wagers/p2p/${wagerId}/accept`, data);
+  // Accept/Sync P2P wager
+  acceptWager: async (marketId: string, wagerId: string, data: AcceptWagerRequest) => {
+    const { txHash } = data;
+    const response = await api.patch(`/markets/${marketId}/wagers/${wagerId}`, { 
+      status: 'MATCHED',
+      txHash 
+    });
     return response.data.data;
   },
 
-  // Get user's wagers
+  // Get user's active wagers
   getUserWagers: async () => {
-    const response = await api.get('/wagers/user');
+    const response = await api.get('/users/me/wagers');
     return response.data.data;
   },
 

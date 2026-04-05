@@ -49,7 +49,7 @@ export function CreateMarket() {
   const resolutionDate = watch('resolutionDate');
   const initialDate = resolutionDate ? new Date(resolutionDate) : addDays(new Date(), 1);
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(initialDate));
-  const [selectedTime, setSelectedTime] = useState(format(initialDate, 'HH:mm'));
+  const [selectedTime, setSelectedTime] = useState('12:00');
   const [selectionMode, setSelectionMode] = useState<'day' | 'month' | 'year'>('day');
 
   const days = useMemo(() => {

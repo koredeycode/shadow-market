@@ -61,29 +61,80 @@ marketCommands
     }
 
     try {
-      const answers = await inquirer.prompt([
+      const now = new Date();
+      
+      const basicAnswers = await inquirer.prompt([
         {
           type: 'input',
           name: 'question',
           message: 'Market Question (e.g. Will ETH hit $10k in 2026?):',
-          validate: (val) => val.length >= 10 || 'Question must be at least 10 characters.'
+          validate: (val: string) => val.length >= 10 || 'Question must be at least 10 characters.'
         },
         {
-          type: 'input',
+          type: 'list',
           name: 'category',
-          message: 'Category (e.g. Crypto, Tech, Sports):',
+          message: 'Category:',
+          choices: [
+            'Politics', 'Sports', 'Crypto', 'Finance', 'Geopolitics', 
+            'Tech', 'Culture', 'Economy', 'Weather', 'Elections', 'Others'
+          ],
           default: 'Crypto'
-        },
-        {
-          type: 'input',
-          name: 'endTime',
-          message: 'Resolution Date (YYYY-MM-DD):',
-          default: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          validate: (val) => !isNaN(Date.parse(val)) || 'Invalid date format.'
         }
       ]);
 
-      const resolutionTime = BigInt(Date.parse(answers.endTime));
+      const yearAnswer = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'year',
+          message: 'Resolution Year (YYYY):',
+          default: now.getFullYear().toString(),
+          validate: (val: string) => (parseInt(val) >= now.getFullYear()) || 'Year must be current or future.'
+        }
+      ]);
+      
+      const year = parseInt(yearAnswer.year);
+
+      const monthAnswer = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'month',
+          message: 'Resolution Month:',
+          choices: [
+            { name: 'January', value: 0 }, { name: 'February', value: 1 }, 
+            { name: 'March', value: 2 },   { name: 'April', value: 3 },
+            { name: 'May', value: 4 },     { name: 'June', value: 5 },
+            { name: 'July', value: 6 },    { name: 'August', value: 7 },
+            { name: 'September', value: 8 }, { name: 'October', value: 9 },
+            { name: 'November', value: 10 }, { name: 'December', value: 11 }
+          ],
+          default: now.getMonth()
+        }
+      ] as any);
+
+      const month = monthAnswer.month;
+
+      const dayAnswer = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'day',
+          message: 'Resolution Day (1-31):',
+          default: now.getDate().toString(),
+          validate: (val: string) => {
+            const day = parseInt(val);
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            return (day >= 1 && day <= daysInMonth) || `Invalid day for chosen month (max ${daysInMonth}).`;
+          }
+        }
+      ]);
+
+      const day = parseInt(dayAnswer.day);
+
+      // Construct Target Date at 12:00 PM (Noon)
+      const targetDate = new Date(year, month, day, 12, 0, 0);
+      const resolutionTime = BigInt(targetDate.getTime());
+
+      const { question, category } = basicAnswers as any;
+      
       const spinner = ora('Initializing on-chain transaction...').start();
 
       // 1. Get API instance
@@ -105,7 +156,7 @@ marketCommands
       });
 
       // 3. Execute circuit
-      const result = await api.createMarket(answers.question, resolutionTime);
+      const result = await api.createMarket(question, resolutionTime);
       spinner.succeed(chalk.green(`Market created on-chain! ID: ${result.onchainId}`));
       console.log(chalk.gray(`TX Hash: ${result.txHash}`));
 
@@ -113,11 +164,17 @@ marketCommands
       const syncSpinner = ora('Syncing with backend reservoir...').start();
       try {
         const address = walletManager.getAddress();
-        await backendClient.login(address);
+        const session = walletManager.getSession();
+        
+        if (session?.token) {
+          backendClient.setToken(session.token);
+        } else {
+          await backendClient.login(address);
+        }
 
-        await backendClient.createMarket({
-          question: answers.question,
-          category: answers.category,
+        const syncedMarket = await backendClient.createMarket({
+          question: question,
+          category: category,
           endTime: new Date(Number(resolutionTime)).toISOString(),
           onchainId: result.onchainId,
           txHash: result.txHash,
@@ -125,11 +182,17 @@ marketCommands
           creatorAddress: address
         });
         syncSpinner.succeed(chalk.green('Synchronized with backend reservoir. Listing updated.'));
+
+        const webUrl = process.env.SHADOW_MARKET_WEB_URL || 'http://localhost:5173';
+        const marketSlug = syncedMarket.slug || result.onchainId;
+        console.log(`\n${chalk.white('View Market on Web:')}  ${chalk.cyan.underline(`${webUrl}/markets/${marketSlug}`)}`);
       } catch (syncErr: any) {
         syncSpinner.fail(chalk.yellow(`Warning: On-chain success, but backend sync failed: ${syncErr.message}`));
       }
     } catch (err: any) {
       console.error(chalk.red(`\n❌ Error during market creation: ${err.message}`));
+    } finally {
+      process.exit(0);
     }
   });
 
@@ -155,6 +218,11 @@ marketCommands
       if (market.description) {
         console.log(`\n${chalk.white('Description:')}\n${market.description}\n`);
       }
+
+      const webUrl = process.env.SHADOW_MARKET_WEB_URL || 'http://localhost:5173';
+      const marketSlug = market.slug || market.onchainId || market.id;
+      console.log(`${chalk.white('View on Web:')}    ${chalk.cyan.underline(`${webUrl}/markets/${marketSlug}`)}`);
+      console.log(chalk.gray('--------------------------------------------------\n'));
     } catch (err: any) {
       spinner.fail(chalk.red(`Failed to fetch market details: ${err.message}`));
     }

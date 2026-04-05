@@ -417,5 +417,7 @@ export function useWallet() {
     setAddressDisplayMode,
     isWalletModalOpen: useWalletStore(s => s.isWalletModalOpen),
     setWalletModalOpen: useWalletStore(s => s.setWalletModalOpen),
+    isTerminalModalOpen: useWalletStore(s => s.isTerminalModalOpen),
+    setTerminalModalOpen: useWalletStore(s => s.setTerminalModalOpen),
   };
 }
