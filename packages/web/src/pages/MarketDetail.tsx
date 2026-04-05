@@ -12,6 +12,7 @@ import { MarketStats } from '../components/market/MarketStats';
 import { BettingTerminal } from '../components/wager/BettingTerminal';
 import { P2PWagersList } from '../components/wager/P2PWagersList';
 import { P2PActionTerminal } from '../components/wager/P2PActionTerminal';
+import { MarketHistory } from '../components/market/MarketHistory';
 import { MarketStatus, Wager } from '../types';
 import { socket } from '../lib/socket';
 
@@ -22,7 +23,11 @@ export function MarketDetail() {
   const queryClient = useQueryClient();
   
   // Determine active tab based on location path
-  const activeTab = location.pathname.endsWith('/wagers') ? 'p2p' : 'chart';
+  const activeTab = useMemo(() => {
+    if (location.pathname.endsWith('/wagers')) return 'p2p';
+    if (location.pathname.endsWith('/history')) return 'history';
+    return 'chart';
+  }, [location.pathname]);
   
   const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d' | '30d' | 'all'>('24h');
   const [selectedWager, setSelectedWager] = useState<Wager | null>(null);
@@ -252,6 +257,16 @@ export function MarketDetail() {
             >
               Wagers Hub
             </button>
+            <button
+              onClick={() => navigate(`/markets/${slug}/history`)}
+              className={`px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-[0.2em] transition-all border-r border-white/5 ${
+                activeTab === 'history'
+                  ? 'text-electric-blue bg-electric-blue/5'
+                  : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              Order History
+            </button>
             <div className="flex-1" />
             {activeTab === 'chart' && (
               <div className="px-4 flex items-center gap-2">
@@ -273,11 +288,13 @@ export function MarketDetail() {
           </div>
 
           <div className="p-8 flex-1 flex flex-col">
-            {activeTab === 'chart' ? (
+            {activeTab === 'chart' && (
               <div className="flex-1">
                 <MarketChart marketId={market.id} timeRange={timeRange} />
               </div>
-            ) : (
+            )}
+            
+            {activeTab === 'p2p' && (
               <div className="space-y-6 flex-1">
                 <div className="flex justify-between items-center bg-electric-blue/5 border border-electric-blue/20 p-4 rounded-sm">
                   <div className="space-y-1">
@@ -292,6 +309,12 @@ export function MarketDetail() {
                   selectedWagerId={selectedWager?.id}
                   onSelectWager={setSelectedWager}
                 />
+              </div>
+            )}
+
+            {activeTab === 'history' && (
+              <div className="flex-1">
+                <MarketHistory marketId={market.id} />
               </div>
             )}
           </div>

@@ -43,6 +43,7 @@ function App() {
               <Route path="markets/create" element={<CreateMarket />} />
               <Route path="markets/:slug" element={<MarketDetail />} />
               <Route path="markets/:slug/wagers" element={<MarketDetail />} />
+              <Route path="markets/:slug/history" element={<MarketDetail />} />
               <Route path="portfolio" element={<Portfolio />} />
               <Route path="portfolio/bets/:id" element={<BetDetails />} />
               <Route path="portfolio/wagers/:id" element={<WagerDetails />} />

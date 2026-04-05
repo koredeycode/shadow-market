@@ -65,6 +65,13 @@ export class BackendClient {
     return response.data.data;
   }
 
+  async getMarketHistory(id: string) {
+    const response = await axios.get(`${this.baseUrl}/markets/${id}/history`, {
+      headers: this.getHeaders()
+    });
+    return response.data.data;
+  }
+
   async getWagers(marketId: string) {
     const response = await axios.get(`${this.baseUrl}/markets/${marketId}/wagers`, {
       headers: this.getHeaders()

@@ -220,6 +220,24 @@ marketsRouter.get(
 );
 
 /**
+ * GET /api/markets/:id/history
+ * Get masked public transaction history
+ */
+marketsRouter.get(
+  '/:id/history',
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const history = await marketService.getMarketTransactions(id);
+
+    res.json({
+      success: true,
+      data: history,
+      timestamp: Date.now(),
+    });
+  })
+);
+
+/**
  * POST /api/markets/:id/upvote
  * Upvote a market
  */

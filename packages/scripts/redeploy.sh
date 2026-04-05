@@ -114,6 +114,10 @@ echo -e "  Checking if database ${BLUE}${DB_NAME}${NC} exists on port ${BLUE}${D
 PGPASSWORD=postgres psql -h localhost -p "$DB_PORT" -U postgres -tc "SELECT 1 FROM pg_database WHERE datname = '${DB_NAME}'" | grep -q 1 || \
 PGPASSWORD=postgres psql -h localhost -p "$DB_PORT" -U postgres -c "CREATE DATABASE ${DB_NAME}"
 
+echo -e "  Clearing database migration files for a clean slate..."
+rm -rf packages/backend/drizzle/migrations/*
+rm -rf packages/backend/migrations/*
+
 pnpm db:clear
 pnpm db:migrate
 

@@ -63,6 +63,11 @@ export const marketsApi = {
     const { data } = await api.get<ApiResponse<any>>(`/markets/${id}/stats`);
     return data.data!;
   },
+  
+  getHistory: async (id: string) => {
+    const { data } = await api.get<ApiResponse<any>>(`/markets/${id}/history`);
+    return data.data!;
+  },
 
   create: async (data: {
     question: string;

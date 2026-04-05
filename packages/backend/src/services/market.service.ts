@@ -411,4 +411,35 @@ export class MarketService {
       counter++;
     }
   }
+
+  /**
+   * Get public transaction history for a market (masked for privacy)
+   */
+  async getMarketTransactions(marketId: string, limit: number = 50) {
+    // Resolve internal market ID first (it could be a slug or onchainId)
+    const market = await db.query.markets.findFirst({
+      where: or(
+        eq(markets.id, marketId),
+        eq(markets.slug, marketId),
+        sql`${markets.onchainId}::text = ${marketId}`
+      ),
+      columns: { id: true }
+    });
+
+    if (!market) return [];
+
+    const transactions = await db
+      .select({
+        id: bets.id,
+        txHash: bets.txHash,
+        entryPrice: bets.entryPrice,
+        timestamp: bets.entryTimestamp,
+      })
+      .from(bets)
+      .where(eq(bets.marketId, market.id))
+      .orderBy(desc(bets.entryTimestamp))
+      .limit(limit);
+
+    return transactions;
+  }
 }
