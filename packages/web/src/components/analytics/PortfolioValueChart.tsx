@@ -24,7 +24,7 @@ export function PortfolioValueChart({ showLegend = true, height = 400 }: Portfol
   const { data, isLoading, error } = useQuery<PortfolioValuePoint[]>({
     queryKey: ['portfolio-value-chart', timeRange],
     queryFn: () => analyticsApi.getPortfolioValueHistory(timeRange),
-    refetchInterval: 30000,
+    refetchInterval: 60000,
   });
 
   const formatCurrency = (value: number) => {

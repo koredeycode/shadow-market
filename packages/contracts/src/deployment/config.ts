@@ -16,7 +16,8 @@ export function loadEnvConfig(): Record<string, string> {
   for (const file of envFiles) {
     // Look in current package root first, then project root
     const packageEnvPath = path.resolve(__dirname, '..', '..', file);
-    const projectRootEnvPath = path.resolve(__dirname, '..', '..', '..', '..', file);
+    const rootDir = path.resolve(__dirname, '..', '..', '..', '..');
+    const projectRootEnvPath = path.resolve(rootDir, file);
     
     const envPaths = [packageEnvPath, projectRootEnvPath];
 

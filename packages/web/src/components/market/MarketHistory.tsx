@@ -24,7 +24,7 @@ export function MarketHistory({ marketId }: MarketHistoryProps) {
     queryKey: ['market-history', marketId],
     queryFn: () => marketsApi.getHistory(marketId),
     enabled: !!marketId,
-    refetchInterval: 10000,
+    refetchInterval: 60000,
   });
 
   if (isLoading) {

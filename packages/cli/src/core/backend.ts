@@ -128,6 +128,13 @@ export class BackendClient {
     return response.data.data;
   }
 
+  async getAdminConfig() {
+    const response = await axios.get(`${this.baseUrl}/admin/config`, {
+      headers: this.getHeaders()
+    });
+    return response.data.data;
+  }
+
   private getHeaders() {
     return this.token ? { Authorization: `Bearer ${this.token}` } : {};
   }

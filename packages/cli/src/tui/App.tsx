@@ -30,13 +30,16 @@ export const App = () => {
     const [markets, setMarkets] = useState<Market[]>([]);
     const [walletStatus, setWalletStatus] = useState<WalletStatus | null>(null);
     const [me, setMe] = useState<UserProfile | null>(null);
+    const [adminAddress, setAdminAddress] = useState<string | null>(null);
     const [selectedMarket, setSelectedMarket] = useState<Market | null>(null);
     const [marketHistory, setMarketHistory] = useState<any[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitStatus, setSubmitStatus] = useState('');
     const [pairingSession, setPairingSession] = useState<any>(null);
     const [showQuitConfirm, setShowQuitConfirm] = useState(false);
+    const [showResolveConfirm, setShowResolveConfirm] = useState<any>(null);
     const [showBetConfirm, setShowBetConfirm] = useState<{ amount: string, side: 'YES' | 'NO' } | null>(null);
+    const [globalError, setGlobalError] = useState<string | null>(null);
 
     const activeView = viewStack[viewStack.length - 1];
 
@@ -59,16 +62,20 @@ export const App = () => {
                 if (session?.token) backendClient.setToken(session.token);
             }
 
-            const [m, s, user] = await Promise.all([
+            const [m, s, user, adminConfig] = await Promise.all([
                 backendClient.getMarkets({ limit: 12 }),
                 walletManager.isLoggedIn() ? walletManager.getStatus() : null,
-                walletManager.isLinked() ? backendClient.getMe() : null
+                walletManager.isLinked() ? backendClient.getMe() : null,
+                walletManager.isLoggedIn() ? backendClient.getAdminConfig().catch(() => null) : null
             ]);
             setMarkets(m as any);
             setWalletStatus(s as any);
             setMe(user as any);
-        } catch (err) {
+            if (adminConfig) setAdminAddress(adminConfig.adminAddress);
+            setGlobalError(null);
+        } catch (err: any) {
             console.error('Data sync failed:', err);
+            setGlobalError(err.message || 'Ledger Hub Sync Failed');
         } finally {
             setLoading(false);
         }
@@ -109,7 +116,7 @@ export const App = () => {
                         setPairingSession(null);
                     }
                 } catch (err) { /* silent poll */ }
-            }, 3000);
+            }, 10000);
         }
         return () => clearInterval(interval);
     }, [pairingSession, loadData]);
@@ -205,7 +212,50 @@ export const App = () => {
         }
     };
 
-    const isEditing = activeView === 'create' || activeView === 'login' || activeView === 'market-detail';
+    const handleOpenMarketInBrowser = useCallback((m: Market) => {
+        const url = `${process.env.SHADOW_MARKET_WEB_URL || 'http://localhost:5173'}/markets/${m.slug || m.id}`;
+        import('open').then(op => (op.default || op)(url)).catch(() => {});
+    }, []);
+
+    const handleAdminAction = async (action: 'lock' | 'resolve') => {
+        if (!selectedMarket) return;
+        if (action === 'lock') {
+            setIsSubmitting(true);
+            setSubmitStatus('Locking market on-chain...');
+            try {
+                const api = await walletManager.getAPI();
+                await api.lockMarket(selectedMarket.onchainId);
+                setSubmitStatus('Success! Syncing backend...');
+                await backendClient.getMarkets(); // force refresh? Actually better to just navigate back
+                setSubmitStatus('MARKET LOCKED SUCCESSFULLY!');
+                setTimeout(() => { setIsSubmitting(false); popView(); }, 2000);
+            } catch (err: any) {
+                setSubmitStatus(`Error: ${err.message}`);
+                setTimeout(() => setIsSubmitting(false), 4000);
+            }
+        } else if (action === 'resolve') {
+            setShowResolveConfirm(true);
+        }
+    };
+
+    const handleResolveMarket = async (outcome: boolean) => {
+        if (!selectedMarket) return;
+        setShowResolveConfirm(false);
+        setIsSubmitting(true);
+        setSubmitStatus(`Resolving market to ${outcome ? 'YES' : 'NO'}...`);
+        try {
+            const api = await walletManager.getAPI();
+            await api.resolveMarket(selectedMarket.onchainId, outcome);
+            setSubmitStatus('Success! Syncing backend...');
+            setSubmitStatus('MARKET RESOLVED SUCCESSFULLY!');
+            setTimeout(() => { setIsSubmitting(false); popView(); }, 2000);
+        } catch (err: any) {
+            setSubmitStatus(`Error: ${err.message}`);
+            setTimeout(() => setIsSubmitting(false), 4000);
+        }
+    };
+
+    const isEditing = activeView === 'create' || activeView === 'login';
 
     useInput((input, key) => {
         if (isSubmitting || showQuitConfirm || showBetConfirm) return;
@@ -236,11 +286,13 @@ export const App = () => {
         }
     });
 
-    if (!walletManager.isLoggedIn() && activeView !== 'login') {
-        navigateTo('login');
-    } else if (walletManager.isLoggedIn() && !walletManager.isLinked() && activeView !== 'link') {
-        navigateTo('link');
-    }
+    useEffect(() => {
+        if (!walletManager.isLoggedIn() && activeView !== 'login') {
+            navigateTo('login');
+        } else if (walletManager.isLoggedIn() && !walletManager.isLinked() && activeView !== 'link') {
+            navigateTo('link');
+        }
+    }, [activeView, loading]);
 
     return (
         <Box flexDirection="column" padding={1} minHeight={25}>
@@ -253,13 +305,26 @@ export const App = () => {
             </Box>
 
             {/* Main Content Area */}
-            <Box flexGrow={1} borderStyle="round" borderColor="magenta" paddingX={2} paddingY={1} position="relative">
+            <Box flexGrow={1} borderStyle="round" borderColor="magenta" paddingX={2} paddingY={1} position="relative" minHeight={20}>
+                {submitStatus && !isSubmitting && submitStatus.includes('ERROR') && (
+                    <Box position="absolute" width="100%" justifyContent="flex-end">
+                        <Box paddingX={1} backgroundColor="red">
+                            <Text bold color="white">{submitStatus}</Text>
+                        </Box>
+                    </Box>
+                )}
+                {globalError && (
+                    <Box paddingX={1} marginBottom={1} borderStyle="single" borderColor="red">
+                        <Text color="red" bold>SYNC ERROR: {globalError}</Text>
+                        <Text dimColor> Check your network or Shadow Indexer status.</Text>
+                    </Box>
+                )}
                 {loading ? (
                     <Box justifyContent="center" alignItems="center" width="100%">
                         <Text color="cyan"><Spinner type="dots" /> Syncing with Ledger Hub...</Text>
                     </Box>
                 ) : (
-                    <Box flexDirection="column" width="100%">
+                    <Box flexDirection="column" width="100%" minHeight={15}>
                         {activeView === 'dashboard' && (
                             <Dashboard 
                                 walletStatus={walletStatus} 
@@ -279,14 +344,31 @@ export const App = () => {
                         )}
 
                         {activeView === 'market-detail' && selectedMarket && (
-                            <MarketDetail 
-                                market={selectedMarket} 
-                                history={marketHistory}
-                                onBack={popView} 
-                                isSubmitting={isSubmitting}
-                                submitStatus={submitStatus}
-                                onPlaceBet={(amount, side) => setShowBetConfirm({ amount, side })}
-                            />
+                            <Box flexDirection="row">
+                                <Box width="60%">
+                                    <MarketDetail 
+                                        market={selectedMarket} 
+                                        history={marketHistory}
+                                        onBack={popView} 
+                                        isSubmitting={isSubmitting}
+                                        submitStatus={submitStatus}
+                                        onPlaceBet={(amount, side) => setShowBetConfirm({ amount, side })}
+                                        onOpenBrowser={handleOpenMarketInBrowser}
+                                        isAdmin={adminAddress ? walletManager.getAddress() === adminAddress : false}
+                                        onAdminAction={handleAdminAction}
+                                    />
+                                </Box>
+                                <Box width="38%" marginLeft={2}>
+                                    <Dashboard 
+                                        walletStatus={walletStatus}
+                                        markets={markets}
+                                        me={me}
+                                        onSelectTab={(tab) => navigateTo(tab as any)}
+                                        onMarketSelect={(m) => { setSelectedMarket(m); pushView('market-detail'); }}
+                                        compact={true}
+                                    />
+                                </Box>
+                            </Box>
                         )}
 
                         {activeView === 'create' && (
@@ -302,16 +384,60 @@ export const App = () => {
                             <LoginView onLogin={handleLogin} onQuit={() => setShowQuitConfirm(true)} />
                         )}
 
-                        {activeView === 'link' && pairingSession && (
-                            <LinkView 
-                                pairingCode={pairingSession.pairingCode} 
-                                walletAddress={walletManager.getAddress()}
-                                onQuit={() => setShowQuitConfirm(true)}
-                                onOpenBrowser={() => {
-                                   const url = `${process.env.SHADOW_MARKET_WEB_URL || 'http://localhost:5173'}/auth/link?code=${pairingSession.pairingCode}`;
-                                   import('open').then(m => (m.default || m)(url)).catch(() => {});
-                                }}
-                            />
+                        {activeView === 'link' && (
+                            pairingSession ? (
+                                <LinkView 
+                                    pairingCode={pairingSession.pairingCode} 
+                                    walletAddress={walletManager.getAddress()}
+                                    onQuit={() => setShowQuitConfirm(true)}
+                                    onOpenBrowser={() => {
+                                       const url = `${process.env.SHADOW_MARKET_WEB_URL || 'http://localhost:5173'}/auth/link?code=${pairingSession.pairingCode}`;
+                                       import('open').then(m => (m.default || m)(url)).catch(() => {});
+                                    }}
+                                />
+                            ) : (
+                                <Box justifyContent="center" alignItems="center" height={10}>
+                                    <Text color="yellow"><Spinner type="dots" /> Initializing secure pairing session...</Text>
+                                </Box>
+                            )
+                        )}
+
+                        {activeView === 'portfolio' && (
+                            <Box flexDirection="column" borderStyle="single" borderColor="cyan" padding={1}>
+                                <Text bold color="cyan">PORTFOLIO VIEW</Text>
+                                <Box marginTop={1}>
+                                    <Text dimColor italic>Syncing your ZK-Shielded history from indexer...</Text>
+                                </Box>
+                                <Box marginTop={1}>
+                                    <Text>Total Bets: {me?.bets?.length || 0}</Text>
+                                </Box>
+                                <Box marginTop={2}>
+                                    <Text color="gray">Press ESC to go back.</Text>
+                                </Box>
+                            </Box>
+                        )}
+
+                        {activeView === 'wallet' && (
+                            <Box flexDirection="column" borderStyle="single" borderColor="blue" padding={1}>
+                                <Text bold color="blue">WALLET HUB</Text>
+                                <Box marginTop={1} flexDirection="column">
+                                    <Text color="gray">Address: <Text color="magenta">{walletManager.getAddress()}</Text></Text>
+                                    <Box marginTop={1} flexDirection="column">
+                                        <Text color="gray">Balance (NIGHT): {walletStatus?.balance.toString() || '0'}</Text>
+                                        <Text color="gray">Balance (DUST): {walletStatus?.dust.toString() || '0'}</Text>
+                                    </Box>
+                                </Box>
+                                <Box marginTop={2}>
+                                    <Text color="gray">Press ESC to go back.</Text>
+                                </Box>
+                            </Box>
+                        )}
+
+                        {/* Catch-all for unknown views to prevent blank screens */}
+                        {!['dashboard', 'markets', 'market-detail', 'create', 'login', 'link', 'portfolio', 'wallet'].includes(activeView) && (
+                           <Box justifyContent="center" alignItems="center" height={10}>
+                              <Text color="red">ERROR: Invalid Terminal Context - Redirecting...</Text>
+                           </Box>
                         )}
                     </Box>
                 )}
@@ -337,6 +463,18 @@ export const App = () => {
                       confirmLabel="Confirm Bet (y)"
                    />
                 )}
+
+                {showResolveConfirm && (
+                    <ConfirmationModal 
+                        title="RESOLVE MARKET"
+                        message={`Admin, please confirm the FINAL OUTCOME of this market:\n\n"${selectedMarket?.question}"`}
+                        confirmLabel="Resolve as YES (y)"
+                        cancelLabel="Resolve as NO (n)"
+                        confirmColor="green"
+                        onConfirm={() => handleResolveMarket(true)}
+                        onCancel={() => handleResolveMarket(false)}
+                    />
+                )}
             </Box>
 
             {/* Global Footer */}
@@ -345,7 +483,7 @@ export const App = () => {
                     <Text color="cyan"> [d] Dash [m] Markets [c] Create [p] Portfolio [w] Wallet [L] Logout [q] Quit </Text>
                 </Box>
                 <Box>
-                    <Text color="gray"> Net: <Text color={walletStatus?.isSynced ? 'green' : 'yellow'}>{walletStatus?.network || 'local-net'}</Text></Text>
+                    <Text color="gray"> Net: <Text color={walletStatus?.isSynced ? 'green' : 'yellow'}>{walletStatus?.network || 'undeployed'}</Text></Text>
                     <Text dimColor> | v0.2.0 </Text>
                 </Box>
             </Box>

@@ -13,6 +13,9 @@ interface MarketDetailProps {
   isSubmitting: boolean;
   submitStatus: string;
   history: any[];
+  onOpenBrowser?: (market: Market) => void;
+  isAdmin?: boolean;
+  onAdminAction?: (action: 'lock' | 'resolve', data?: any) => void;
 }
 
 export const MarketDetail: React.FC<MarketDetailProps> = ({
@@ -21,7 +24,10 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
   onBack,
   isSubmitting,
   submitStatus,
-  history
+  history,
+  onOpenBrowser,
+  isAdmin = false,
+  onAdminAction
 }) => {
   const [betAmount, setBetAmount] = useState('10');
   const [betSide, setBetSide] = useState<'YES' | 'NO'>('YES');
@@ -67,7 +73,7 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
          </Box>
          <Box flexDirection="column" alignItems="center">
             <Text color="yellow" bold>TOTAL VOLUME</Text>
-            <Text color="white">1.2k NIGHT</Text>
+            <Text color="white">{(Number(market.totalVolume || 0) / 1_000_000).toLocaleString()} NIGHT</Text>
          </Box>
       </Box>
 
@@ -77,15 +83,21 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
            <Text color="cyan" bold underline>Terminal Execution</Text>
            <Box marginTop={1}>
               <SelectInput
-                 items={[
-                   { label: 'PLACE A NEW BET', value: 'bet' },
-                   { label: 'VIEW ON-CHAIN RECORD', value: 'view' },
-                   { label: 'GO BACK', value: 'back' }
-                 ]}
-                 onSelect={(i) => {
-                   if (i.value === 'bet') setStep('BET');
-                   if (i.value === 'back') onBack();
-                 }}
+                  items={[
+                    { label: 'PLACE A NEW BET', value: 'bet' },
+                    { label: 'VIEW ON WEB PORTAL', value: 'browser' },
+                    ...(isAdmin && market.status === 'OPEN' ? [{ label: '🔒 LOCK MARKET (ADMIN ONLY)', value: 'lock' }] : []),
+                    ...(isAdmin && market.status === 'LOCKED' ? [{ label: '🏁 RESOLVE MARKET (ADMIN ONLY)', value: 'resolve' }] : []),
+                    { label: 'VIEW ON-CHAIN RECORD', value: 'view' },
+                    { label: 'GO BACK', value: 'back' }
+                  ] as any}
+                  onSelect={(i: any) => {
+                    if (i.value === 'bet') setStep('BET');
+                    if (i.value === 'browser' && onOpenBrowser) onOpenBrowser(market);
+                    if (i.value === 'lock' && onAdminAction) onAdminAction('lock');
+                    if (i.value === 'resolve' && onAdminAction) onAdminAction('resolve');
+                    if (i.value === 'back') onBack();
+                  }}
               />
            </Box>
         </Box>

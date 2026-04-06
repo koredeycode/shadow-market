@@ -1,5 +1,5 @@
 {
-  "id": "351b55e2-b334-471f-a7e3-fcb43c04e0aa",
+  "id": "f5f988f7-7ef2-4565-8076-c2407a9383b3",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "5",
   "dialect": "pg",
@@ -521,6 +521,20 @@
           "notNull": true,
           "default": "'0'"
         },
+        "total_yes_volume": {
+          "name": "total_yes_volume",
+          "type": "numeric(20, 0)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "total_no_volume": {
+          "name": "total_no_volume",
+          "type": "numeric(20, 0)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
         "total_bets": {
           "name": "total_bets",
           "type": "integer",
@@ -777,7 +791,7 @@
           "name": "wallet_address",
           "type": "varchar(255)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "created_at": {
           "name": "created_at",

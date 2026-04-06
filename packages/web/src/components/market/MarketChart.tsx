@@ -25,7 +25,7 @@ export function MarketChart({ marketId, timeRange }: MarketChartProps) {
   } = useQuery({
     queryKey: ['market-chart', marketId, timeRange],
     queryFn: () => marketsApi.getPriceHistory(marketId, timeRange),
-    refetchInterval: 15000,
+    refetchInterval: 45000,
   });
 
   if (isLoading) {

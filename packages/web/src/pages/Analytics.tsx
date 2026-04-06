@@ -54,25 +54,25 @@ export function Analytics() {
   const { data: platformStats, isLoading: statsLoading } = useQuery<PlatformStats>({
     queryKey: ['platform-stats'],
     queryFn: () => analyticsApi.getPlatformStats(),
-    refetchInterval: 30000,
+    refetchInterval: 60000,
   });
 
   const { data: topMarkets, isLoading: marketsLoading } = useQuery<TopMarket[]>({
     queryKey: ['top-markets'],
     queryFn: () => analyticsApi.getTopMarkets(10),
-    refetchInterval: 30000,
+    refetchInterval: 60000,
   });
 
   const { data: topTraders, isLoading: tradersLoading } = useQuery<TopTrader[]>({
     queryKey: ['top-traders'],
     queryFn: () => analyticsApi.getTopTraders(10),
-    refetchInterval: 30000,
+    refetchInterval: 60000,
   });
 
   const { data: categoryStats, isLoading: categoriesLoading } = useQuery<CategoryStats[]>({
     queryKey: ['category-stats'],
     queryFn: () => analyticsApi.getCategoryStats(),
-    refetchInterval: 30000,
+    refetchInterval: 60000,
   });
 
   const formatCurrency = (value: string | number) => {

@@ -171,7 +171,7 @@ export function P2PWagersList({ marketId, selectedWagerId, onSelectWager }: P2PW
       // In real implementation, this would call an API endpoint
       return [] as Wager[];
     },
-    refetchInterval: 10000,
+    refetchInterval: 60000,
   });
 
   // Logic removed here as it lives in P2PActionTerminal now

@@ -56,14 +56,13 @@
   "dependencies": {
     "@midnight-ntwrk/compact-runtime": "0.15.0",
     "@midnight-ntwrk/dapp-connector-api": "4.0.1",
-    "@midnight-ntwrk/ledger-v7": "7.0.2",
-    "@midnight-ntwrk/midnight-js-compact": "4.0.2",
-    "@midnight-ntwrk/midnight-js-contracts": "4.0.2",
-    "@midnight-ntwrk/midnight-js-fetch-zk-config-provider": "4.0.2",
-    "@midnight-ntwrk/midnight-js-http-client-proof-provider": "4.0.2",
-    "@midnight-ntwrk/midnight-js-indexer-public-data-provider": "4.0.2",
-    "@midnight-ntwrk/midnight-js-types": "4.0.2",
-    "@midnight-ntwrk/midnight-js-utils": "4.0.2",
+    "@midnight-ntwrk/midnight-js-compact": "4.0.4",
+    "@midnight-ntwrk/midnight-js-contracts": "4.0.4",
+    "@midnight-ntwrk/midnight-js-fetch-zk-config-provider": "4.0.4",
+    "@midnight-ntwrk/midnight-js-http-client-proof-provider": "4.0.4",
+    "@midnight-ntwrk/midnight-js-indexer-public-data-provider": "4.0.4",
+    "@midnight-ntwrk/midnight-js-types": "4.0.4",
+    "@midnight-ntwrk/midnight-js-utils": "4.0.4",
     "@midnight-ntwrk/wallet-api": "5.0.0"
   },
   "devDependencies": {
@@ -92,15 +91,5 @@
     "blockchain",
     "dapp",
     "p2p-wager"
-  ],
-  "pnpm": {
-    "overrides": {
-      "@midnight-ntwrk/ledger-v7": "7.0.2",
-      "@midnight-ntwrk/ledger-v8": "npm:@midnight-ntwrk/ledger-v7@7.0.2",
-      "@midnight-ntwrk/wallet-sdk-shielded": "2.0.0",
-      "@midnight-ntwrk/wallet-sdk-dust-wallet": "2.0.0",
-      "@midnight-ntwrk/wallet-sdk-facade": "2.0.0",
-      "@midnight-ntwrk/wallet-sdk-unshielded-wallet": "2.0.0"
-    }
-  }
+  ]
 }

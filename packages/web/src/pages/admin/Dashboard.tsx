@@ -65,7 +65,7 @@ export function AdminDashboard() {
   } = useQuery<AdminStats>({
     queryKey: ['admin-stats'],
     queryFn: () => adminApi.getStats(),
-    refetchInterval: 30000,
+    refetchInterval: 60000,
     retry: false,
   });
 

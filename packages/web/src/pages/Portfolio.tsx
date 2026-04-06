@@ -62,7 +62,7 @@ export function Portfolio() {
   } = useQuery<PortfolioData>({
     queryKey: ['portfolio'],
     queryFn: () => betsApi.getPortfolio(),
-    refetchInterval: 15000,
+    refetchInterval: 45000,
   });
 
   if (isLoading) {

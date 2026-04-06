@@ -89,7 +89,7 @@ export function MarketDetail() {
   const { data: portfolio } = useQuery({
     queryKey: ['user-portfolio'],
     queryFn: () => betsApi.getPortfolio(),
-    refetchInterval: 10000,
+    refetchInterval: 60000,
   });
 
   const marketPositions = useMemo(() => {

@@ -59,6 +59,21 @@ adminRouter.post(
   })
 );
 
+// Admin config route - accessible to authenticated users to check their admin potential
+adminRouter.get(
+  '/config',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    res.json({
+      success: true,
+      data: {
+        adminAddress: config.adminAddress,
+      },
+      timestamp: Date.now(),
+    });
+  })
+);
+
 // All other admin routes require authentication and admin role
 adminRouter.use(authenticate, isAdmin);
 

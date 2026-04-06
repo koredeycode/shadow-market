@@ -104,7 +104,7 @@ class WalletManager {
 
     return {
       address: this.currentContext.address,
-      network: 'local-network',
+      network: this.currentContext.networkId,
       balance: state.unshielded.balances[ledger.unshieldedToken().raw] ?? 0n,
       dust: state.dust.balance(new Date()) ?? 0n,
       isSynced: state.isSynced
@@ -177,7 +177,7 @@ class WalletManager {
       txHistoryStorage: new InMemoryTransactionHistoryStorage(),
     };
 
-    const unshieldedKeystore = createKeystore(unshieldedSecretKey, 'undeployed');
+    const unshieldedKeystore = createKeystore(unshieldedSecretKey, networkId);
     const unshieldedPublicKey = PublicKey.fromKeyStore(unshieldedKeystore);
 
     const shieldedWallet = ShieldedWallet(baseConfiguration).startWithSecretKeys(shieldedSecretKeys);
@@ -200,7 +200,8 @@ class WalletManager {
       dustSecretKey,
       unshieldedKeystore,
       address: unshieldedKeystore.getBech32Address().toString(),
-      zswapKey: derivationResult.keys[Roles.Zswap]
+      zswapKey: derivationResult.keys[Roles.Zswap],
+      networkId
     };
   }
 

@@ -68,7 +68,7 @@ export function Markets() {
           : undefined 
       });
     },
-    refetchInterval: 10000,
+    refetchInterval: 60000,
   });
 
   return (

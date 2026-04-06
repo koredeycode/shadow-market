@@ -18,6 +18,7 @@ export interface Market {
   endTime: string;
   yesPrice: string;
   noPrice: string;
+  totalVolume: string;
   status: string;
   slug?: string;
 }

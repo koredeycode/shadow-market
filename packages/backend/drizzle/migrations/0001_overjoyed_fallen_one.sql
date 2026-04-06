@@ -1,1 +1,0 @@
-ALTER TABLE "terminal_sessions" ALTER COLUMN "wallet_address" SET NOT NULL;

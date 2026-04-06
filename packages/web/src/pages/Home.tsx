@@ -19,13 +19,13 @@ export function Home() {
   const { data: trendingMarkets, isLoading: loadingTrending } = useQuery<TrendingMarket[]>({
     queryKey: ['trending-markets'],
     queryFn: () => marketsApi.getTrending(3),
-    refetchInterval: 10000,
+    refetchInterval: 60000,
   });
 
   const { data: newMarkets, isLoading: loadingNew } = useQuery<Market[]>({
     queryKey: ['new-markets'],
     queryFn: () => marketsApi.getNew(3),
-    refetchInterval: 10000,
+    refetchInterval: 60000,
   });
 
   const {

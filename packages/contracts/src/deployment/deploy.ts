@@ -1,3 +1,42 @@
+// 0. Configuration & Global State (MUST RUN FIRST)
+import { getNetworkConfig } from './config.js';
+const NETWORK_CONFIG = getNetworkConfig();
+
+// Initialize network ID globally before any SDK components are used
+// The SDK v2.0.0 uses the literal network name as the HRP prefix (mn_addr_preview, mn_addr_preprod, etc.)
+const networkId = NETWORK_CONFIG.network === 'local' ? 'undeployed' : NETWORK_CONFIG.network;
+process.env.MIDNIGHT_NETWORK_ID = networkId;
+process.env.NETWORK_ID = networkId;
+process.env.MIDNIGHT_JS_NETWORK_ID = networkId;
+
+import { setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
+setNetworkId(networkId as any);
+
+// CRITICAL: pnpm installs two copies of midnight-js-network-id (4.0.2 + 4.0.4).
+// Each has its own module-scoped `currentNetworkId` variable.
+// We must patch ALL copies so midnight-js-contracts (which uses 4.0.4) also sees the value.
+try {
+  const { readdirSync, existsSync } = await import('node:fs');
+  const { resolve: resolvePath, dirname: dirnamePath } = await import('node:path');
+  const { fileURLToPath: toPath } = await import('node:url');
+  const deployDir = dirnamePath(toPath(import.meta.url));
+  const pnpmDir = resolvePath(deployDir, '..', '..', '..', '..', 'node_modules', '.pnpm');
+  if (existsSync(pnpmDir)) {
+    const entries = readdirSync(pnpmDir).filter((e: string) => e.startsWith('@midnight-ntwrk+midnight-js-network-id@'));
+    for (const entry of entries) {
+      const modPath = resolvePath(pnpmDir, entry, 'node_modules', '@midnight-ntwrk', 'midnight-js-network-id', 'dist', 'index.mjs');
+      if (existsSync(modPath)) {
+        const mod = await import(modPath);
+        if (mod.setNetworkId && typeof mod.setNetworkId === 'function') {
+          mod.setNetworkId(networkId);
+        }
+      }
+    }
+  }
+} catch (e) {
+  console.warn('  Warning: Could not patch all network-id instances:', (e as Error).message);
+}
+
 /**
  * Deploy Shadow Market contract to Midnight Local/Preprod network
  */
@@ -9,6 +48,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { WebSocket } from 'ws';
 import * as Rx from 'rxjs';
 import { Buffer } from 'buffer';
+import chalk from 'chalk';
 
 // Midnight SDK imports
 import { deployContract } from '@midnight-ntwrk/midnight-js-contracts';
@@ -16,7 +56,6 @@ import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
 import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-private-state-provider';
 import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
-import { setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import { toHex } from '@midnight-ntwrk/midnight-js-utils';
 import * as ledger from '@midnight-ntwrk/ledger-v8';
 import { unshieldedToken } from '@midnight-ntwrk/ledger-v8';
@@ -28,19 +67,14 @@ import {
   UnshieldedWallet,
 } from '@midnight-ntwrk/wallet-sdk-unshielded-wallet';
 import { CompiledContract } from '@midnight-ntwrk/compact-js';
-import chalk from 'chalk';
 
 // Shared config
-import { getAdminWalletSeed, getNetworkConfig } from './config.js';
+import { getAdminWalletSeed } from './config.js';
 import { ShadowMarketAPI } from '@shadow-market/api';
 
 // Enable WebSocket for GraphQL subscriptions
 // @ts-expect-error Required for wallet sync
 globalThis.WebSocket = WebSocket;
-
-const NETWORK_CONFIG = getNetworkConfig();
-console.log(chalk.gray(`  Network: ${NETWORK_CONFIG.network}`));
-setNetworkId(NETWORK_CONFIG.network === 'local' || NETWORK_CONFIG.network === 'undeployed' ? 'undeployed' : 'testnet');
 
 const CONFIG = {
   indexer: NETWORK_CONFIG.indexer,
@@ -49,6 +83,13 @@ const CONFIG = {
   proofServer: NETWORK_CONFIG.proofServer,
   faucetUrl: 'http://localhost:8080', // Default local faucet
 };
+
+console.log(chalk.gray(`  Network: ${NETWORK_CONFIG.network}`));
+console.log(chalk.gray(`  Using NetworkID: ${networkId}`));
+console.log(chalk.gray(`  Indexer: ${CONFIG.indexer}`));
+console.log(chalk.gray(`  Node URL: ${CONFIG.node}`));
+console.log(chalk.gray(`  Proof Server: ${CONFIG.proofServer}`));
+console.log(chalk.gray(`  --------------------------------------------------------------`));
 
 interface WalletContext {
   wallet: WalletFacade;
@@ -124,7 +165,7 @@ const compiledContract = CompiledContract.make('shadow-market', ShadowMarket.Con
 // --- Wallet Functions ---
 
 const baseConfiguration = {
-  networkId: (NETWORK_CONFIG.network === 'local' || NETWORK_CONFIG.network === 'undeployed' ? 'undeployed' : 'testnet') as any,
+  networkId: (process.env.MIDNIGHT_NETWORK_ID || 'undeployed') as any,
   costParameters: {
     additionalFeeOverhead: 300_000_000_000_000n,
     feeBlocksMargin: 5,
@@ -140,8 +181,8 @@ console.log(chalk.gray(`  BaseConfiguration NetworkId: ${baseConfiguration.netwo
 import { getNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 
 async function initWalletWithSeed(seed: Uint8Array): Promise<WalletContext> {
-  const currentNetworkId = (NETWORK_CONFIG.network === 'local' || NETWORK_CONFIG.network === 'undeployed' ? 'undeployed' : 'testnet');
-  setNetworkId(currentNetworkId);
+  const currentNetworkId = (process.env.MIDNIGHT_NETWORK_ID || 'undeployed');
+  setNetworkId(currentNetworkId as any);
   console.log(chalk.gray(`  Config NetworkId: ${baseConfiguration.networkId}`));
   console.log(chalk.gray(`  Current NetworkId: ${currentNetworkId}`));
   console.log(chalk.gray(`  SDK Global NetworkId: ${getNetworkId()}`));
@@ -434,6 +475,9 @@ async function main() {
     process.stdout.write('\r  Proof server ready!                    \n');
 
     console.log('  Setting up providers...');
+    // Re-set network ID immediately before contract operations
+    // pnpm's strict module resolution can create separate instances of midnight-js-network-id
+    setNetworkId(networkId as any);
     const providers = await createProviders(walletCtx);
 
     console.log('  Deploying contract...\n');

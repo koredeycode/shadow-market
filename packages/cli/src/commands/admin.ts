@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import ora from 'ora';
 import { walletManager } from '../core/wallet.js';
+import { backendClient } from '../core/backend.js';
 
 export const adminCommands = new Command('admin')
   .description('Administrative tools for Shadow Market owners');
@@ -13,6 +14,12 @@ adminCommands
   .action(async () => {
     if (!walletManager.isLoggedIn()) {
       console.log(chalk.yellow('Please login first: "sm wallet login"'));
+      return;
+    }
+
+    const adminConfig = await backendClient.getAdminConfig().catch(() => null);
+    if (adminConfig && walletManager.getAddress() !== adminConfig.adminAddress) {
+      console.log(chalk.red('❌ ERROR: Admin Address Mismatch. Operation restricted to the configured admin wallet.'));
       return;
     }
 
@@ -33,6 +40,12 @@ adminCommands
     if (!walletManager.isLoggedIn()) {
       console.log(chalk.yellow('Please login first: "sm wallet login"'));
       return;
+    }
+
+    const adminConfig = await backendClient.getAdminConfig().catch(() => null);
+    if (adminConfig && walletManager.getAddress() !== adminConfig.adminAddress) {
+       console.log(chalk.red('❌ ERROR: Admin Address Mismatch. Operation restricted to the configured admin wallet.'));
+       return;
     }
 
     try {
@@ -66,6 +79,12 @@ adminCommands
   .action(async (marketId) => {
     if (!walletManager.isLoggedIn()) {
        console.log(chalk.yellow('Please login first: "sm wallet login"'));
+       return;
+    }
+
+    const adminConfig = await backendClient.getAdminConfig().catch(() => null);
+    if (adminConfig && walletManager.getAddress() !== adminConfig.adminAddress) {
+       console.log(chalk.red('❌ ERROR: Admin Address Mismatch. Operation restricted to the configured admin wallet.'));
        return;
     }
 

@@ -1,4 +1,4 @@
-import { Moon, X, Camera, MessageSquare, Music2, Globe, ChevronDown, Mail } from 'lucide-react';
+import { X, Camera, MessageSquare, Music2, Globe, ChevronDown, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function Footer() {
@@ -11,9 +11,11 @@ export function Footer() {
         {/* Top Section: Logo & Tagline */}
         <div className="space-y-2">
           <Link to="/" className="flex items-center gap-2 group w-fit">
-            <div className="w-8 h-8 bg-electric-blue rounded-sm flex items-center justify-center transition-transform group-hover:scale-105">
-              <Moon className="w-5 h-5 text-white" fill="currentColor" />
-            </div>
+            <img 
+              src="/assets/logo.png" 
+              alt="Shadow Market" 
+              className="w-10 h-10 object-contain transition-transform group-hover:scale-105" 
+            />
             <span className="text-xl font-bold tracking-tight text-white focus:outline-none">
               Shadow Market
             </span>

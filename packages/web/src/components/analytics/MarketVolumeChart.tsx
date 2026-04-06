@@ -25,7 +25,7 @@ export function MarketVolumeChart({ showLegend = true, height = 400 }: MarketVol
   const { data, isLoading, error } = useQuery<MarketVolumePoint[]>({
     queryKey: ['market-volume-chart', timeRange],
     queryFn: () => analyticsApi.getMarketVolumeHistory(timeRange),
-    refetchInterval: 30000,
+    refetchInterval: 60000,
   });
 
   const formatCurrency = (value: number) => {
