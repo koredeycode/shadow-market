@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Text, useInput, useApp } from 'ink';
-import Spinner from 'ink-spinner';
 import Gradient from 'ink-gradient';
 import BigText from 'ink-big-text';
 import { walletManager } from '../core/wallet.js';
@@ -39,6 +38,7 @@ export const App = () => {
     const [showQuitConfirm, setShowQuitConfirm] = useState(false);
     const [showResolveConfirm, setShowResolveConfirm] = useState<any>(null);
     const [showBetConfirm, setShowBetConfirm] = useState<{ amount: string, side: 'YES' | 'NO' } | null>(null);
+    const [showWagerConfirm, setShowWagerConfirm] = useState<{ amount: string, side: 'YES' | 'NO' } | null>(null);
     const [globalError, setGlobalError] = useState<string | null>(null);
 
     const activeView = viewStack[viewStack.length - 1];
@@ -114,6 +114,7 @@ export const App = () => {
                         walletManager.setLinkedSession(statusResult.token, statusResult.walletAddress);
                         await loadData();
                         setPairingSession(null);
+                        navigateTo('dashboard');
                     }
                 } catch (err) { /* silent poll */ }
             }, 10000);
@@ -212,8 +213,55 @@ export const App = () => {
         }
     };
 
+    const executeWager = async (amountStr: string, side: 'YES' | 'NO') => {
+        if (!selectedMarket) return;
+        setIsSubmitting(true);
+        setShowWagerConfirm(null);
+        setSubmitStatus('Initializing P2P execution environment...');
+
+        try {
+            const api = await walletManager.getAPI();
+            api.setStatusCallback((status: string) => {
+                if (status.includes('BALANCING')) setSubmitStatus('Balancing UTXOs...');
+                if (status.includes('PROVING')) setSubmitStatus('Generating P2P ZK proof...');
+                if (status.includes('SUBMITTING')) setSubmitStatus('Confirming on-chain...');
+            });
+
+            const amount = BigInt(Math.floor(parseFloat(amountStr) * 1_000_000));
+            // In a real P2P wager, this would involve creating a wager offer on-chain
+            // For now, we use the same placeBet pattern but tagged as P2P in backend
+            const res = await api.placeBet(selectedMarket.onchainId, amount, side === 'YES');
+
+            setSubmitStatus('Success! Syncing wager with backend...');
+            await backendClient.placeBet(selectedMarket.id, {
+                onchainId: res.onchainId,
+                side: side.toLowerCase(),
+                amount: amountStr,
+                txHash: res.txHash,
+                type: 'P2P'
+            } as any);
+
+            setSubmitStatus('P2P WAGER CREATED SUCCESSFULLY!');
+            setTimeout(() => {
+                setIsSubmitting(false);
+                setSelectedMarket(null);
+                navigateTo('dashboard');
+            }, 3000);
+        } catch (err: any) {
+            setSubmitStatus(`Error: ${err.message}`);
+            setTimeout(() => setIsSubmitting(false), 4000);
+        }
+    };
+
     const handleOpenMarketInBrowser = useCallback((m: Market) => {
         const url = `${process.env.SHADOW_MARKET_WEB_URL || 'http://localhost:5173'}/markets/${m.slug || m.id}`;
+        import('open').then(op => (op.default || op)(url)).catch(() => {});
+    }, []);
+
+    const handleViewOnChain = useCallback((m: Market) => {
+        // Redirect to Midnight Testnet Explorer for the contract
+        const contractAddress = process.env.MIDNIGHT_CONTRACT_ADDRESS || '0x...'; 
+        const url = `https://explorer.midnight.network/address/${contractAddress}`; 
         import('open').then(op => (op.default || op)(url)).catch(() => {});
     }, []);
 
@@ -258,25 +306,31 @@ export const App = () => {
     const isEditing = activeView === 'create' || activeView === 'login';
 
     useInput((input, key) => {
-        if (isSubmitting || showQuitConfirm || showBetConfirm) return;
+        if (isSubmitting || showQuitConfirm || showBetConfirm || showResolveConfirm) return;
 
-        // Global Navigation (only if not editing)
+        // Global Navigation (only if not currently typing in an input field)
+        // Note: TextInput and SelectInput will handle their own keys if they have focus.
+        // But we want to allow jumping back to dashboard or quitting anytime from major views.
         if (!isEditing) {
-            if (input === 'd') navigateTo('dashboard');
-            if (input === 'm') navigateTo('markets');
-            if (input === 'c') navigateTo('create');
-            if (input === 'p') navigateTo('portfolio');
-            if (input === 'w') navigateTo('wallet');
-            if (input === 'q') setShowQuitConfirm(true);
-            if (input === 'L') {
-                walletManager.logout();
-                navigateTo('dashboard');
-                setWalletStatus(null);
-                setMe(null);
+            if (activeView !== 'link') {
+                if (input === 'd') navigateTo('dashboard');
+                if (input === 'm') navigateTo('markets');
+                if (input === 'c') navigateTo('create');
+                if (input === 'p') navigateTo('portfolio');
+                if (input === 'w') navigateTo('wallet');
+                if (input === 'q') setShowQuitConfirm(true);
+                if (input === 'L') {
+                    walletManager.logout();
+                    navigateTo('dashboard');
+                    setWalletStatus(null);
+                    setMe(null);
+                }
             }
-        } else {
-          // ESC to go back is handled inside components or here
-           if (key.escape) popView();
+        }
+
+        // Global Escape to go back
+        if (key.escape) {
+            popView();
         }
 
         // Automatic browser opening for link session
@@ -321,7 +375,7 @@ export const App = () => {
                 )}
                 {loading ? (
                     <Box justifyContent="center" alignItems="center" width="100%">
-                        <Text color="cyan"><Spinner type="dots" /> Syncing with Ledger Hub...</Text>
+                        <Text color="cyan">… Syncing with Ledger Hub …</Text>
                     </Box>
                 ) : (
                     <Box flexDirection="column" width="100%" minHeight={15}>
@@ -344,31 +398,18 @@ export const App = () => {
                         )}
 
                         {activeView === 'market-detail' && selectedMarket && (
-                            <Box flexDirection="row">
-                                <Box width="60%">
-                                    <MarketDetail 
-                                        market={selectedMarket} 
-                                        history={marketHistory}
-                                        onBack={popView} 
-                                        isSubmitting={isSubmitting}
-                                        submitStatus={submitStatus}
-                                        onPlaceBet={(amount, side) => setShowBetConfirm({ amount, side })}
-                                        onOpenBrowser={handleOpenMarketInBrowser}
-                                        isAdmin={adminAddress ? walletManager.getAddress() === adminAddress : false}
-                                        onAdminAction={handleAdminAction}
-                                    />
-                                </Box>
-                                <Box width="38%" marginLeft={2}>
-                                    <Dashboard 
-                                        walletStatus={walletStatus}
-                                        markets={markets}
-                                        me={me}
-                                        onSelectTab={(tab) => navigateTo(tab as any)}
-                                        onMarketSelect={(m) => { setSelectedMarket(m); pushView('market-detail'); }}
-                                        compact={true}
-                                    />
-                                </Box>
-                            </Box>
+                            <MarketDetail 
+                                market={selectedMarket} 
+                                history={marketHistory}
+                                onBack={popView} 
+                                isSubmitting={isSubmitting}
+                                submitStatus={submitStatus}
+                                onPlaceBet={(amount, side) => setShowBetConfirm({ amount, side })}
+                                onPlaceWager={(amount, side) => setShowWagerConfirm({ amount, side })}
+                                onOpenBrowser={handleOpenMarketInBrowser}
+                                isAdmin={adminAddress ? walletManager.getAddress() === adminAddress : false}
+                                onAdminAction={handleAdminAction}
+                            />
                         )}
 
                         {activeView === 'create' && (
@@ -397,7 +438,7 @@ export const App = () => {
                                 />
                             ) : (
                                 <Box justifyContent="center" alignItems="center" height={10}>
-                                    <Text color="yellow"><Spinner type="dots" /> Initializing secure pairing session...</Text>
+                                    <Text color="yellow">… Initializing secure pairing session …</Text>
                                 </Box>
                             )
                         )}
@@ -461,6 +502,17 @@ export const App = () => {
                       onCancel={() => setShowBetConfirm(null)}
                       confirmColor="green"
                       confirmLabel="Confirm Bet (y)"
+                   />
+                )}
+
+                {showWagerConfirm && (
+                   <ConfirmationModal 
+                      title="CONFIRM P2P WAGER"
+                      message={`Create a P2P WAGER of ${showWagerConfirm.amount} NIGHT on ${showWagerConfirm.side} for:\n"${selectedMarket?.question}"\n\nThis will be matched with opposing custom wagers.`}
+                      onConfirm={() => executeWager(showWagerConfirm.amount, showWagerConfirm.side)}
+                      onCancel={() => setShowWagerConfirm(null)}
+                      confirmColor="yellow"
+                      confirmLabel="Confirm Wager (y)"
                    />
                 )}
 

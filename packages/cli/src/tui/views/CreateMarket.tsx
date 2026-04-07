@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import SelectInput from 'ink-select-input';
-import Spinner from 'ink-spinner';
 import { format, isFuture, isValid } from 'date-fns';
 
 interface CreateMarketProps {
@@ -103,7 +102,7 @@ export const CreateMarket: React.FC<CreateMarketProps> = ({
 
       {isSubmitting ? (
         <Box marginTop={1} borderStyle="single" borderColor="cyan" paddingX={1} height={5} justifyContent="center" alignItems="center">
-          <Text color="yellow"><Spinner type="dots" /> {submitStatus}</Text>
+          <Text color="yellow">… {submitStatus} …</Text>
         </Box>
       ) : (
         <Box marginTop={1} flexDirection="column">

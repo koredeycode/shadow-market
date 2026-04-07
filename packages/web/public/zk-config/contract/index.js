@@ -199,6 +199,12 @@ export class Contract {
     if (typeof(witnesses_0.wagerAmountInput) !== 'function') {
       throw new __compactRuntime.CompactError('first (witnesses) argument to Contract constructor does not contain a function-valued field named wagerAmountInput');
     }
+    if (typeof(witnesses_0.betPayout) !== 'function') {
+      throw new __compactRuntime.CompactError('first (witnesses) argument to Contract constructor does not contain a function-valued field named betPayout');
+    }
+    if (typeof(witnesses_0.betRemainder) !== 'function') {
+      throw new __compactRuntime.CompactError('first (witnesses) argument to Contract constructor does not contain a function-valued field named betRemainder');
+    }
     this.witnesses = witnesses_0;
     this.circuits = {
       initialize: (...args_1) => {
@@ -209,7 +215,7 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('initialize',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 101 char 1',
+                                     'shadow-market.compact line 107 char 5',
                                      'CircuitContext',
                                      contextOrig_0)
         }
@@ -234,21 +240,21 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('createMarket',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 113 char 1',
+                                     'shadow-market.compact line 119 char 5',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(endTime_0) === 'bigint' && endTime_0 >= 0n && endTime_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('createMarket',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 113 char 1',
+                                     'shadow-market.compact line 119 char 5',
                                      'Uint<0..18446744073709551616>',
                                      endTime_0)
         }
         if (!(title_0.buffer instanceof ArrayBuffer && title_0.BYTES_PER_ELEMENT === 1 && title_0.length === 32)) {
           __compactRuntime.typeError('createMarket',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'shadow-market.compact line 113 char 1',
+                                     'shadow-market.compact line 119 char 5',
                                      'Bytes<32>',
                                      title_0)
         }
@@ -279,21 +285,21 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('placeBet',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 141 char 1',
+                                     'shadow-market.compact line 147 char 5',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(marketId_0) === 'bigint' && marketId_0 >= 0n && marketId_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('placeBet',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 141 char 1',
+                                     'shadow-market.compact line 147 char 5',
                                      'Uint<0..18446744073709551616>',
                                      marketId_0)
         }
         if (!(typeof(side_0) === 'number' && side_0 >= 0 && side_0 <= 2)) {
           __compactRuntime.typeError('placeBet',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'shadow-market.compact line 141 char 1',
+                                     'shadow-market.compact line 147 char 5',
                                      'Enum<Outcome, NONE, NO, YES>',
                                      side_0)
         }
@@ -326,35 +332,35 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('createWager',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 195 char 1',
+                                     'shadow-market.compact line 208 char 5',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(marketId_0) === 'bigint' && marketId_0 >= 0n && marketId_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('createWager',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 195 char 1',
+                                     'shadow-market.compact line 208 char 5',
                                      'Uint<0..18446744073709551616>',
                                      marketId_0)
         }
         if (!(typeof(side_0) === 'number' && side_0 >= 0 && side_0 <= 2)) {
           __compactRuntime.typeError('createWager',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'shadow-market.compact line 195 char 1',
+                                     'shadow-market.compact line 208 char 5',
                                      'Enum<Outcome, NONE, NO, YES>',
                                      side_0)
         }
         if (!(typeof(oddsNumerator_0) === 'bigint' && oddsNumerator_0 >= 0n && oddsNumerator_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('createWager',
                                      'argument 3 (argument 4 as invoked from Typescript)',
-                                     'shadow-market.compact line 195 char 1',
+                                     'shadow-market.compact line 208 char 5',
                                      'Uint<0..18446744073709551616>',
                                      oddsNumerator_0)
         }
         if (!(typeof(oddsDenominator_0) === 'bigint' && oddsDenominator_0 >= 0n && oddsDenominator_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('createWager',
                                      'argument 4 (argument 5 as invoked from Typescript)',
-                                     'shadow-market.compact line 195 char 1',
+                                     'shadow-market.compact line 208 char 5',
                                      'Uint<0..18446744073709551616>',
                                      oddsDenominator_0)
         }
@@ -386,14 +392,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('acceptWager',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 244 char 1',
+                                     'shadow-market.compact line 266 char 5',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(wagerId_0) === 'bigint' && wagerId_0 >= 0n && wagerId_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('acceptWager',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 244 char 1',
+                                     'shadow-market.compact line 266 char 5',
                                      'Uint<0..18446744073709551616>',
                                      wagerId_0)
         }
@@ -422,14 +428,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('cancelWager',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 269 char 1',
+                                     'shadow-market.compact line 305 char 5',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(wagerId_0) === 'bigint' && wagerId_0 >= 0n && wagerId_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('cancelWager',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 269 char 1',
+                                     'shadow-market.compact line 305 char 5',
                                      'Uint<0..18446744073709551616>',
                                      wagerId_0)
         }
@@ -458,14 +464,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('lockMarket',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 294 char 1',
+                                     'shadow-market.compact line 330 char 5',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(marketId_0) === 'bigint' && marketId_0 >= 0n && marketId_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('lockMarket',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 294 char 1',
+                                     'shadow-market.compact line 330 char 5',
                                      'Uint<0..18446744073709551616>',
                                      marketId_0)
         }
@@ -495,21 +501,21 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('resolveMarket',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 311 char 1',
+                                     'shadow-market.compact line 351 char 5',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(marketId_0) === 'bigint' && marketId_0 >= 0n && marketId_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('resolveMarket',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 311 char 1',
+                                     'shadow-market.compact line 351 char 5',
                                      'Uint<0..18446744073709551616>',
                                      marketId_0)
         }
         if (!(typeof(outcome_0) === 'number' && outcome_0 >= 0 && outcome_0 <= 2)) {
           __compactRuntime.typeError('resolveMarket',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'shadow-market.compact line 311 char 1',
+                                     'shadow-market.compact line 351 char 5',
                                      'Enum<Outcome, NONE, NO, YES>',
                                      outcome_0)
         }
@@ -540,21 +546,21 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('claimPoolWinnings',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 334 char 1',
+                                     'shadow-market.compact line 378 char 5',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(betId_0) === 'bigint' && betId_0 >= 0n && betId_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('claimPoolWinnings',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 334 char 1',
+                                     'shadow-market.compact line 378 char 5',
                                      'Uint<0..18446744073709551616>',
                                      betId_0)
         }
         if (!(typeof(user_addr_0) === 'object' && user_addr_0.bytes.buffer instanceof ArrayBuffer && user_addr_0.bytes.BYTES_PER_ELEMENT === 1 && user_addr_0.bytes.length === 32)) {
           __compactRuntime.typeError('claimPoolWinnings',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'shadow-market.compact line 334 char 1',
+                                     'shadow-market.compact line 378 char 5',
                                      'struct UserAddress<bytes: Bytes<32>>',
                                      user_addr_0)
         }
@@ -585,21 +591,21 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('claimWagerWinnings',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 369 char 1',
+                                     'shadow-market.compact line 442 char 5',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(wagerId_0) === 'bigint' && wagerId_0 >= 0n && wagerId_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('claimWagerWinnings',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 369 char 1',
+                                     'shadow-market.compact line 442 char 5',
                                      'Uint<0..18446744073709551616>',
                                      wagerId_0)
         }
         if (!(typeof(user_addr_0) === 'object' && user_addr_0.bytes.buffer instanceof ArrayBuffer && user_addr_0.bytes.BYTES_PER_ELEMENT === 1 && user_addr_0.bytes.length === 32)) {
           __compactRuntime.typeError('claimWagerWinnings',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'shadow-market.compact line 369 char 1',
+                                     'shadow-market.compact line 442 char 5',
                                      'struct UserAddress<bytes: Bytes<32>>',
                                      user_addr_0)
         }
@@ -997,7 +1003,7 @@ export class Contract {
     if (!(result_0.buffer instanceof ArrayBuffer && result_0.BYTES_PER_ELEMENT === 1 && result_0.length === 32)) {
       __compactRuntime.typeError('userSecretKey',
                                  'return value',
-                                 'shadow-market.compact line 80 char 1',
+                                 'shadow-market.compact line 82 char 5',
                                  'Bytes<32>',
                                  result_0)
     }
@@ -1014,7 +1020,7 @@ export class Contract {
     if (!(typeof(result_0) === 'bigint' && result_0 >= 0n && result_0 <= 340282366920938463463374607431768211455n)) {
       __compactRuntime.typeError('betAmount',
                                  'return value',
-                                 'shadow-market.compact line 81 char 1',
+                                 'shadow-market.compact line 83 char 5',
                                  'Uint<0..340282366920938463463374607431768211456>',
                                  result_0)
     }
@@ -1031,7 +1037,7 @@ export class Contract {
     if (!(typeof(result_0) === 'number' && result_0 >= 0 && result_0 <= 2)) {
       __compactRuntime.typeError('betSide',
                                  'return value',
-                                 'shadow-market.compact line 82 char 1',
+                                 'shadow-market.compact line 84 char 5',
                                  'Enum<Outcome, NONE, NO, YES>',
                                  result_0)
     }
@@ -1048,7 +1054,7 @@ export class Contract {
     if (!(result_0.buffer instanceof ArrayBuffer && result_0.BYTES_PER_ELEMENT === 1 && result_0.length === 32)) {
       __compactRuntime.typeError('betNonce',
                                  'return value',
-                                 'shadow-market.compact line 83 char 1',
+                                 'shadow-market.compact line 85 char 5',
                                  'Bytes<32>',
                                  result_0)
     }
@@ -1065,7 +1071,41 @@ export class Contract {
     if (!(typeof(result_0) === 'bigint' && result_0 >= 0n && result_0 <= 340282366920938463463374607431768211455n)) {
       __compactRuntime.typeError('wagerAmountInput',
                                  'return value',
-                                 'shadow-market.compact line 84 char 1',
+                                 'shadow-market.compact line 86 char 5',
+                                 'Uint<0..340282366920938463463374607431768211456>',
+                                 result_0)
+    }
+    partialProofData.privateTranscriptOutputs.push({
+      value: _descriptor_7.toValue(result_0),
+      alignment: _descriptor_7.alignment()
+    });
+    return result_0;
+  }
+  _betPayout_0(context, partialProofData) {
+    const witnessContext_0 = __compactRuntime.createWitnessContext(ledger(context.currentQueryContext.state), context.currentPrivateState, context.currentQueryContext.address);
+    const [nextPrivateState_0, result_0] = this.witnesses.betPayout(witnessContext_0);
+    context.currentPrivateState = nextPrivateState_0;
+    if (!(typeof(result_0) === 'bigint' && result_0 >= 0n && result_0 <= 340282366920938463463374607431768211455n)) {
+      __compactRuntime.typeError('betPayout',
+                                 'return value',
+                                 'shadow-market.compact line 87 char 5',
+                                 'Uint<0..340282366920938463463374607431768211456>',
+                                 result_0)
+    }
+    partialProofData.privateTranscriptOutputs.push({
+      value: _descriptor_7.toValue(result_0),
+      alignment: _descriptor_7.alignment()
+    });
+    return result_0;
+  }
+  _betRemainder_0(context, partialProofData) {
+    const witnessContext_0 = __compactRuntime.createWitnessContext(ledger(context.currentQueryContext.state), context.currentPrivateState, context.currentQueryContext.address);
+    const [nextPrivateState_0, result_0] = this.witnesses.betRemainder(witnessContext_0);
+    context.currentPrivateState = nextPrivateState_0;
+    if (!(typeof(result_0) === 'bigint' && result_0 >= 0n && result_0 <= 340282366920938463463374607431768211455n)) {
+      __compactRuntime.typeError('betRemainder',
+                                 'return value',
+                                 'shadow-market.compact line 88 char 5',
                                  'Uint<0..340282366920938463463374607431768211456>',
                                  result_0)
     }
@@ -1121,7 +1161,7 @@ export class Contract {
     const disclosedTitle_0 = title_0;
     const newMarketId_0 = ((t1) => {
                             if (t1 > 18446744073709551615n) {
-                              throw new __compactRuntime.CompactError('shadow-market.compact line 120 char 23: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 18446744073709551615');
+                              throw new __compactRuntime.CompactError('shadow-market.compact line 126 char 27: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 18446744073709551615');
                             }
                             return t1;
                           })(_descriptor_0.fromValue(__compactRuntime.queryLedgerState(context,
@@ -1201,6 +1241,25 @@ export class Contract {
                                                                                        { popeq: { cached: true,
                                                                                                   result: undefined } }]).value),
                             'Market does not exist');
+    const market_0 = _descriptor_8.fromValue(__compactRuntime.queryLedgerState(context,
+                                                                               partialProofData,
+                                                                               [
+                                                                                { dup: { n: 0 } },
+                                                                                { idx: { cached: false,
+                                                                                         pushPath: false,
+                                                                                         path: [
+                                                                                                { tag: 'value',
+                                                                                                  value: { value: _descriptor_17.toValue(5n),
+                                                                                                           alignment: _descriptor_17.alignment() } }] } },
+                                                                                { idx: { cached: false,
+                                                                                         pushPath: false,
+                                                                                         path: [
+                                                                                                { tag: 'value',
+                                                                                                  value: { value: _descriptor_0.toValue(disclosedMarketId_0),
+                                                                                                           alignment: _descriptor_0.alignment() } }] } },
+                                                                                { popeq: { cached: false,
+                                                                                           result: undefined } }]).value);
+    __compactRuntime.assert(market_0.status === 0, 'Market not open');
     this._receiveUnshielded_0(context,
                               partialProofData,
                               new Uint8Array(32),
@@ -1210,7 +1269,7 @@ export class Contract {
                                                  nonce_0]);
     const newBetId_0 = ((t1) => {
                          if (t1 > 18446744073709551615n) {
-                           throw new __compactRuntime.CompactError('shadow-market.compact line 162 char 20: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 18446744073709551615');
+                           throw new __compactRuntime.CompactError('shadow-market.compact line 174 char 24: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 18446744073709551615');
                          }
                          return t1;
                        })(_descriptor_0.fromValue(__compactRuntime.queryLedgerState(context,
@@ -1259,27 +1318,9 @@ export class Contract {
                                                                                               alignment: _descriptor_3.alignment() }).encode() } },
                                        { ins: { cached: false, n: 1 } },
                                        { ins: { cached: true, n: 1 } }]);
-    const market_0 = _descriptor_8.fromValue(__compactRuntime.queryLedgerState(context,
-                                                                               partialProofData,
-                                                                               [
-                                                                                { dup: { n: 0 } },
-                                                                                { idx: { cached: false,
-                                                                                         pushPath: false,
-                                                                                         path: [
-                                                                                                { tag: 'value',
-                                                                                                  value: { value: _descriptor_17.toValue(5n),
-                                                                                                           alignment: _descriptor_17.alignment() } }] } },
-                                                                                { idx: { cached: false,
-                                                                                         pushPath: false,
-                                                                                         path: [
-                                                                                                { tag: 'value',
-                                                                                                  value: { value: _descriptor_0.toValue(disclosedMarketId_0),
-                                                                                                           alignment: _descriptor_0.alignment() } }] } },
-                                                                                { popeq: { cached: false,
-                                                                                           result: undefined } }]).value);
     const newYes_0 = ((t1) => {
                        if (t1 > 340282366920938463463374607431768211455n) {
-                         throw new __compactRuntime.CompactError('shadow-market.compact line 175 char 18: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
+                         throw new __compactRuntime.CompactError('shadow-market.compact line 187 char 22: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
                        }
                        return t1;
                      })(disclosedSide_0 === 2 ?
@@ -1287,7 +1328,7 @@ export class Contract {
                         market_0.yesTotal);
     const newNo_0 = ((t1) => {
                       if (t1 > 340282366920938463463374607431768211455n) {
-                        throw new __compactRuntime.CompactError('shadow-market.compact line 176 char 17: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
+                        throw new __compactRuntime.CompactError('shadow-market.compact line 188 char 21: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
                       }
                       return t1;
                     })(disclosedSide_0 === 1 ?
@@ -1302,7 +1343,7 @@ export class Contract {
                     betCount:
                       ((t1) => {
                         if (t1 > 18446744073709551615n) {
-                          throw new __compactRuntime.CompactError('shadow-market.compact line 185 char 17: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 18446744073709551615');
+                          throw new __compactRuntime.CompactError('shadow-market.compact line 197 char 21: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 18446744073709551615');
                         }
                         return t1;
                       })(market_0.betCount + 1n),
@@ -1358,13 +1399,34 @@ export class Contract {
                                                                                        { popeq: { cached: true,
                                                                                                   result: undefined } }]).value),
                             'Market does not exist');
+    const market_0 = _descriptor_8.fromValue(__compactRuntime.queryLedgerState(context,
+                                                                               partialProofData,
+                                                                               [
+                                                                                { dup: { n: 0 } },
+                                                                                { idx: { cached: false,
+                                                                                         pushPath: false,
+                                                                                         path: [
+                                                                                                { tag: 'value',
+                                                                                                  value: { value: _descriptor_17.toValue(5n),
+                                                                                                           alignment: _descriptor_17.alignment() } }] } },
+                                                                                { idx: { cached: false,
+                                                                                         pushPath: false,
+                                                                                         path: [
+                                                                                                { tag: 'value',
+                                                                                                  value: { value: _descriptor_0.toValue(disclosedMarketId_0),
+                                                                                                           alignment: _descriptor_0.alignment() } }] } },
+                                                                                { popeq: { cached: false,
+                                                                                           result: undefined } }]).value);
+    __compactRuntime.assert(market_0.status === 0, 'Market not open');
+    __compactRuntime.assert(disclosedOddsNum_0 > 0n,
+                            'Invalid odds: numerator cannot be zero');
     this._receiveUnshielded_0(context,
                               partialProofData,
                               new Uint8Array(32),
                               amount_0);
     const newWagerId_0 = ((t1) => {
                            if (t1 > 18446744073709551615n) {
-                             throw new __compactRuntime.CompactError('shadow-market.compact line 213 char 22: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 18446744073709551615');
+                             throw new __compactRuntime.CompactError('shadow-market.compact line 234 char 26: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 18446744073709551615');
                            }
                            return t1;
                          })(_descriptor_0.fromValue(__compactRuntime.queryLedgerState(context,
@@ -1420,24 +1482,6 @@ export class Contract {
                                                                                               alignment: _descriptor_11.alignment() }).encode() } },
                                        { ins: { cached: false, n: 1 } },
                                        { ins: { cached: true, n: 1 } }]);
-    const market_0 = _descriptor_8.fromValue(__compactRuntime.queryLedgerState(context,
-                                                                               partialProofData,
-                                                                               [
-                                                                                { dup: { n: 0 } },
-                                                                                { idx: { cached: false,
-                                                                                         pushPath: false,
-                                                                                         path: [
-                                                                                                { tag: 'value',
-                                                                                                  value: { value: _descriptor_17.toValue(5n),
-                                                                                                           alignment: _descriptor_17.alignment() } }] } },
-                                                                                { idx: { cached: false,
-                                                                                         pushPath: false,
-                                                                                         path: [
-                                                                                                { tag: 'value',
-                                                                                                  value: { value: _descriptor_0.toValue(disclosedMarketId_0),
-                                                                                                           alignment: _descriptor_0.alignment() } }] } },
-                                                                                { popeq: { cached: false,
-                                                                                           result: undefined } }]).value);
     const tmp_1 = { status: market_0.status,
                     endTime: market_0.endTime,
                     outcome: market_0.outcome,
@@ -1448,7 +1492,7 @@ export class Contract {
                     wagerCount:
                       ((t1) => {
                         if (t1 > 18446744073709551615n) {
-                          throw new __compactRuntime.CompactError('shadow-market.compact line 239 char 17: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 18446744073709551615');
+                          throw new __compactRuntime.CompactError('shadow-market.compact line 260 char 21: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 18446744073709551615');
                         }
                         return t1;
                       })(market_0.wagerCount + 1n) };
@@ -1512,11 +1556,45 @@ export class Contract {
                                                                                 { popeq: { cached: false,
                                                                                            result: undefined } }]).value);
     __compactRuntime.assert(wager_0.status === 0, 'Wager is not open');
+    __compactRuntime.assert(this._equal_1(((t1) => {
+                                            if (t1 > 340282366920938463463374607431768211455n) {
+                                              throw new __compactRuntime.CompactError('shadow-market.compact line 278 char 14: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
+                                            }
+                                            return t1;
+                                          })(matchAmount_0 * wager_0.oddsNum),
+                                          ((t1) => {
+                                            if (t1 > 340282366920938463463374607431768211455n) {
+                                              throw new __compactRuntime.CompactError('shadow-market.compact line 278 char 58: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
+                                            }
+                                            return t1;
+                                          })(wager_0.amount * wager_0.oddsDenom)),
+                            'Incorrect match amount: odds mismatch');
+    let tmp_0;
+    const market_0 = (tmp_0 = wager_0.marketId,
+                      _descriptor_8.fromValue(__compactRuntime.queryLedgerState(context,
+                                                                                partialProofData,
+                                                                                [
+                                                                                 { dup: { n: 0 } },
+                                                                                 { idx: { cached: false,
+                                                                                          pushPath: false,
+                                                                                          path: [
+                                                                                                 { tag: 'value',
+                                                                                                   value: { value: _descriptor_17.toValue(5n),
+                                                                                                            alignment: _descriptor_17.alignment() } }] } },
+                                                                                 { idx: { cached: false,
+                                                                                          pushPath: false,
+                                                                                          path: [
+                                                                                                 { tag: 'value',
+                                                                                                   value: { value: _descriptor_0.toValue(tmp_0),
+                                                                                                            alignment: _descriptor_0.alignment() } }] } },
+                                                                                 { popeq: { cached: false,
+                                                                                            result: undefined } }]).value));
+    __compactRuntime.assert(market_0.status === 0, 'Market not open');
     this._receiveUnshielded_0(context,
                               partialProofData,
                               new Uint8Array(32),
                               matchAmount_0);
-    const tmp_0 = { marketId: wager_0.marketId,
+    const tmp_1 = { marketId: wager_0.marketId,
                     creatorKey: wager_0.creatorKey,
                     takerKey: userKey_0,
                     amount: wager_0.amount,
@@ -1539,7 +1617,7 @@ export class Contract {
                                                  value: __compactRuntime.StateValue.newCell({ value: _descriptor_0.toValue(disclosedWagerId_0),
                                                                                               alignment: _descriptor_0.alignment() }).encode() } },
                                        { push: { storage: true,
-                                                 value: __compactRuntime.StateValue.newCell({ value: _descriptor_11.toValue(tmp_0),
+                                                 value: __compactRuntime.StateValue.newCell({ value: _descriptor_11.toValue(tmp_1),
                                                                                               alignment: _descriptor_11.alignment() }).encode() } },
                                        { ins: { cached: false, n: 1 } },
                                        { ins: { cached: true, n: 1 } }]);
@@ -1584,7 +1662,7 @@ export class Contract {
                                                                                                            alignment: _descriptor_0.alignment() } }] } },
                                                                                 { popeq: { cached: false,
                                                                                            result: undefined } }]).value);
-    __compactRuntime.assert(this._equal_1(wager_0.creatorKey, userKey_0),
+    __compactRuntime.assert(this._equal_2(wager_0.creatorKey, userKey_0),
                             'Only creator can cancel');
     __compactRuntime.assert(wager_0.status === 0, 'Cannot cancel matched wager');
     const tmp_0 = { marketId: wager_0.marketId,
@@ -1622,6 +1700,22 @@ export class Contract {
     return [];
   }
   _lockMarket_0(context, partialProofData, marketId_0) {
+    const adminValue_0 = this._persistentHash_1(this._userSecretKey_0(context,
+                                                                      partialProofData));
+    __compactRuntime.assert(this._equal_3(adminValue_0,
+                                          _descriptor_1.fromValue(__compactRuntime.queryLedgerState(context,
+                                                                                                    partialProofData,
+                                                                                                    [
+                                                                                                     { dup: { n: 0 } },
+                                                                                                     { idx: { cached: false,
+                                                                                                              pushPath: false,
+                                                                                                              path: [
+                                                                                                                     { tag: 'value',
+                                                                                                                       value: { value: _descriptor_17.toValue(0n),
+                                                                                                                                alignment: _descriptor_17.alignment() } }] } },
+                                                                                                     { popeq: { cached: false,
+                                                                                                                result: undefined } }]).value)),
+                            'Only admin can lock');
     const disclosedMarketId_0 = marketId_0;
     __compactRuntime.assert(_descriptor_4.fromValue(__compactRuntime.queryLedgerState(context,
                                                                                       partialProofData,
@@ -1686,6 +1780,22 @@ export class Contract {
     return [];
   }
   _resolveMarket_0(context, partialProofData, marketId_0, outcome_0) {
+    const adminValue_0 = this._persistentHash_1(this._userSecretKey_0(context,
+                                                                      partialProofData));
+    __compactRuntime.assert(this._equal_4(adminValue_0,
+                                          _descriptor_1.fromValue(__compactRuntime.queryLedgerState(context,
+                                                                                                    partialProofData,
+                                                                                                    [
+                                                                                                     { dup: { n: 0 } },
+                                                                                                     { idx: { cached: false,
+                                                                                                              pushPath: false,
+                                                                                                              path: [
+                                                                                                                     { tag: 'value',
+                                                                                                                       value: { value: _descriptor_17.toValue(0n),
+                                                                                                                                alignment: _descriptor_17.alignment() } }] } },
+                                                                                                     { popeq: { cached: false,
+                                                                                                                result: undefined } }]).value)),
+                            'Only admin can resolve');
     const disclosedMarketId_0 = marketId_0;
     const disclosedOutcome_0 = outcome_0;
     __compactRuntime.assert(disclosedOutcome_0 !== 0, 'Invalid outcome');
@@ -1794,11 +1904,11 @@ export class Contract {
                                                                                                         alignment: _descriptor_0.alignment() } }] } },
                                                                              { popeq: { cached: false,
                                                                                         result: undefined } }]).value);
-    __compactRuntime.assert(this._equal_2(bet_0.userKey, userKey_0),
+    __compactRuntime.assert(this._equal_5(bet_0.userKey, userKey_0),
                             'Not your bet');
     __compactRuntime.assert(bet_0.claimed === 0, 'Already claimed');
     const commitment_0 = this._persistentHash_0([amount_0, side_0, nonce_0]);
-    __compactRuntime.assert(this._equal_3(bet_0.commitment, commitment_0),
+    __compactRuntime.assert(this._equal_6(bet_0.commitment, commitment_0),
                             'Invalid commitment');
     let tmp_0;
     const market_0 = (tmp_0 = bet_0.marketId,
@@ -1821,12 +1931,38 @@ export class Contract {
                                                                                  { popeq: { cached: false,
                                                                                             result: undefined } }]).value));
     __compactRuntime.assert(market_0.status === 2, 'Market not resolved');
-    if (side_0 === market_0.outcome) {
+    const winnersPool_0 = market_0.outcome === 2 ?
+                          market_0.yesTotal :
+                          market_0.noTotal;
+    if (market_0.outcome === 0 || this._equal_7(winnersPool_0, 0n)) {
       this._sendUnshielded_0(context,
                              partialProofData,
                              new Uint8Array(32),
                              amount_0,
                              this._right_0(disclosedUserAddr_0));
+    } else {
+      if (side_0 === market_0.outcome) {
+        const totalPool_0 = ((t1) => {
+                              if (t1 > 340282366920938463463374607431768211455n) {
+                                throw new __compactRuntime.CompactError('shadow-market.compact line 408 char 27: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
+                              }
+                              return t1;
+                            })(market_0.yesTotal + market_0.noTotal);
+        const fullPayout_0 = this._betPayout_0(context, partialProofData);
+        const remainder_0 = this._betRemainder_0(context, partialProofData);
+        const lhs_0 = __compactRuntime.addField(__compactRuntime.mulField(fullPayout_0,
+                                                                          winnersPool_0),
+                                                remainder_0);
+        const rhs_0 = __compactRuntime.mulField(amount_0, totalPool_0);
+        __compactRuntime.assert(lhs_0 === rhs_0, 'Invalid payout calculation');
+        __compactRuntime.assert(remainder_0 < winnersPool_0,
+                                'Invalid remainder: payout is non-deterministic');
+        this._sendUnshielded_0(context,
+                               partialProofData,
+                               new Uint8Array(32),
+                               fullPayout_0,
+                               this._right_0(disclosedUserAddr_0));
+      }
     }
     const tmp_1 = { marketId: bet_0.marketId,
                     userKey: bet_0.userKey,
@@ -1940,35 +2076,55 @@ export class Contract {
                                                                                               alignment: _descriptor_11.alignment() }).encode() } },
                                        { ins: { cached: false, n: 1 } },
                                        { ins: { cached: true, n: 1 } }]);
-    if (market_0.outcome === wager_0.side
-        &&
-        this._equal_4(userKey_0, wager_0.creatorKey))
-    {
-      this._sendUnshielded_0(context,
-                             partialProofData,
-                             new Uint8Array(32),
-                             ((t1) => {
-                               if (t1 > 340282366920938463463374607431768211455n) {
-                                 throw new __compactRuntime.CompactError('shadow-market.compact line 396 char 41: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
-                               }
-                               return t1;
-                             })(wager_0.amount + wager_0.matchAmount),
-                             this._right_0(disclosedUserAddr_0));
-    } else {
-      if (market_0.outcome !== wager_0.side
-          &&
-          this._equal_5(userKey_0, wager_0.takerKey))
-      {
+    if (market_0.outcome === 0) {
+      if (this._equal_8(userKey_0, wager_0.creatorKey)) {
         this._sendUnshielded_0(context,
                                partialProofData,
                                new Uint8Array(32),
-                               ((t1) => {
+                               wager_0.amount,
+                               this._right_0(disclosedUserAddr_0));
+      } else {
+        if (this._equal_9(userKey_0, wager_0.takerKey)) {
+          this._sendUnshielded_0(context,
+                                 partialProofData,
+                                 new Uint8Array(32),
+                                 wager_0.matchAmount,
+                                 this._right_0(disclosedUserAddr_0));
+        }
+      }
+    } else {
+      if (market_0.outcome === wager_0.side
+          &&
+          this._equal_10(userKey_0, wager_0.creatorKey))
+      {
+        const fullPayout_0 = ((t1) => {
+                               if (t1 > 340282366920938463463374607431768211455n) {
+                                 throw new __compactRuntime.CompactError('shadow-market.compact line 475 char 28: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
+                               }
+                               return t1;
+                             })(wager_0.amount + wager_0.matchAmount);
+        this._sendUnshielded_0(context,
+                               partialProofData,
+                               new Uint8Array(32),
+                               fullPayout_0,
+                               this._right_0(disclosedUserAddr_0));
+      } else {
+        if (market_0.outcome !== wager_0.side
+            &&
+            this._equal_11(userKey_0, wager_0.takerKey))
+        {
+          const fullPayout_1 = ((t1) => {
                                  if (t1 > 340282366920938463463374607431768211455n) {
-                                   throw new __compactRuntime.CompactError('shadow-market.compact line 399 char 41: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
+                                   throw new __compactRuntime.CompactError('shadow-market.compact line 478 char 28: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
                                  }
                                  return t1;
-                               })(wager_0.amount + wager_0.matchAmount),
-                               this._right_0(disclosedUserAddr_0));
+                               })(wager_0.amount + wager_0.matchAmount);
+          this._sendUnshielded_0(context,
+                                 partialProofData,
+                                 new Uint8Array(32),
+                                 fullPayout_1,
+                                 this._right_0(disclosedUserAddr_0));
+        }
       }
     }
     return [];
@@ -1978,7 +2134,7 @@ export class Contract {
     return true;
   }
   _equal_1(x0, y0) {
-    if (!x0.every((x, i) => y0[i] === x)) { return false; }
+    if (x0 !== y0) { return false; }
     return true;
   }
   _equal_2(x0, y0) {
@@ -1994,6 +2150,30 @@ export class Contract {
     return true;
   }
   _equal_5(x0, y0) {
+    if (!x0.every((x, i) => y0[i] === x)) { return false; }
+    return true;
+  }
+  _equal_6(x0, y0) {
+    if (!x0.every((x, i) => y0[i] === x)) { return false; }
+    return true;
+  }
+  _equal_7(x0, y0) {
+    if (x0 !== y0) { return false; }
+    return true;
+  }
+  _equal_8(x0, y0) {
+    if (!x0.every((x, i) => y0[i] === x)) { return false; }
+    return true;
+  }
+  _equal_9(x0, y0) {
+    if (!x0.every((x, i) => y0[i] === x)) { return false; }
+    return true;
+  }
+  _equal_10(x0, y0) {
+    if (!x0.every((x, i) => y0[i] === x)) { return false; }
+    return true;
+  }
+  _equal_11(x0, y0) {
     if (!x0.every((x, i) => y0[i] === x)) { return false; }
     return true;
   }
@@ -2131,7 +2311,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0n && key_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'shadow-market.compact line 72 char 1',
+                                     'shadow-market.compact line 72 char 5',
                                      'Uint<0..18446744073709551616>',
                                      key_0)
         }
@@ -2160,7 +2340,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0n && key_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'shadow-market.compact line 72 char 1',
+                                     'shadow-market.compact line 72 char 5',
                                      'Uint<0..18446744073709551616>',
                                      key_0)
         }
@@ -2240,7 +2420,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0n && key_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'shadow-market.compact line 73 char 1',
+                                     'shadow-market.compact line 73 char 5',
                                      'Uint<0..18446744073709551616>',
                                      key_0)
         }
@@ -2269,7 +2449,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0n && key_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'shadow-market.compact line 73 char 1',
+                                     'shadow-market.compact line 73 char 5',
                                      'Uint<0..18446744073709551616>',
                                      key_0)
         }
@@ -2349,7 +2529,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0n && key_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'shadow-market.compact line 74 char 1',
+                                     'shadow-market.compact line 74 char 5',
                                      'Uint<0..18446744073709551616>',
                                      key_0)
         }
@@ -2378,7 +2558,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'bigint' && key_0 >= 0n && key_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'shadow-market.compact line 74 char 1',
+                                     'shadow-market.compact line 74 char 5',
                                      'Uint<0..18446744073709551616>',
                                      key_0)
         }
@@ -2419,7 +2599,9 @@ const _dummyContract = new Contract({
   betAmount: (...args) => undefined,
   betSide: (...args) => undefined,
   betNonce: (...args) => undefined,
-  wagerAmountInput: (...args) => undefined
+  wagerAmountInput: (...args) => undefined,
+  betPayout: (...args) => undefined,
+  betRemainder: (...args) => undefined
 });
 export const pureCircuits = {};
 export const contractReferenceLocations =

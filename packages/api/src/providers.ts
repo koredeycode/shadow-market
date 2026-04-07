@@ -142,7 +142,7 @@ export const createProvidersFromWallet = async (
 
   if (!privateState) {
     const secretKey = randomBytes(32);
-    privateState = { userSecretKey: secretKey };
+    privateState = { userSecretKey: secretKey, bets: {} };
     await privateStateProvider.set(privateStateKey, privateState);
     console.log('Generated new user secret key');
   }
@@ -267,7 +267,7 @@ export const getOrCreatePrivateState = async (
 
   if (!privateState) {
     const secretKey = randomBytes(32);
-    privateState = { userSecretKey: secretKey };
+    privateState = { userSecretKey: secretKey, bets: {} };
     await privateStateProvider.set(privateStateKey, privateState);
   }
 

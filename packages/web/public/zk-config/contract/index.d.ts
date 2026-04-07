@@ -34,6 +34,8 @@ export type Witnesses<PS> = {
   betSide(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, number];
   betNonce(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, Uint8Array];
   wagerAmountInput(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, bigint];
+  betPayout(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, bigint];
+  betRemainder(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, bigint];
 }
 
 export type ImpureCircuits<PS> = {

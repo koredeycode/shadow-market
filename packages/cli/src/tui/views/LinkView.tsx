@@ -1,6 +1,5 @@
 import React from 'react';
 import { Box, Text, useInput } from 'ink';
-import Spinner from 'ink-spinner';
 
 interface LinkViewProps {
   pairingCode: string;
@@ -42,7 +41,7 @@ export const LinkView: React.FC<LinkViewProps> = ({
         </Box>
 
         <Box marginTop={2} justifyContent="center">
-            <Text color="yellow"><Spinner type="dots" /> Waiting for browser confirmation...</Text>
+            <Text color="yellow">… Waiting for browser confirmation …</Text>
         </Box>
     </Box>
   );

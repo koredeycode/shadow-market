@@ -220,7 +220,7 @@ class WalletManager {
       import('@midnight-ntwrk/midnight-js-level-private-state-provider')
     ]);
 
-    const witnesses = createWitnessProviders({ userSecretKey: ctx.zswapKey });
+    const witnesses = createWitnessProviders({ userSecretKey: ctx.zswapKey, bets: {} });
     
     // ZK Config handling (Remote URL only for portability)
     // Always fetch from the frontend public folder to ensure consistency across environments

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import SelectInput from 'ink-select-input';
 import TextInput from 'ink-text-input';
-import Spinner from 'ink-spinner';
 
 interface LoginViewProps {
   onLogin: (method: 'mnemonic' | 'key', data: string) => Promise<void>;
@@ -88,7 +87,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onQuit }) => {
 
         {stage === 'LOGGING_IN' && (
             <Box marginTop={1}>
-                <Text color="yellow"><Spinner type="dots" /> Logging in & Syncing wallet...</Text>
+                <Text color="yellow">… Logging in & Syncing wallet …</Text>
             </Box>
         )}
     </Box>

@@ -24,7 +24,8 @@ import {
   type MarketProviders,
 } from './providers.js';
 import { stringToBytes32, safeRandomNonce, fromHex } from './utils.js';
-import { setBetContext, setWagerAmount, createWitnessProviders } from './witnesses.js';
+import { setBetContext, setPayoutContext, setWagerAmount, createWitnessProviders } from './witnesses.js';
+
 
 /**
  * Configuration for connecting to a deployed contract
@@ -194,12 +195,13 @@ export class ShadowMarketAPI {
       const outcomeEnum = betOutcome ? 2 : 1; // Outcome.YES=2, Outcome.NO=1
 
       // Use the new ephemeral witness pattern
-      setBetContext(betAmount, outcomeEnum);
+      const nonce = setBetContext(betAmount, outcomeEnum);
 
       const txData = await (this.deployedContract.callTx.placeBet as any)(
         BigInt(marketId),
         outcomeEnum
       );
+
 
       // console.log('Bet placed! Transaction:', txData.public.txHash);
       // console.log('DEBUG: Full txData response:', JSON.stringify(txData, (key, value) => 
@@ -209,7 +211,20 @@ export class ShadowMarketAPI {
       const onchainId = this.getDisclosedId(txData);
       console.log('Disclosed Bet ID:', onchainId);
 
+      // PERSIST PRIVATE STATE: Save the bet details for future claims
+      if (onchainId) {
+        this.privateState.bets = this.privateState.bets || {};
+        this.privateState.bets[onchainId] = {
+            amount: betAmount,
+            side: outcomeEnum,
+            nonce: nonce // Use the captured nonce
+        };
+
+        await this.providers.privateStateProvider.set('shadow-market-private-state', this.privateState);
+      }
+
       return { txHash: txData.public.txHash, onchainId };
+
     } catch (error: any) {
       console.error('placeBet circuit execution failed:', error);
       throw new Error(`Failed to place bet: ${error.message}`);
@@ -224,6 +239,40 @@ export class ShadowMarketAPI {
     console.log(`CLAIMING POOL WINNINGS ON-CHAIN: betId=${betId}`);
 
     try {
+      // 1. Get private bet data
+      const privateBet = this.privateState.bets?.[betId];
+      if (!privateBet) throw new Error(`Private data for bet ${betId} not found. Cannot claim.`);
+
+      // 2. Fetch public market state
+      const betLedger = this.getOnChainBet(BigInt(betId));
+      if (!betLedger) throw new Error(`Bet ${betId} not found on ledger`);
+      
+      const market = this.getOnChainMarket(betLedger.marketId);
+      if (!market) throw new Error(`Market for bet ${betId} not found on ledger`);
+
+      // 3. Calculate witnesses for proportional sharing
+      // Logic: Payout = (Amount * TotalPool) / WinnersPool
+      const totalPool = market.yesTotal + market.noTotal;
+      const winnersPool = (market.outcome === 2) ? market.yesTotal : market.noTotal; // Outcome.YES=2
+      
+      let payout = 0n;
+      let remainder = 0n;
+      
+      if (market.outcome === 0 || winnersPool === 0n) {
+          // Refund scenario: Payout is just the principal
+          payout = privateBet.amount;
+          remainder = 0n;
+      } else if (privateBet.side === market.outcome) {
+          // Normal winning
+          const dividend = privateBet.amount * totalPool;
+          payout = dividend / winnersPool;
+          remainder = dividend % winnersPool;
+      }
+
+      // 4. Set witness context
+      setBetContext(privateBet.amount, privateBet.side, privateBet.nonce);
+      setPayoutContext(payout, remainder);
+
       const userAddress = this.providers.walletProvider.getCoinPublicKey();
       const txData = await (this.deployedContract.callTx.claimPoolWinnings as any)(
         BigInt(betId),
@@ -237,6 +286,7 @@ export class ShadowMarketAPI {
       throw new Error(`Failed to claim winnings: ${error.message}`);
     }
   }
+
 
 
 

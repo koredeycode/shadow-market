@@ -323,6 +323,24 @@
         "type-name": "Uint",
         "maxval": 340282366920938463463374607431768211455
       }
+    },
+    {
+      "name": "betPayout",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Uint",
+        "maxval": 340282366920938463463374607431768211455
+      }
+    },
+    {
+      "name": "betRemainder",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Uint",
+        "maxval": 340282366920938463463374607431768211455
+      }
     }
   ],
   "contracts": [

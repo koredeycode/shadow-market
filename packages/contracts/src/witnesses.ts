@@ -1,4 +1,4 @@
-import { type WitnessContext } from '@midnight-ntwrk/compact-runtime';
+ import { type WitnessContext } from '@midnight-ntwrk/compact-runtime';
 import { type Ledger } from './managed/shadow-market/contract/index.js';
 
 // Private state only stores the permanent secret key
@@ -10,7 +10,6 @@ export const createMarketPrivateState = (secretKey: Uint8Array): MarketPrivateSt
   userSecretKey: secretKey,
 });
 
-// Ephemeral state for transaction-specific inputs (Matching example-locker style)
 let _betContext: { amount: bigint, side: bigint, nonce: Uint8Array } = {
   amount: 0n,
   side: 0n,
@@ -18,6 +17,10 @@ let _betContext: { amount: bigint, side: bigint, nonce: Uint8Array } = {
 };
 
 let _wagerAmount = 0n;
+let _betPayoutContext: { payout: bigint, remainder: bigint } = {
+  payout: 0n,
+  remainder: 0n,
+};
 
 /**
  * Sets the context for a pool bet transaction
@@ -31,6 +34,13 @@ export const setBetContext = (amount: bigint, side: bigint, nonce: Uint8Array): 
  */
 export const setWagerAmount = (amount: bigint): void => {
   _wagerAmount = amount;
+};
+
+/**
+ * Sets the context for pool claim transaction
+ */
+export const setPayoutContext = (payout: bigint, remainder: bigint): void => {
+  _betPayoutContext = { payout, remainder };
 };
 
 /**
@@ -53,4 +63,10 @@ export const witnesses = {
 
   wagerAmountInput: ({ privateState }: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, bigint] =>
     [privateState, _wagerAmount],
+
+  betPayout: ({ privateState }: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, bigint] =>
+    [privateState, _betPayoutContext.payout],
+
+  betRemainder: ({ privateState }: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, bigint] =>
+    [privateState, _betPayoutContext.remainder],
 };

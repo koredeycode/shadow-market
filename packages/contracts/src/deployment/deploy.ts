@@ -150,11 +150,14 @@ const witnesses = {
     new Uint8Array(32).fill(0),
   ],
   wagerAmountInput: ({ privateState }: any): [any, bigint] => [privateState, 1000n],
+  betPayout: ({ privateState }: any): [any, bigint] => [privateState, 0n],
+  betRemainder: ({ privateState }: any): [any, bigint] => [privateState, 0n],
   callerAddress: ({ privateState }: any): [any, Uint8Array] => [
     privateState,
     new Uint8Array(32).fill(0), // Placeholder - usually derived from wallet
   ],
 };
+
 
 const compiledContract = CompiledContract.make('shadow-market', ShadowMarket.Contract).pipe(
   // @ts-ignore - Witness type mismatch
