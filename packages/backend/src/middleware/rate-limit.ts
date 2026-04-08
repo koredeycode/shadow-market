@@ -1,15 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { createClient } from 'redis';
-import { config } from '../config.js';
 import logger from '../utils/logger.js';
-
-// Redis client for rate limiting
-const redisClient = createClient({
-  url: config.redisUrl,
-});
-
-redisClient.on('error', err => logger.error('Redis client error', { error: err }));
-redisClient.connect().catch(err => logger.error('Redis connection failed', { error: err }));
 
 interface RateLimitOptions {
   windowMs: number; // Time window in milliseconds
@@ -18,8 +8,22 @@ interface RateLimitOptions {
   keyGenerator?: (req: Request) => string;
 }
 
+// In-memory store for rate limiting
+const store = new Map<string, { count: number; resetTime: number }>();
+
+// Cleanup stale entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of store.entries()) {
+    if (now > record.resetTime) {
+      store.delete(key);
+    }
+  }
+}, 60000); // Clean up every minute
+
 /**
- * Rate limiting middleware using Redis
+ * Rate limiting middleware using in-memory store
+ * Simplified and removed Redis dependency for infrastructure simplicity.
  */
 export function rateLimit(options: RateLimitOptions) {
   const {
@@ -31,38 +35,36 @@ export function rateLimit(options: RateLimitOptions) {
 
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const key = `ratelimit:${keyGenerator(req)}`;
-      const windowStart = Date.now();
+      const key = keyGenerator(req);
+      const now = Date.now();
+      
+      let record = store.get(key);
 
-      // Get current count
-      const count = await redisClient.get(key);
-      const currentCount = count ? parseInt(count, 10) : 0;
+      if (!record || now > record.resetTime) {
+        record = { count: 0, resetTime: now + windowMs };
+      }
 
-      if (currentCount >= maxRequests) {
+      if (record.count >= maxRequests) {
         return res.status(429).json({
           success: false,
           error: message,
-          retryAfter: Math.ceil(windowMs / 1000),
+          retryAfter: Math.ceil((record.resetTime - now) / 1000),
         });
       }
 
-      // Increment counter
-      if (currentCount === 0) {
-        await redisClient.setEx(key, Math.ceil(windowMs / 1000), '1');
-      } else {
-        await redisClient.incr(key);
-      }
+      record.count++;
+      store.set(key, record);
 
       // Add rate limit headers
       res.setHeader('X-RateLimit-Limit', maxRequests.toString());
-      res.setHeader('X-RateLimit-Remaining', (maxRequests - currentCount - 1).toString());
-      res.setHeader('X-RateLimit-Reset', (windowStart + windowMs).toString());
+      res.setHeader('X-RateLimit-Remaining', (maxRequests - record.count).toString());
+      res.setHeader('X-RateLimit-Reset', record.resetTime.toString());
 
       next();
     } catch (error) {
-      // If Redis fails, allow the request (fail open)
-      logger.error('Rate limit error', { error });
-      next();
+      // In-memory should not fail, but if it does, we fail CLOSED (security first)
+      logger.error('Rate limit internal error', { error });
+      res.status(500).json({ success: false, error: 'Internal server error' });
     }
   };
 }
@@ -74,29 +76,27 @@ export const rateLimits = {
   // Strict rate limit for auth endpoints
   auth: rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: 5,
+    maxRequests: 10, // Slightly relaxed for local testing but secure
     message: 'Too many authentication attempts, please try again later',
   }),
 
   // General API rate limit
   api: rateLimit({
     windowMs: 60 * 1000, // 1 minute
-    maxRequests: 60,
+    maxRequests: 100,
   }),
 
   // Stricter limit for write operations
   write: rateLimit({
     windowMs: 60 * 1000, // 1 minute
-    maxRequests: 20,
+    maxRequests: 30,
     message: 'Too many requests, please slow down',
   }),
 
   // Very strict for expensive operations
   expensive: rateLimit({
     windowMs: 60 * 1000, // 1 minute
-    maxRequests: 5,
+    maxRequests: 10,
     message: 'This operation is rate limited, please try again later',
   }),
 };
-
-export { redisClient };

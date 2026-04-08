@@ -398,10 +398,11 @@
       const market = markets.lookup(bet.marketId);
       assert(market.status == MarketStatus.RESOLVED, "Market not resolved");
       
+      const isCancelled = (market.outcome == Outcome.NONE);
       const winnersPool = (market.outcome == Outcome.YES) ? market.yesTotal : market.noTotal;
       
-      if (market.outcome == Outcome.NONE || winnersPool == 0) {
-        // Refund scenario: Market canceled or no one bet on the winning side
+      if (isCancelled || winnersPool == 0) {
+        // 1.10 SAFE REFUND: Market canceled or zero liquidity on winning side
         sendUnshielded(default<Bytes<32>>, amount, right<ContractAddress, UserAddress>(disclosedUserAddr));
       } else if (side == market.outcome) {
         // Normal winning scenario
@@ -416,10 +417,10 @@
         // Verify the math using Field to handle the intermediate product's bit-width
         const lhs = (fullPayout as Field) * (winnersPool as Field) + (remainder as Field);
         const rhs = (amount as Field) * (totalPool as Field);
-        assert(lhs == rhs, "Invalid payout calculation");
+        assert(lhs == rhs, "Invalid payout proof");
         
-        // Ensure the remainder is valid (standard Euclidean division check)
-        assert(remainder < winnersPool, "Invalid remainder: payout is non-deterministic");
+        // Division property: remainder must be less than divisor
+        assert(remainder < winnersPool, "Non-minimal remainder");
 
         sendUnshielded(default<Bytes<32>>, fullPayout, right<ContractAddress, UserAddress>(disclosedUserAddr));
 

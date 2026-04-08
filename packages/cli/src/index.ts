@@ -70,6 +70,7 @@ registerLazyCommand('wallet', 'Manage your wallet and session', () => import('./
 registerLazyCommand('market', 'Interact with prediction markets', () => import('./commands/market.js'));
 registerLazyCommand('bet', 'Place bets on prediction markets', () => import('./commands/bet.js'));
 registerLazyCommand('wager', 'Manage P2P prediction wagers', () => import('./commands/wager.js'));
+registerLazyCommand('identity', 'Manage your ZK Identity Key (Backup/Import)', () => import('./commands/identity.js'));
 registerLazyCommand('admin', 'Administrative tools for Shadow Market owners', () => import('./commands/admin.js'));
 
 program

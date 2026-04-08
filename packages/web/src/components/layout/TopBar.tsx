@@ -34,7 +34,8 @@ export function TopBar() {
   }, []);
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 border-b border-white/10 glass bg-obsidian/80 z-50 px-4 md:px-8 flex items-center justify-between gap-4">
+    <header className="fixed top-0 left-0 right-0 h-16 border-b border-white/10 glass bg-obsidian/80 z-[60] px-4 md:px-8 flex items-center justify-between gap-4">
+      <div className="absolute inset-0 glass-shine overflow-hidden pointer-events-none" />
       {/* Logo & Primary Nav */}
       <div className="flex items-center gap-8">
         <Link to="/" className="flex items-center gap-2 group">

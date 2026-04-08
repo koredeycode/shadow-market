@@ -24,7 +24,7 @@ import {
   type MarketProviders,
 } from './providers.js';
 import { stringToBytes32, safeRandomNonce, fromHex, getExplorerLink } from './utils.js';
-import { setBetContext, setPayoutContext, setWagerAmount, createWitnessProviders } from './witnesses.js';
+import { generateBetNonce, createWitnessProviders } from './witnesses.js';
 
 
 /**
@@ -84,7 +84,7 @@ export class ShadowMarketAPI {
     this.deployedContract = deployedContract;
     this.providers = providers;
     this.privateState = privateState;
-    this.networkId = (process.env.MIDNIGHT_NETWORK_ID || 'undeployed');
+    this.networkId = (typeof process !== 'undefined' ? process.env?.MIDNIGHT_NETWORK_ID : (import.meta as any).env?.VITE_NETWORK_ID) || 'undeployed';
     this.deployedContractAddress = deployedContract.deployTxData.public.contractAddress;
 
     // Set up observable state stream from contract ledger
@@ -135,7 +135,8 @@ export class ShadowMarketAPI {
     if (!this.latestLedger) return null;
     try {
       return this.latestLedger.markets.lookup(marketId);
-    } catch (e) {
+    } catch (error) {
+      console.warn(`Failed to lookup market ${marketId} on-chain:`, error);
       return null;
     }
   }
@@ -147,7 +148,8 @@ export class ShadowMarketAPI {
     if (!this.latestLedger) return null;
     try {
       return this.latestLedger.wagers.lookup(wagerId);
-    } catch (e) {
+    } catch (error) {
+      console.warn(`Failed to lookup wager ${wagerId} on-chain:`, error);
       return null;
     }
   }
@@ -159,7 +161,8 @@ export class ShadowMarketAPI {
     if (!this.latestLedger) return null;
     try {
       return this.latestLedger.bets.lookup(betId);
-    } catch (e) {
+    } catch (error) {
+      console.warn(`Failed to lookup bet ${betId} on-chain:`, error);
       return null;
     }
   }
@@ -202,14 +205,28 @@ export class ShadowMarketAPI {
     );
 
     try {
-      // Update witnesses context (mocked for now, but should be handled by providers)
-      // For node/script environment, we can set the context if our provider supports it
-      const outcomeEnum = betOutcome ? 2 : 1; // Outcome.YES=2, Outcome.NO=1
+      const outcomeEnum = betOutcome ? 2 : 1; 
+      const nonce = generateBetNonce();
 
-      // Use the new ephemeral witness pattern
-      const nonce = setBetContext(betAmount, outcomeEnum);
+      // SCOPED WITNESSES: Create a fresh contract instance with local witnesses to prevent race conditions
+      const scopedWitnesses = createWitnessProviders(this.privateState, {
+        betAmount,
+        betSide: outcomeEnum,
+        betNonce: nonce,
+      });
 
-      const txData = await (this.deployedContract.callTx.placeBet as any)(
+      const compiledWithWitnesses = (compiledShadowMarketContract as any).pipe(
+        (CompiledContract as any).withWitnesses(scopedWitnesses)
+      );
+
+      const contractInstance = (await findDeployedContract(this.providers, {
+        compiledContract: compiledWithWitnesses,
+        contractAddress: this.deployedContractAddress,
+        privateStateId: 'shadow-market-private-state',
+        initialPrivateState: this.privateState,
+      } as any)) as DeployedShadowMarketContract;
+
+      const txData = await (contractInstance.callTx.placeBet as any)(
         BigInt(marketId),
         outcomeEnum
       );
@@ -265,28 +282,55 @@ export class ShadowMarketAPI {
       // 3. Calculate witnesses for proportional sharing
       // Logic: Payout = (Amount * TotalPool) / WinnersPool
       const totalPool = market.yesTotal + market.noTotal;
-      const winnersPool = (market.outcome === 2) ? market.yesTotal : market.noTotal; // Outcome.YES=2
+      const winnersPool = (market.outcome === 2) ? market.yesTotal : market.noTotal; 
       
       let payout = 0n;
       let remainder = 0n;
       
-      if (market.outcome === 0 || winnersPool === 0n) {
-          // Refund scenario: Payout is just the principal
+      if (market.outcome === 0) {
+          // Market cancelled: Refund full principal
+          payout = privateBet.amount;
+          remainder = 0n;
+      } else if (winnersPool === 0n) {
+          // NO ONE bet on the winning side (Edge Case): Refund principal 
+          // to prevent locked funds (as handled in the Compact contract)
           payout = privateBet.amount;
           remainder = 0n;
       } else if (privateBet.side === market.outcome) {
-          // Normal winning
+          // Normal winning: Proportional share of the entire pool
+          const totalPool = market.yesTotal + market.noTotal;
           const dividend = privateBet.amount * totalPool;
           payout = dividend / winnersPool;
           remainder = dividend % winnersPool;
+      } else {
+          // User lost: Payout is zero
+          payout = 0n;
+          remainder = 0n;
+          console.log(`Losing bet detected for ${betId}. Payout is 0n.`);
       }
 
-      // 4. Set witness context
-      setBetContext(privateBet.amount, privateBet.side, privateBet.nonce);
-      setPayoutContext(payout, remainder);
+      // SCOPED WITNESSES
+      const scopedWitnesses = createWitnessProviders(this.privateState, {
+        betAmount: privateBet.amount,
+        betSide: privateBet.side,
+        betNonce: privateBet.nonce,
+        betPayout: payout,
+        betRemainder: remainder
+      });
+
+      const compiledWithWitnesses = (compiledShadowMarketContract as any).pipe(
+        (CompiledContract as any).withWitnesses(scopedWitnesses)
+      );
+
+      const contractInstance = (await findDeployedContract(this.providers, {
+        compiledContract: compiledWithWitnesses,
+        contractAddress: this.deployedContractAddress,
+        privateStateId: 'shadow-market-private-state',
+        initialPrivateState: this.privateState,
+      } as any)) as DeployedShadowMarketContract;
 
       const userAddress = this.providers.walletProvider.getCoinPublicKey();
-      const txData = await (this.deployedContract.callTx.claimPoolWinnings as any)(
+      const txData = await (contractInstance.callTx.claimPoolWinnings as any)(
         BigInt(betId),
         userAddress
       );
@@ -387,12 +431,25 @@ export class ShadowMarketAPI {
     console.log(`CREATING P2P WAGER ON-CHAIN: market=${marketId}, amount=${amount}`);
 
     try {
-      // Use the new ephemeral witness pattern
-      setWagerAmount(amount);
+      const outcomeEnum = side ? 2 : 1; 
 
-      const outcomeEnum = side ? 2 : 1; // YES=2, NO=1
+      // SCOPED WITNESSES
+      const scopedWitnesses = createWitnessProviders(this.privateState, {
+        wagerAmount: amount,
+      });
 
-      const txData = await (this.deployedContract.callTx.createWager as any)(
+      const compiledWithWitnesses = (compiledShadowMarketContract as any).pipe(
+        (CompiledContract as any).withWitnesses(scopedWitnesses)
+      );
+
+      const contractInstance = (await findDeployedContract(this.providers, {
+        compiledContract: compiledWithWitnesses,
+        contractAddress: this.deployedContractAddress,
+        privateStateId: 'shadow-market-private-state',
+        initialPrivateState: this.privateState,
+      } as any)) as DeployedShadowMarketContract;
+
+      const txData = await (contractInstance.callTx.createWager as any)(
         BigInt(marketId),
         outcomeEnum,
         oddsNumerator,
@@ -519,6 +576,13 @@ export class ShadowMarketAPI {
     return new ShadowMarketAPI(deployedContract, providers, privateState);
   }
 
+  /**
+   * Get the user's private identity key (for backup)
+   */
+  getUserSecretKey(): Uint8Array {
+    return this.privateState.userSecretKey;
+  }
+
   static async connect(
     wallet: ConnectedAPI,
     config: DeployedShadowMarketConfig
@@ -626,5 +690,5 @@ export class ShadowMarketAPI {
 // Export types and utilities
 export { createProvidersFromWallet, getOrCreatePrivateState } from './providers.js';
 export { createWitnessProviders } from './witnesses.js';
-export { getExplorerLink, getExplorerBaseUrl } from './utils.js';
+export { getExplorerLink, getExplorerBaseUrl, toHex, fromHex } from './utils.js';
 export type { MarketPrivateState, MarketProviders };

@@ -69,8 +69,7 @@ import {
 import { CompiledContract } from '@midnight-ntwrk/compact-js';
 
 // Shared config
-import { getAdminWalletSeed } from './config.js';
-import { ShadowMarketAPI } from '@shadow-market/api';
+import { getAdminWalletSeed, deriveAdminKey } from './config.js';
 
 // Enable WebSocket for GraphQL subscriptions
 // @ts-expect-error Required for wallet sync
@@ -508,18 +507,18 @@ async function main() {
     console.log('─── Step: Initialize Contract ──────────────────────────────────\n');
     console.log('  Calling on-chain initialize...\n');
 
-    // Connect via API to call initialize
-    const api = await ShadowMarketAPI.connectWithProviders(
-      providers as any,
-      contractAddress as any
-    );
-
-    await api.initialize();
-    console.log('Contract initialized successfully!\n');
+    const txData = await (deployed.callTx.initialize as any)();
+    console.log(`  Contract initialized: ${chalk.cyan(txData.public.txHash)}`);
+    
+    // Print Admin Identity for backup
+    const adminIdentityKey = toHex(deriveAdminKey(seed));
+    console.log(chalk.yellow('\n  🛡️  ADMIN IDENTITY KEY (BACKUP THIS):'));
+    console.log(`  ${chalk.bold.magenta(adminIdentityKey)}\n`);
 
     // Save deployment info
     const deploymentInfo = {
       contractAddress,
+      adminIdentityKey: toHex(deriveAdminKey(seed)),
       seed,
       network: NETWORK_CONFIG.network,
       deployedAt: new Date().toISOString(),

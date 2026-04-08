@@ -80,6 +80,8 @@ export interface DecryptedBet {
   marketId: string;
   marketSlug: string;
   marketQuestion: string;
+  marketEndTime: string;
+  marketStatus: string;
   amount: string;
   side: 'yes' | 'no';
   entryPrice: string;
@@ -89,6 +91,8 @@ export interface DecryptedBet {
   entryTimestamp: Date;
   settledAt?: Date;
   payout?: string;
+  txHash?: string;
+  onchainId?: string;
   username?: string;
 }
 

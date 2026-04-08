@@ -11,6 +11,8 @@ import semver from 'semver';
 import { authApi } from '../api/auth';
 import { useContractStore } from '../store/contract.store';
 import { useWalletStore } from '../store/wallet.store';
+import { contractManager } from '../services/contract.service';
+import { toHex, fromHex } from '@shadow-market/api';
 
 // Declare global window types for Lace wallet
 declare global {
@@ -249,6 +251,27 @@ export function useWallet() {
     }
   }, [isWalletInstalled, storeConnect, updateBalances, setConnecting, isConnecting, isConnected, initializeContract]);
 
+  // Handle secret key export/import
+  const getUserSecretKey = useCallback(() => {
+    const key = (useContractStore.getState().isInitialized) 
+      ? (contractManager as any).getUserSecretKey() 
+      : null;
+    
+    if (key) return toHex(key);
+    
+    // Fallback to localStorage if contract not initialized yet
+    const stored = localStorage.getItem('shadow-market-private-state');
+    if (stored) {
+       try {
+         const parsed = JSON.parse(stored);
+         return parsed.userSecretKey;
+       } catch (e) {
+         console.error('Failed to parse stored private state', e);
+       }
+    }
+    return null;
+  }, []);
+
   // Disconnect wallet
   const disconnectWallet = useCallback(() => {
     connectedAPIRef.current = null;
@@ -261,6 +284,31 @@ export function useWallet() {
 
     toast.success('Wallet disconnected');
   }, [storeDisconnect, cleanupContract]);
+
+  const importUserSecretKey = useCallback(async (hexKey: string) => {
+    try {
+      const bytes = fromHex(hexKey);
+      if (bytes.length !== 32) throw new Error('Invalid key length (must be 32 bytes / 64 hex chars)');
+      
+      const privateState = {
+        userSecretKey: hexKey, // Store as hex in localStorage for the PersistentPrivateStateProvider to find it
+        bets: {}
+      };
+      
+      localStorage.setItem('shadow-market-private-state', JSON.stringify(privateState));
+      toast.success('Identity Imported! Please reconnect to apply changes.');
+      
+      // If connected, we should disconnect to force re-init
+      if (isConnected) {
+        disconnectWallet();
+      }
+      return true;
+    } catch (error: any) {
+      toast.error(`Import failed: ${error.message}`);
+      return false;
+    }
+  }, [isConnected, disconnectWallet]);
+
 
   // Refresh balances
   const refreshBalance = useCallback(async () => {
@@ -385,7 +433,7 @@ export function useWallet() {
       console.log('DEBUG: Auto-connecting wallet...');
       connectWallet();
     }
-  }, []);
+  }, [isConnected, isConnecting, autoConnect, connectWallet]);
 
   return {
     // State
@@ -415,9 +463,11 @@ export function useWallet() {
     refreshBalance,
     signTransaction,
     setAddressDisplayMode,
-    isWalletModalOpen: useWalletStore(s => s.isWalletModalOpen),
-    setWalletModalOpen: useWalletStore(s => s.setWalletModalOpen),
     isTerminalModalOpen: useWalletStore(s => s.isTerminalModalOpen),
     setTerminalModalOpen: useWalletStore(s => s.setTerminalModalOpen),
+    getUserSecretKey,
+    importUserSecretKey,
+    isWalletModalOpen: useWalletStore(s => s.isWalletModalOpen),
+    setWalletModalOpen: useWalletStore(s => s.setWalletModalOpen),
   };
 }

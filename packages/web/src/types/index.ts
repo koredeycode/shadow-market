@@ -48,12 +48,16 @@ export interface Bet {
   isSettled: boolean;
   payout?: string;
   username?: string;
+  txHash?: string;
+  onchainId?: string;
   entryTimestamp: string;
+  settledAt?: string;
 }
 
 export interface Portfolio {
   activeBets: Bet[];
   settledBets: Bet[];
+  wagers: Wager[];
   stats: PortfolioStats;
 }
 
@@ -66,7 +70,7 @@ export interface Wager {
   amount: string;
   odds: [number, number];
   creatorSide: string;
-  status: 'OPEN' | 'MATCHED' | 'RESOLVED' | 'CANCELLED';
+  status: 'OPEN' | 'MATCHED' | 'RESOLVED' | 'CANCELLED' | 'SETTLED';
   winner?: string;
   createdAt: string;
   expiresAt: string;
@@ -75,8 +79,15 @@ export interface Wager {
   creator?: {
     id: string;
     username?: string;
+    address?: string;
     reputation: number;
   };
+  taker?: {
+    id: string;
+    username?: string;
+    address?: string;
+  };
+  market?: Market;
 }
 
 export interface PricePoint {

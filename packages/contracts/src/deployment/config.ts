@@ -133,20 +133,23 @@ export function getNetworkConfig(): NetworkConfig {
   };
 }
 
+import { pbkdf2Sync } from 'node:crypto';
+
+// ... (top level imports)
+
 /**
- * Derive admin key (Bytes<32>) from wallet address or seed
- * For now, returns a deterministic key based on seed
+ * Derive admin key (Bytes<32>) from wallet address or seed.
+ * Hardened using PBKDF2 with 100,000 iterations for cryptographically strong 
+ * key derivation from the provided seed.
  */
 export function deriveAdminKey(seed: string): Uint8Array {
-  // Simple deterministic approach: hash the seed
-  // In production, you'd use proper key derivation
-  const buffer = Buffer.from(seed, 'hex');
-  const key = new Uint8Array(32);
+  // We use a domain-specific salt to ensure the derived key is unique to this app.
+  // This must remain consistent across deployments for the same seed to produce the same key.
+  const salt = 'shadow-market-admin-identity-v1';
+  const iterations = 100000;
+  const keyLength = 32;
+  const digest = 'sha256';
 
-  // Use first 32 bytes of seed or repeat pattern
-  for (let i = 0; i < 32; i++) {
-    key[i] = buffer[i % buffer.length];
-  }
-
-  return key;
+  const derivedKey = pbkdf2Sync(seed, salt, iterations, keyLength, digest);
+  return new Uint8Array(derivedKey);
 }

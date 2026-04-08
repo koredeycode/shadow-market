@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLayoutEffect } from 'react';
 import { format } from 'date-fns';
-import { ArrowLeft, BarChart3, Clock, Info, Share2, ChevronUp, Wallet } from 'lucide-react';
+import { ArrowLeft, BarChart3, Clock, Info, Share2, ChevronUp } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -100,12 +100,19 @@ export function MarketDetail() {
     refetchInterval: 60000,
   });
 
-  const marketPositions = useMemo(() => {
+  const marketBets = useMemo(() => {
     if (!portfolio || !market) return [];
     const active = portfolio.activeBets || [];
     const settled = portfolio.settledBets || [];
     return [...active, ...settled].filter(bet => bet.marketId === market.id);
   }, [portfolio, market]);
+
+  const marketWagers = useMemo(() => {
+    if (!portfolio || !market) return [];
+    return (portfolio.wagers || []).filter(wager => wager.marketId === market.id);
+  }, [portfolio, market]);
+
+  const [positionType, setPositionType] = useState<'bets' | 'wagers'>('bets');
 
   const handleUpvote = async () => {
     if (!market) return;
@@ -186,7 +193,7 @@ export function MarketDetail() {
           className="flex items-center gap-2 px-4 py-2 text-slate-500 hover:text-white transition-all font-mono text-[10px] uppercase font-bold tracking-widest group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          Terminal exit
+          View Markets
         </button>
 
         <div className="flex items-center gap-3">
@@ -243,10 +250,10 @@ export function MarketDetail() {
         )}
       </div>
 
-      {/* Unified Interaction Level */}
+      {/* Main Grid: Visuals & Execution */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Market Graphical Area */}
-        <div className="lg:col-span-8 bg-slate-900/40 border border-white/5 rounded-sm overflow-hidden flex flex-col min-h-[500px]">
+        <div className="glass-card glass-shine lg:col-span-8 border border-white/5 rounded-sm overflow-hidden flex flex-col min-h-[500px]">
           <div className="flex items-center border-b border-white/5 bg-black/40">
             <button
               onClick={() => navigate(`/markets/${slug}`)}
@@ -276,7 +283,7 @@ export function MarketDetail() {
                   : 'text-slate-500 hover:text-slate-300'
               }`}
             >
-              Audit Trail
+              Transactions
             </button>
             <div className="flex-1" />
             {activeTab === 'chart' && (
@@ -333,7 +340,7 @@ export function MarketDetail() {
 
         {/* Execution Terminal */}
         <div className="lg:col-span-4 flex flex-col lg:sticky lg:top-8 self-start">
-          <div className="bg-slate-900/40 border border-white/10 rounded-sm overflow-hidden flex-1 flex flex-col">
+          <div className="glass-card glass-shine border border-white/10 rounded-sm overflow-hidden flex-1 flex flex-col">
             <div className="px-6 py-4 border-b border-white/5 bg-black/40 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <button 
@@ -370,8 +377,115 @@ export function MarketDetail() {
         </div>
       </div>
 
-      {/* Secondary Level: Stats & Social Proof */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {/* Full Width Collective Positions Section */}
+      {(marketBets.length > 0 || marketWagers.length > 0) && (
+        <section className="space-y-8 py-8 border-y border-white/5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-2xl font-bold text-white flex items-center gap-3">
+              <div className="w-1.5 h-8 bg-electric-blue" />
+              Collective Positions
+            </h3>
+            <div className="flex bg-slate-900/60 p-1 rounded-sm border border-white/5">
+              <button
+                onClick={() => setPositionType('bets')}
+                className={`px-6 py-2 text-[10px] font-mono font-bold uppercase tracking-widest rounded-sm transition-all ${
+                  positionType === 'bets' ? 'bg-electric-blue text-white shadow-lg' : 'text-slate-500 hover:text-white'
+                }`}
+              >
+                Pool Bets ({marketBets.length})
+              </button>
+              <button
+                onClick={() => setPositionType('wagers')}
+                className={`px-6 py-2 text-[10px] font-mono font-bold uppercase tracking-widest rounded-sm transition-all ${
+                  positionType === 'wagers' ? 'bg-electric-blue text-white shadow-lg' : 'text-slate-500 hover:text-white'
+                }`}
+              >
+                P2P Wagers ({marketWagers.length})
+              </button>
+            </div>
+          </div>
+
+          {positionType === 'bets' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {marketBets.map(pos => (
+                <Link 
+                  key={pos.id} 
+                  to={`/portfolio/bets/${pos.id}`}
+                  className="glass-card glass-shine group block p-6 space-y-4 hover:border-electric-blue/30 transition-all bg-slate-900/40"
+                >
+                  <div className="flex justify-between items-start">
+                    <span className={`px-2 py-0.5 border rounded-sm text-[9px] font-mono font-bold uppercase tracking-widest ${
+                      pos.side === 'yes' ? 'bg-success-green/10 text-success-green border-success-green/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
+                    }`}>
+                      {pos.side.toUpperCase()} SIDE
+                    </span>
+                    <span className="text-[9px] text-slate-500 font-mono group-hover:text-electric-blue transition-colors uppercase">
+                      View Receipt
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-mono text-slate-500 uppercase">Staked Amount</p>
+                    <h3 className="text-2xl font-bold font-mono text-white">{pos.amount} <span className="text-xs font-normal text-slate-500">NIGHT</span></h3>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                    <div>
+                      <p className="text-[9px] font-mono text-slate-500 uppercase">Entry Price</p>
+                      <p className="text-sm font-bold font-mono text-white">@{(parseFloat(pos.entryPrice) * 100).toFixed(1)}%</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[9px] font-mono text-slate-500 uppercase">P/L (Current)</p>
+                      <p className={`text-sm font-bold font-mono ${parseFloat(pos.profitLoss) >= 0 ? 'text-success-green' : 'text-red-500'}`}>
+                        {parseFloat(pos.profitLoss) >= 0 ? '+' : ''}{parseFloat(pos.profitLoss).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {marketWagers.map(wager => (
+                <Link 
+                  key={wager.id} 
+                  to={`/portfolio/wagers/${wager.id}`}
+                  className="glass-card glass-shine block p-6 space-y-4 border border-white/5 bg-slate-900/40 hover:border-electric-blue/30 transition-all group"
+                >
+                   <div className="flex justify-between items-start">
+                    <span className="px-2 py-0.5 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 rounded-sm text-[9px] font-mono font-bold uppercase tracking-widest">
+                      P2P WAGER
+                    </span>
+                    <span className={`text-[10px] font-bold font-mono group-hover:text-electric-blue transition-colors ${
+                      wager.status === 'MATCHED' ? 'text-success-green' : 'text-amber-500'
+                    }`}>
+                      {wager.status}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-mono text-slate-500 uppercase">Collateral</p>
+                    <h3 className="text-2xl font-bold font-mono text-white">{wager.amount} <span className="text-xs font-normal text-slate-500">NIGHT</span></h3>
+                  </div>
+                  <div className="flex justify-between items-center pt-4 border-t border-white/5 text-[10px] font-mono font-bold uppercase">
+                     <span className="text-slate-500">Side</span>
+                     <span className={wager.creatorSide === 'yes' ? 'text-success-green' : 'text-red-500'}>{wager.creatorSide.toUpperCase()}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px] font-mono font-bold uppercase">
+                     <span className="text-slate-500">Odds</span>
+                     <span className="text-electric-blue">{wager.odds[0]}:{wager.odds[1]}</span>
+                  </div>
+                </Link>
+              ))}
+              {marketWagers.length === 0 && (
+                <div className="col-span-full py-12 text-center border border-dashed border-white/5 rounded-sm">
+                   <p className="text-[10px] font-mono text-slate-600 uppercase tracking-widest underline decoration-white/10">No active peer-to-peer wagers for this market.</p>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Tertiary Level: Information & Stats Display */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pb-12">
         <div className="lg:col-span-8 flex flex-col gap-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Timeline Row */}
@@ -380,7 +494,7 @@ export function MarketDetail() {
                 <Clock className="w-3.5 h-3.5 text-electric-blue" />
                 Market Timeline
               </h3>
-              <div className="bg-slate-900/40 border border-white/5 p-6 rounded-sm space-y-4">
+              <div className="glass-card glass-shine border border-white/5 p-6 rounded-sm space-y-4">
                 <div className="flex justify-between items-center text-[10px] font-mono">
                   <span className="text-slate-500 uppercase">Creation time</span>
                   <span className="text-white">
@@ -412,62 +526,15 @@ export function MarketDetail() {
           </div>
         </div>
 
-        {/* Market Stats & User Positions */}
+        {/* Market Stats Card */}
         <div className="lg:col-span-4 space-y-8">
-          <div className="bg-slate-900/40 border border-white/5 p-8 rounded-sm space-y-8">
+          <div className="glass-card glass-shine border border-white/5 p-8 rounded-sm space-y-8 bg-slate-900/40">
             <h3 className="text-white font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 border-b border-white/5 pb-4">
               <BarChart3 className="w-4 h-4 text-electric-blue" />
               Market Statistics
             </h3>
             <MarketStats market={market} />
           </div>
-
-          {marketPositions.length > 0 && (
-            <div className="bg-slate-900/40 border border-white/5 p-8 rounded-sm space-y-8">
-              <h3 className="text-white font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 border-b border-white/5 pb-4">
-                <Wallet className="w-4 h-4 text-success-green" />
-                Your Positions
-              </h3>
-              <div className="space-y-4">
-                {marketPositions.map(pos => (
-                  <Link 
-                    key={pos.id} 
-                    to={`/portfolio/bets/${pos.id}`}
-                    className="block border border-white/5 p-4 rounded-sm space-y-3 bg-black/20 hover:border-electric-blue/30 transition-all group"
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className={`text-[10px] font-mono font-bold uppercase tracking-widest ${
-                        pos.side === 'yes' ? 'text-success-green' : 'text-danger-red'
-                      }`}>
-                        {pos.side} Position
-                      </span>
-                      <span className="text-[9px] text-slate-500 font-mono group-hover:text-electric-blue uppercase">
-                        VIEW DATA (ZK)
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <span className="text-[8px] text-slate-500 uppercase font-mono tracking-tighter">Amount</span>
-                        <div className="text-xs font-mono font-bold text-white">{pos.amount} NIGHT</div>
-                      </div>
-                      <div className="space-y-1 text-right">
-                        <span className="text-[8px] text-slate-500 uppercase font-mono tracking-tighter">Entry Price</span>
-                        <div className="text-xs font-mono font-bold text-white">{(parseFloat(pos.entryPrice) * 100).toFixed(1)}%</div>
-                      </div>
-                    </div>
-                    <div className="pt-2 border-t border-white/5 flex justify-between items-center">
-                       <span className="text-[8px] text-slate-500 uppercase font-mono tracking-tighter">P&L</span>
-                       <span className={`text-[10px] font-mono font-bold ${
-                         parseFloat(pos.profitLoss) >= 0 ? 'text-success-green' : 'text-danger-red'
-                       }`}>
-                         {parseFloat(pos.profitLoss) >= 0 ? '+' : ''}{pos.profitLoss} NIGHT
-                       </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

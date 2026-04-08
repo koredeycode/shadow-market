@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from 'express';
-import { redisClient } from './rate-limit.js';
 import logger from '../utils/logger.js';
 
 interface CacheOptions {
@@ -9,7 +8,12 @@ interface CacheOptions {
 }
 
 /**
- * Response caching middleware using Redis
+ * Simple In-memory store to replace Redis for caching
+ */
+const memoryCache = new Map<string, { data: string; expires: number }>();
+
+/**
+ * Response caching middleware using In-memory Store
  */
 export function cacheMiddleware(options: CacheOptions) {
   const {
@@ -26,22 +30,26 @@ export function cacheMiddleware(options: CacheOptions) {
 
     try {
       const cacheKey = `${keyPrefix}:${keyGenerator(req)}`;
+      const now = Date.now();
 
       // Check cache
-      const cachedData = await redisClient.get(cacheKey);
-      if (cachedData) {
-        const parsed = JSON.parse(cachedData);
+      const cached = memoryCache.get(cacheKey);
+      if (cached && cached.expires > now) {
+        const parsed = JSON.parse(cached.data);
         res.setHeader('X-Cache', 'HIT');
         return res.json(parsed);
+      } else if (cached) {
+        memoryCache.delete(cacheKey);
       }
 
       // Cache miss - intercept json() method to cache response
       const originalJson = res.json.bind(res);
       res.json = function (data: any) {
         // Cache the response
-        redisClient
-          .setEx(cacheKey, ttl, JSON.stringify(data))
-          .catch(err => logger.error('Cache set error', { error: err, cacheKey }));
+        memoryCache.set(cacheKey, {
+          data: JSON.stringify(data),
+          expires: Date.now() + (ttl * 1000)
+        });
 
         res.setHeader('X-Cache', 'MISS');
         return originalJson(data);
@@ -61,11 +69,9 @@ export function cacheMiddleware(options: CacheOptions) {
  */
 export async function invalidateCache(pattern: string) {
   try {
-    const keys = await redisClient.keys(pattern);
-    if (keys.length > 0) {
-      await redisClient.del(keys);
-      logger.info('Cache invalidated', { pattern, count: keys.length });
-    }
+    const keys = Array.from(memoryCache.keys()).filter(k => k.includes(pattern));
+    keys.forEach(k => memoryCache.delete(k));
+    logger.info('Cache invalidated', { pattern, count: keys.length });
   } catch (error) {
     logger.error('Cache invalidation error', { error, pattern });
   }
@@ -75,27 +81,8 @@ export async function invalidateCache(pattern: string) {
  * Predefined cache configurations
  */
 export const cacheConfigs = {
-  // Short cache for frequently changing data
-  short: cacheMiddleware({
-    ttl: 10, // 10 seconds
-    keyPrefix: 'cache:short',
-  }),
-
-  // Medium cache for semi-static data
-  medium: cacheMiddleware({
-    ttl: 60, // 1 minute
-    keyPrefix: 'cache:medium',
-  }),
-
-  // Long cache for static data
-  long: cacheMiddleware({
-    ttl: 300, // 5 minutes
-    keyPrefix: 'cache:long',
-  }),
-
-  // Very long cache for rarely changing data
-  veryLong: cacheMiddleware({
-    ttl: 3600, // 1 hour
-    keyPrefix: 'cache:verylong',
-  }),
+  short: cacheMiddleware({ ttl: 10, keyPrefix: 'cache:short' }),
+  medium: cacheMiddleware({ ttl: 60, keyPrefix: 'cache:medium' }),
+  long: cacheMiddleware({ ttl: 300, keyPrefix: 'cache:long' }),
+  veryLong: cacheMiddleware({ ttl: 3600, keyPrefix: 'cache:verylong' }),
 };

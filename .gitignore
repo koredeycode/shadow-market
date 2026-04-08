@@ -34,6 +34,9 @@ out/
 # Midnight
 private-state/
 *.leveldb/
+midnight-level-db/
+witnesses/
+.witnesses/
 logs/
 *.prover
 *.verifier

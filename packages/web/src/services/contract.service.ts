@@ -356,6 +356,13 @@ class ContractManager {
   }
 
   /**
+   * Get the user's private identity key
+   */
+  getUserSecretKey(): Uint8Array | null {
+    return this.api?.getUserSecretKey() || null;
+  }
+
+  /**
    * Subscribe to contract state updates
    */
   subscribeToState(callback: (state: any) => void): Subscription | null {

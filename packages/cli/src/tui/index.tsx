@@ -19,14 +19,28 @@ export const startTUI = () => {
     console.info = () => {};
     console.debug = () => {};
 
-    const instance = render(React.createElement(App));
-    
-    instance.waitUntilExit().then(() => {
+    const cleanup = () => {
         console.log = originalLog;
         console.error = originalError;
         console.warn = originalWarn;
         console.info = originalInfo;
         console.debug = originalDebug;
-        process.exit();
-    });
+    };
+
+    // Handle signals for cleanup
+    process.on('SIGINT', () => { cleanup(); process.exit(); });
+    process.on('SIGTERM', () => { cleanup(); process.exit(); });
+
+    const instance = render(React.createElement(App));
+    
+    instance.waitUntilExit()
+        .then(() => {
+            cleanup();
+            process.exit();
+        })
+        .catch((err) => {
+            cleanup();
+            originalError('CLI exited with error:', err);
+            process.exit(1);
+        });
 };

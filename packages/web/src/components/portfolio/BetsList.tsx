@@ -1,4 +1,4 @@
-import { Activity, Trophy, XCircle, ExternalLink, Clock, Zap } from 'lucide-react';
+import { Activity, Trophy, XCircle, Clock, Zap } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
@@ -146,24 +146,22 @@ function BetRow({ bet, isActive: _isActive, onClaimSuccess }: BetRowProps) {
           </div>
 
           <div className="col-span-2 flex justify-end">
-            {canClaim ? (
-              <button
-                onClick={handleClaim}
-                disabled={claiming || claimMutation.isPending}
-                className="px-4 py-2 bg-success-green text-black text-[10px] font-bold font-mono uppercase tracking-widest rounded-sm hover:bg-success-green/90 transition-all flex items-center gap-2"
-              >
-                {claiming ? (
-                  <div className="w-3 h-3 border-2 border-black/20 border-t-black rounded-full animate-spin" />
-                ) : (
-                  <Zap className="w-3 h-3" />
-                )}
-                Claim
-              </button>
-            ) : (
-              <div className="p-2 text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ExternalLink className="w-4 h-4" />
-              </div>
-            )}
+             <button
+               onClick={handleClaim}
+               disabled={claiming || claimMutation.isPending || !canClaim}
+               className={`px-4 py-2 text-[8px] font-bold font-mono uppercase tracking-[0.2em] rounded-sm transition-all flex items-center gap-2 ${
+                 canClaim 
+                   ? 'bg-success-green text-black hover:bg-success-green/90 shadow-lg' 
+                   : 'text-slate-600 bg-white/5 border border-white/10 opacity-60 cursor-not-allowed group-hover:opacity-100'
+               }`}
+             >
+               {claiming ? (
+                 <div className="w-2.5 h-2.5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+               ) : (
+                 <Zap className={`w-3 h-3 ${canClaim ? 'fill-current' : ''}`} />
+               )}
+               {bet.isSettled ? 'SETTLED' : bet.marketStatus === 'resolved' ? (outcomeWon ? 'CLAIM' : 'LOST') : 'WAITING'}
+             </button>
           </div>
         </div>
 

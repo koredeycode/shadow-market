@@ -18,9 +18,11 @@ import { MarketDetail } from './views/MarketDetail.js';
 import { MarketList } from './views/MarketList.js';
 import { Portfolio } from './views/Portfolio.js';
 import { Wallet } from './views/Wallet.js';
+import { BetDetail } from './views/BetDetail.js';
 
 // Components
 import { ConfirmationModal } from './components/ConfirmationModal.js';
+import { SuccessModal } from './components/SuccessModal.js';
 
 const GradientComp = Gradient as any;
 const BigTextComp = BigText as any;
@@ -43,7 +45,9 @@ export const App = () => {
     const [showBetConfirm, setShowBetConfirm] = useState<{ amount: string, side: 'YES' | 'NO' } | null>(null);
     const [showWagerConfirm, setShowWagerConfirm] = useState<{ amount: string, side: 'YES' | 'NO', odds: string } | null>(null);
     const [showCreateConfirm, setShowCreateConfirm] = useState<any | null>(null);
+    const [showSuccess, setShowSuccess] = useState<{ title: string, message: string, txHash?: string } | null>(null);
     const [globalError, setGlobalError] = useState<string | null>(null);
+    const [viewingBet, setViewingBet] = useState<any>(null);
 
     const activeView = viewStack[viewStack.length - 1];
 
@@ -207,11 +211,12 @@ export const App = () => {
             });
 
             setSubmitStatus('BET PLACED SUCCESSFULLY!');
-            setTimeout(() => {
-                setIsSubmitting(false);
-                setSelectedMarket(null);
-                navigateTo('dashboard');
-            }, 3000);
+            setShowSuccess({
+                title: 'Position Secured',
+                message: `Successfully deposited ${amountStr} NIGHT into the ZK-escrow pool for the ${side} outcome on market:\n"${selectedMarket.question}"`,
+                txHash: res.txHash
+            });
+            setIsSubmitting(false);
         } catch (err: any) {
             setSubmitStatus(`Error: ${err.message}`);
             setTimeout(() => setIsSubmitting(false), 4000);
@@ -266,11 +271,12 @@ export const App = () => {
             });
 
             setSubmitStatus('P2P WAGER CREATED SUCCESSFULLY!');
-            setTimeout(() => {
-                setIsSubmitting(false);
-                setSelectedMarket(null);
-                navigateTo('dashboard');
-            }, 3000);
+            setShowSuccess({
+                title: 'Wager Offering Active',
+                message: `Your P2P wager for ${amountStr} NIGHT on ${side} with ${oddsStr} odds has been broadcast to the Midnight ledger.`,
+                txHash: res.txHash
+            });
+            setIsSubmitting(false);
         } catch (err: any) {
             setSubmitStatus(`Error: ${err.message}`);
             setTimeout(() => setIsSubmitting(false), 4000);
@@ -444,7 +450,15 @@ export const App = () => {
                         )}
 
                         {activeView === 'portfolio' && (
-                             <Portfolio me={me} onBack={popView} />
+                             <Portfolio 
+                                me={me} 
+                                onBack={popView} 
+                                onSelectBet={(b) => { setViewingBet(b); pushView('bet-detail'); }} 
+                             />
+                        )}
+
+                        {activeView === 'bet-detail' && viewingBet && (
+                            <BetDetail bet={viewingBet} onBack={popView} />
                         )}
 
                         {activeView === 'wallet' && (
@@ -532,6 +546,19 @@ export const App = () => {
                         confirmColor="green"
                         onConfirm={() => handleResolveMarket(true)}
                         onCancel={() => handleResolveMarket(false)}
+                    />
+                )}
+
+                {showSuccess && (
+                    <SuccessModal 
+                        title={showSuccess.title}
+                        message={showSuccess.message}
+                        txHash={showSuccess.txHash}
+                        onClose={() => {
+                            setShowSuccess(null);
+                            setSelectedMarket(null);
+                            navigateTo('dashboard');
+                        }}
                     />
                 )}
             </Box>

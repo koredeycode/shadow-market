@@ -1,23 +1,12 @@
 import { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
 import logger from '../utils/logger.js';
-
-// Custom error class
-export class AppError extends Error {
-  constructor(
-    public statusCode: number,
-    message: string,
-    public isOperational = true
-  ) {
-    super(message);
-    Object.setPrototypeOf(this, AppError.prototype);
-  }
-}
+import { AppError } from '../utils/errors.js';
 
 /**
  * Global error handler with improved error classification
  */
-export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
+export function errorHandler(err: any, req: Request, res: Response, next: NextFunction) {
   // Determine if this is an operational error or a programming error
   const isOperational = err instanceof AppError && err.isOperational;
 
@@ -55,31 +44,25 @@ export function errorHandler(err: Error, req: Request, res: Response, next: Next
     statusCode = err.statusCode;
     message = err.message;
   } else if (err instanceof ZodError) {
-    // Validation errors
+    // Validation errors (Zod)
     statusCode = 400;
     message = 'Validation failed';
     errors = err.errors.map(e => ({
       field: e.path.join('.'),
       message: e.message,
     }));
-  } else if (err.name === 'ValidationError') {
-    statusCode = 400;
-    message = err.message;
-  } else if (err.name === 'UnauthorizedError' || err.name === 'JsonWebTokenError') {
+  } else if (err.name === 'JsonWebTokenError') {
     statusCode = 401;
-    message = 'Unauthorized';
+    message = 'Invalid authentication token';
   } else if (err.name === 'TokenExpiredError') {
     statusCode = 401;
-    message = 'Token expired';
-  } else if (err.name === 'NotFoundError') {
-    statusCode = 404;
-    message = err.message;
-  } else if (err.name === 'SequelizeUniqueConstraintError' || err.message?.includes('duplicate')) {
+    message = 'Authentication token expired';
+  } else if (err.message?.includes('duplicate key value violates unique constraint')) {
     statusCode = 409;
     message = 'Resource already exists';
   } else if (err.message?.includes('ECONNREFUSED')) {
     statusCode = 503;
-    message = 'Service temporarily unavailable';
+    message = 'Upstream service unavailable (Database/Indexer)';
   } else {
     // For unexpected errors, use the actual error message in development
     if (process.env.NODE_ENV === 'development') {
@@ -92,10 +75,9 @@ export function errorHandler(err: Error, req: Request, res: Response, next: Next
     success: false,
     error: message,
     ...(errors && { errors }),
-    ...(process.env.NODE_ENV === 'development' && {
+    ...(process.env.NODE_ENV === 'development' && !isOperational && {
       stack: err.stack,
       name: err.name,
-      originalMessage: err.message,
     }),
   });
 }

@@ -209,22 +209,34 @@ class WalletManager {
     const [
       { indexerPublicDataProvider },
       { httpClientProofProvider },
-      { NodeZkConfigProvider },
       { FetchZkConfigProvider },
       { levelPrivateStateProvider }
     ] = await Promise.all([
       import('@midnight-ntwrk/midnight-js-indexer-public-data-provider'),
       import('@midnight-ntwrk/midnight-js-http-client-proof-provider'),
-      import('@midnight-ntwrk/midnight-js-node-zk-config-provider'),
       import('@midnight-ntwrk/midnight-js-fetch-zk-config-provider'),
       import('@midnight-ntwrk/midnight-js-level-private-state-provider')
     ]);
 
-    const witnesses = createWitnessProviders({ userSecretKey: ctx.zswapKey, bets: {} });
+    const { toHex, fromHex } = await import('@midnight-ntwrk/midnight-js-utils');
+
+    // Section 6.1: Load or Generate Identity Key
+    // Check if we have a manually imported/generated identity key
+    let identityKeyHex = this.config.get('identityKey') as string;
+    let userSecretKey: Uint8Array;
+
+    if (identityKeyHex) {
+      userSecretKey = fromHex(identityKeyHex);
+    } else {
+      // Fallback to seed-derived key for existing users, but mark it for backup
+      userSecretKey = ctx.zswapKey;
+      console.warn('⚠️ No managed identity key found. Using wallet-derived key. Run "identity backup" to secure it.');
+    }
+
+    const witnesses = createWitnessProviders({ userSecretKey, bets: {} });
     
     // ZK Config handling (Remote URL only for portability)
-    // Always fetch from the frontend public folder to ensure consistency across environments
-    const zkConfigUrl = 'http://localhost:5173/zk-config';
+    const zkConfigUrl = process.env.MIDNIGHT_ZK_CONFIG_URL || 'http://localhost:5173/zk-config';
     const zkConfigProvider = new FetchZkConfigProvider(zkConfigUrl, fetch);
 
     const walletProvider = {
@@ -261,6 +273,35 @@ class WalletManager {
       midnightProvider: walletProvider,
       witnesses
     };
+  }
+
+  /**
+   * Section 6.1: Identity Management Methods
+   */
+  getIdentityKey(): string {
+    const key = this.config.get('identityKey') as string;
+    if (key) return key;
+    
+    // If not set, we return the seed-derived one if context exists
+    if (this.currentContext) {
+      const { toHex } = require('@midnight-ntwrk/midnight-js-utils');
+      return toHex(this.currentContext.zswapKey);
+    }
+    return '';
+  }
+
+  setIdentityKey(hex: string): void {
+    if (hex.length !== 64) throw new Error('Invalid key format. Must be a 32-byte hex string (64 characters).');
+    this.config.set('identityKey', hex.toLowerCase());
+  }
+
+  generateNewIdentity(): string {
+    const bytes = new Uint8Array(32);
+    crypto.getRandomValues(bytes);
+    const { toHex } = require('@midnight-ntwrk/midnight-js-utils');
+    const hex = toHex(bytes);
+    this.setIdentityKey(hex);
+    return hex;
   }
 }
 

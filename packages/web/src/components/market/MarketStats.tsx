@@ -1,4 +1,4 @@
-import { BarChart3, Users, Clock, CheckCircle2, Database, TrendingUp } from 'lucide-react';
+import { BarChart3, Users, Clock, CheckCircle2, TrendingUp } from 'lucide-react';
 import { Market } from '../../types';
 
 interface MarketStatsProps {

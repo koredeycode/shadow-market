@@ -52,21 +52,53 @@ export interface ProviderConfig {
 }
 
 /**
- * In-memory private state provider
+ * LocalStorage private state provider for browser persistence.
+ * Falls back to in-memory if localStorage is unavailable (e.g. Node.js).
  */
-class MemoryPrivateStateProvider {
-  private states = new Map<string, any>();
+class PersistentPrivateStateProvider {
+  private memoryStore = new Map<string, any>();
+  private useLocalStorage: boolean;
 
-  async get<T>(key: string): Promise<T | undefined> {
-    return this.states.get(key);
+  constructor() {
+    this.useLocalStorage = typeof window !== 'undefined' && !!window.localStorage;
   }
 
-  async set<T>(key: string, value: T): Promise<void> {
-    this.states.set(key, value);
+  async get<T>(key: string): Promise<T | undefined> {
+    if (this.useLocalStorage) {
+      const value = localStorage.getItem(key);
+      if (value) {
+        try {
+          const parsed = JSON.parse(value);
+          // Convert hex strings back to Uint8Arrays for keys if needed
+          if (parsed && parsed.userSecretKey && typeof parsed.userSecretKey === 'string') {
+            parsed.userSecretKey = fromHex(parsed.userSecretKey);
+          }
+          return parsed as T;
+        } catch (e) {
+          console.error('Failed to parse private state from localStorage', e);
+        }
+      }
+    }
+    return this.memoryStore.get(key);
+  }
+
+  async set<T>(key: string, value: any): Promise<void> {
+    if (this.useLocalStorage) {
+      // Serialize Uint8Arrays to Hex for storage
+      const toSerialize = { ...value };
+      if (toSerialize.userSecretKey instanceof Uint8Array) {
+        toSerialize.userSecretKey = toHex(toSerialize.userSecretKey);
+      }
+      localStorage.setItem(key, JSON.stringify(toSerialize));
+    }
+    this.memoryStore.set(key, value);
   }
 
   async delete(key: string): Promise<void> {
-    this.states.delete(key);
+    if (this.useLocalStorage) {
+      localStorage.removeItem(key);
+    }
+    this.memoryStore.delete(key);
   }
 
   setContractAddress(address: string): void {
@@ -74,11 +106,11 @@ class MemoryPrivateStateProvider {
   }
 
   async getSigningKey(address: string): Promise<Uint8Array | undefined> {
-    return this.states.get(`signing-key-${address}`);
+    return this.memoryStore.get(`signing-key-${address}`);
   }
 
   async setSigningKey(address: string, key: Uint8Array): Promise<void> {
-    this.states.set(`signing-key-${address}`, key);
+    this.memoryStore.set(`signing-key-${address}`, key);
   }
 }
 
@@ -127,7 +159,7 @@ export const createProvidersFromWallet = async (
   const graphqlWsUri = config.indexerWsUri.endsWith('/graphql/ws') ? config.indexerWsUri : `${config.indexerWsUri}/graphql/ws`;
 
   const publicDataProvider = indexerPublicDataProvider(graphqlUri, graphqlWsUri);
-  const privateStateProvider = new MemoryPrivateStateProvider();
+  const privateStateProvider = new PersistentPrivateStateProvider();
   const baseIndexerUri = config.indexerUri.replace(/\/graphql$/, '');
 
   const zkConfigProvider = new FetchZkConfigProvider(

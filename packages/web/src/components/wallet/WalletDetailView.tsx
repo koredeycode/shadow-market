@@ -3,17 +3,17 @@ import {
   Copy,
   ExternalLink,
   RefreshCw,
-
   ChevronRight,
-
   Briefcase,
   Lock,
   Monitor,
+  Fingerprint,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useWallet } from '../../hooks/useWallet';
 import { Link } from 'react-router-dom';
 import { getContractExplorerUrl, isExplorerAvailable } from '../../utils/explorer';
+import { useMemo } from 'react';
 
 interface WalletDetailViewProps {
   onClose: () => void;
@@ -32,7 +32,15 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
     disconnectWallet,
     refreshBalance,
     setTerminalModalOpen,
+    getUserSecretKey,
   } = useWallet();
+
+  const userSecretKey = useMemo(() => getUserSecretKey(), [getUserSecretKey]);
+
+  const formattedSecretKey = useMemo(() => {
+    if (!userSecretKey) return 'KEYS_NOT_LOADED';
+    return `${userSecretKey.slice(0, 8)}...${userSecretKey.slice(-8)}`;
+  }, [userSecretKey]);
 
   const handleCopy = () => {
     if (address) {
@@ -165,6 +173,23 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
               )}
             </div>
           </div>
+
+          <div className="space-y-2 pt-2">
+            <div className="text-[9px] text-slate-500 font-mono uppercase tracking-widest flex items-center gap-2">
+              <Fingerprint className="w-3 h-3 text-electric-blue" />
+              ZK Identity Vault
+            </div>
+            <div className="p-2 bg-slate-900/80 border border-white/5 rounded-sm space-y-2">
+               <div className="flex justify-between items-center">
+                  <span className="text-[8px] text-slate-500 font-mono uppercase">Master Secret</span>
+                  <span className="text-[9px] text-white font-mono">{formattedSecretKey}</span>
+               </div>
+               <div className="flex justify-between items-center">
+                  <span className="text-[8px] text-slate-500 font-mono uppercase">Sync ID</span>
+                  <span className="text-[9px] text-white font-mono">#{address?.slice(2, 8).toUpperCase()}</span>
+               </div>
+            </div>
+          </div>
         </div>
 
         <div className="space-y-1 pt-2">
@@ -179,14 +204,6 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
             </div>
             <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all" />
           </Link>
-
-          {/* <button className="w-full flex items-center justify-between p-2 hover:bg-white/5 rounded-sm transition-colors text-xs text-slate-400 hover:text-white group">
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="w-4 h-4 text-electric-blue" />
-              <span>Identity Settings</span>
-            </div>
-            <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all" />
-          </button> */}
 
           <button
             onClick={() => {

@@ -591,21 +591,21 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('claimWagerWinnings',
                                      'argument 1 (as invoked from Typescript)',
-                                     'shadow-market.compact line 442 char 5',
+                                     'shadow-market.compact line 443 char 5',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(wagerId_0) === 'bigint' && wagerId_0 >= 0n && wagerId_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('claimWagerWinnings',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'shadow-market.compact line 442 char 5',
+                                     'shadow-market.compact line 443 char 5',
                                      'Uint<0..18446744073709551616>',
                                      wagerId_0)
         }
         if (!(typeof(user_addr_0) === 'object' && user_addr_0.bytes.buffer instanceof ArrayBuffer && user_addr_0.bytes.BYTES_PER_ELEMENT === 1 && user_addr_0.bytes.length === 32)) {
           __compactRuntime.typeError('claimWagerWinnings',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'shadow-market.compact line 442 char 5',
+                                     'shadow-market.compact line 443 char 5',
                                      'struct UserAddress<bytes: Bytes<32>>',
                                      user_addr_0)
         }
@@ -1931,10 +1931,11 @@ export class Contract {
                                                                                  { popeq: { cached: false,
                                                                                             result: undefined } }]).value));
     __compactRuntime.assert(market_0.status === 2, 'Market not resolved');
+    const isCancelled_0 = market_0.outcome === 0;
     const winnersPool_0 = market_0.outcome === 2 ?
                           market_0.yesTotal :
                           market_0.noTotal;
-    if (market_0.outcome === 0 || this._equal_7(winnersPool_0, 0n)) {
+    if (isCancelled_0 || this._equal_7(winnersPool_0, 0n)) {
       this._sendUnshielded_0(context,
                              partialProofData,
                              new Uint8Array(32),
@@ -1944,7 +1945,7 @@ export class Contract {
       if (side_0 === market_0.outcome) {
         const totalPool_0 = ((t1) => {
                               if (t1 > 340282366920938463463374607431768211455n) {
-                                throw new __compactRuntime.CompactError('shadow-market.compact line 408 char 27: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
+                                throw new __compactRuntime.CompactError('shadow-market.compact line 409 char 27: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
                               }
                               return t1;
                             })(market_0.yesTotal + market_0.noTotal);
@@ -1954,9 +1955,9 @@ export class Contract {
                                                                           winnersPool_0),
                                                 remainder_0);
         const rhs_0 = __compactRuntime.mulField(amount_0, totalPool_0);
-        __compactRuntime.assert(lhs_0 === rhs_0, 'Invalid payout calculation');
+        __compactRuntime.assert(lhs_0 === rhs_0, 'Invalid payout proof');
         __compactRuntime.assert(remainder_0 < winnersPool_0,
-                                'Invalid remainder: payout is non-deterministic');
+                                'Non-minimal remainder');
         this._sendUnshielded_0(context,
                                partialProofData,
                                new Uint8Array(32),
@@ -2099,7 +2100,7 @@ export class Contract {
       {
         const fullPayout_0 = ((t1) => {
                                if (t1 > 340282366920938463463374607431768211455n) {
-                                 throw new __compactRuntime.CompactError('shadow-market.compact line 475 char 28: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
+                                 throw new __compactRuntime.CompactError('shadow-market.compact line 476 char 28: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
                                }
                                return t1;
                              })(wager_0.amount + wager_0.matchAmount);
@@ -2115,7 +2116,7 @@ export class Contract {
         {
           const fullPayout_1 = ((t1) => {
                                  if (t1 > 340282366920938463463374607431768211455n) {
-                                   throw new __compactRuntime.CompactError('shadow-market.compact line 478 char 28: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
+                                   throw new __compactRuntime.CompactError('shadow-market.compact line 479 char 28: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 340282366920938463463374607431768211455');
                                  }
                                  return t1;
                                })(wager_0.amount + wager_0.matchAmount);

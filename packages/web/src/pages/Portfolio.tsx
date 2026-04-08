@@ -9,12 +9,14 @@ import {
   Box as BoxIcon,
   ShieldCheck,
   Loader2,
+  HandMetal,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Portfolio as PortfolioData, betsApi } from '../api/bets';
 import { ExportDataButton } from '../components/analytics/ExportDataButton';
 import { BetsList } from '../components/portfolio/BetsList';
+import { WagersList } from '../components/portfolio/WagersList';
 
 interface StatCardProps {
   title: string;
@@ -29,7 +31,7 @@ interface StatCardProps {
 
 function StatCard({ title, value, icon, trend, color }: StatCardProps) {
   return (
-    <div className="bg-slate-900/40 border-stealth p-6 rounded-sm space-y-4 group hover:bg-slate-900/60 transition-all">
+    <div className="glass-card glass-shine p-6 rounded-sm space-y-4 group hover:bg-slate-900/60 transition-all">
       <div className="flex justify-between items-start">
         <div className="p-2 bg-white/[0.03] border border-white/5 rounded-sm text-slate-400 group-hover:text-white group-hover:border-white/10 transition-all">
           {icon}
@@ -52,7 +54,7 @@ function StatCard({ title, value, icon, trend, color }: StatCardProps) {
 }
 
 export function Portfolio() {
-  const [activeTab, setActiveTab] = useState<'active' | 'settled'>('active');
+  const [activeTab, setActiveTab] = useState<'active' | 'settled' | 'wagers'>('active');
 
   const {
     data: portfolio,
@@ -192,7 +194,7 @@ export function Portfolio() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-8">
 
-          <div className="bg-slate-900/40 border-stealth rounded-sm overflow-hidden flex flex-col">
+          <div className="glass-card glass-shine rounded-sm overflow-hidden flex flex-col">
             <div className="flex items-center border-b border-white/5 bg-black/40">
               <button
                 onClick={() => setActiveTab('active')}
@@ -216,20 +218,35 @@ export function Portfolio() {
                 <ShieldCheck className="w-3 h-3" />
                 Settled history ({settledBets.length})
               </button>
+              <button
+                onClick={() => setActiveTab('wagers')}
+                className={`px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-[0.2em] transition-all border-r border-white/5 flex items-center gap-2 ${
+                  activeTab === 'wagers'
+                    ? 'text-electric-blue bg-electric-blue/5'
+                    : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                <HandMetal className={`w-3 h-3 ${activeTab === 'wagers' ? 'text-electric-blue' : 'text-slate-500'}`} />
+                P2P Wagers ({portfolio.wagers?.length || 0})
+              </button>
             </div>
 
             <div className="p-0">
-              <BetsList
-                bets={activeTab === 'active' ? activeBets : settledBets}
-                isActive={activeTab === 'active'}
-                onClaimSuccess={() => refetch()}
-              />
+              {activeTab === 'wagers' ? (
+                <WagersList wagers={portfolio.wagers || []} />
+              ) : (
+                <BetsList
+                  bets={activeTab === 'active' ? activeBets : settledBets}
+                  isActive={activeTab === 'active'}
+                  onClaimSuccess={() => refetch()}
+                />
+              )}
             </div>
           </div>
         </div>
 
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-slate-900/40 border-stealth p-6 rounded-sm space-y-6">
+          <div className="glass-card glass-shine p-6 rounded-sm space-y-6">
             <div className="flex items-center gap-2 text-white">
               <BoxIcon className="w-4 h-4 text-electric-blue" />
               <h3 className="text-[10px] font-mono font-bold uppercase tracking-widest">

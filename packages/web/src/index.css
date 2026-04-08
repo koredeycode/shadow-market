@@ -60,7 +60,41 @@
   }
 
   .glass-shine {
-    @apply relative overflow-hidden after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/5 after:to-transparent after:animate-[shine_3s_infinite];
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glass-shine::after {
+    content: "";
+    position: absolute;
+    top: -150%;
+    left: -150%;
+    width: 300%;
+    height: 300%;
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      transparent 40%,
+      rgba(255, 255, 255, 0.08) 50%,
+      transparent 60%,
+      transparent 100%
+    );
+    transform: rotate(35deg);
+    animation: premium-shine 8s cubic-bezier(0.19, 1, 0.22, 1) infinite;
+    pointer-events: none;
+  }
+
+  @keyframes premium-shine {
+    0% { transform: rotate(35deg) translateX(-100%); opacity: 0; }
+    10% { opacity: 1; }
+    30% { transform: rotate(35deg) translateX(100%); opacity: 1; }
+    40%, 100% { transform: rotate(35deg) translateX(100%); opacity: 0; }
+  }
+
+  .glass-card {
+    @apply bg-slate-900/40 backdrop-blur-md border border-white/10 rounded-sm;
+    position: relative;
+    overflow: hidden;
   }
 
   .hover-lift {

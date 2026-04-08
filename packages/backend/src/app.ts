@@ -9,6 +9,8 @@ import { marketsRouter } from './routes/markets.js';
 import { oraclesRouter } from './routes/oracles.js';
 import { usersRouter } from './routes/users.js';
 import { sessionsRouter } from './routes/sessions.js';
+import { betsRouter } from './routes/bets.js';
+import { wagersRouter } from './routes/wagers.js';
 
 // Create Express app
 export const app = express();
@@ -34,6 +36,8 @@ app.use('/api/markets', marketsRouter);
 app.use('/api/oracles', oraclesRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/sessions', sessionsRouter);
+app.use('/api/bets', betsRouter);
+app.use('/api/wagers', wagersRouter);
 
 // 404 handler
 app.use((req, res) => {

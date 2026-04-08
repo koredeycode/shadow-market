@@ -7,7 +7,9 @@ import { X, Info, TrendingUp, Zap, Loader2, AlertCircle, Percent } from 'lucide-
 import toast from 'react-hot-toast';
 import { wagersApi } from '../../api/wagers';
 import { useWallet } from '../../hooks/useWallet';
+import { useContract } from '../../hooks/useContract';
 import { Market } from '../../types';
+import { TxSuccessModal } from '../common/TxSuccessModal';
 
 const betSchema = z.object({
   amount: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
@@ -29,7 +31,9 @@ interface PlaceBetModalProps {
 
 export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
   const { isConnected, unshieldedNightBalance, formattedUnshieldedNightBalance, connectWallet } = useWallet();
+  const { placeBet, isInitialized } = useContract();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successData, setSuccessData] = useState<{ txHash: string; amount: string; side: string } | null>(null);
   const queryClient = useQueryClient();
 
   const {
@@ -88,20 +92,40 @@ export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
 
   const mutation = useMutation({
     mutationFn: async (data: BetFormData) => {
-      if (!isConnected) throw new Error('Wallet not connected');
+      if (!isConnected) throw new Error('Identity Verification Required');
+      if (!isInitialized) throw new Error('Contract not initialized');
+      
+      // Step 1: REQUIRED - Execute on-chain contract call
+      console.log('DEBUG: Initiating on-chain pool bet placement...');
+      const result = await placeBet(
+        market.onchainId || market.id,
+        data.side.toUpperCase() as 'YES' | 'NO',
+        parseFloat(data.amount)
+      );
+
+      if (!result) throw new Error('On-chain transaction failed or was cancelled');
+      const { txHash, onchainId } = result;
+
+      // Step 2: Sync to backend for indexing
+      console.log('DEBUG: Syncing pool bet to backend with txHash:', txHash);
       return await wagersApi.placeBet({
         marketId: market.id,
         amount: data.amount,
         side: data.side,
         slippage: data.slippage,
+        txHash,
+        onchainId,
       });
     },
-    onSuccess: data => {
-      toast.success(`Trade Executed! Position: ${data.positionId.slice(0, 8)}...`);
+    onSuccess: (data, variables) => {
+      setSuccessData({
+        txHash: data.transaction?.hash || '',
+        amount: variables.amount,
+        side: variables.side.toUpperCase()
+      });
       queryClient.invalidateQueries({ queryKey: ['market', market.id] });
       queryClient.invalidateQueries({ queryKey: ['bets'] });
       reset();
-      onClose();
     },
     onError: (error: any) => {
       toast.error(error.message || 'Trade Execution Failed');
@@ -113,10 +137,33 @@ export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
     setIsSubmitting(true);
     try {
       await mutation.mutateAsync(data);
+    } catch (e) {
+      console.error('Submission error:', e);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const TransactingOverlay = () => (
+    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-md animate-in fade-in duration-500">
+      <div className="relative mb-8">
+        <div className="w-20 h-20 border-2 border-electric-blue/20 rounded-full animate-spin duration-[3000ms]" />
+        <div className="absolute inset-0 w-20 h-20 border-t-2 border-electric-blue rounded-full animate-spin" />
+        <Zap className="absolute inset-x-0 inset-y-0 m-auto w-8 h-8 text-electric-blue animate-pulse" />
+      </div>
+      <h3 className="text-sm font-bold text-white tracking-[0.3em] uppercase mb-2">
+        Generating Proof
+      </h3>
+      <p className="text-[10px] text-slate-500 font-mono text-center max-w-[200px] leading-relaxed uppercase">
+        Encrypting transaction data using Midnight ZK-Protocol...
+      </p>
+      <div className="mt-8 flex gap-1">
+        <div className="w-1 h-1 bg-electric-blue rounded-full animate-[bounce_1s_infinite_0s]" />
+        <div className="w-1 h-1 bg-electric-blue rounded-full animate-[bounce_1s_infinite_0.2s]" />
+        <div className="w-1 h-1 bg-electric-blue rounded-full animate-[bounce_1s_infinite_0.4s]" />
+      </div>
+    </div>
+  );
 
   if (!open) return null;
 
@@ -126,6 +173,7 @@ export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
         className="relative w-full max-w-lg bg-slate-900 border border-white/10 rounded-sm shadow-2xl overflow-hidden animate-in zoom-in duration-300 my-8"
         onClick={e => e.stopPropagation()}
       >
+        {isSubmitting && <TransactingOverlay />}
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/5 bg-black/20">
           <div className="flex items-center gap-3">
@@ -361,6 +409,23 @@ export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
           </div>
         </form>
       </div>
+      <TxSuccessModal 
+        isOpen={!!successData}
+        onClose={() => {
+          setSuccessData(null);
+          onClose(); // Close the creation modal too
+        }}
+        txHash={successData?.txHash || ''}
+        title="Position Secured"
+        subtitle={`Successfully deposited ${successData?.amount} NIGHT into the ZK-escrow pool for the ${successData?.side} outcome.`}
+        primaryAction={{
+          label: 'View Portfolio',
+          onClick: () => {
+             setSuccessData(null);
+             onClose();
+          }
+        }}
+      />
     </div>
   );
 }

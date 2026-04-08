@@ -169,7 +169,7 @@ wagersRouter.get(
 
 /**
  * POST /api/wagers/:id/claim
- * Claim winnings from settled position
+ * Claim winnings from settled position (AMM)
  */
 wagersRouter.post(
   '/:id/claim',
@@ -183,6 +183,27 @@ wagersRouter.post(
     res.json({
       success: true,
       data: bet,
+      timestamp: Date.now(),
+    });
+  })
+);
+
+/**
+ * POST /api/wagers/p2p/:id/claim
+ * Claim winnings from settled P2P wager
+ */
+wagersRouter.post(
+  '/p2p/:id/claim',
+  authenticate,
+  asyncHandler(async (req: AuthRequest, res) => {
+    const userId = req.user!.id;
+    const { id } = req.params;
+
+    const wager = await wagerService.claimWagerWinnings(userId, id);
+
+    res.json({
+      success: true,
+      data: wager,
       timestamp: Date.now(),
     });
   })

@@ -84,103 +84,94 @@ export function Home() {
         {/* Featured Market Carousel (Left) */}
         <div className="lg:col-span-8 flex flex-col">
           {currentFeatured && (
-            <div className="relative group overflow-hidden rounded-sm border border-white/10 bg-slate-900/40 hover:border-electric-blue/30 transition-all duration-500 flex-1 min-h-[400px] flex flex-col">
+            <div className="glass-card glass-shine relative group overflow-hidden rounded-sm border border-white/10 bg-slate-900/60 hover:border-electric-blue/30 transition-all duration-700 flex-1 min-h-[450px] flex flex-col">
+              
               {/* Crossfade Layer */}
               <div
                 key={currentFeatured.id}
-                className="absolute inset-0 animate-in fade-in duration-1000 flex flex-col"
+                className="absolute inset-0 animate-in fade-in zoom-in-95 duration-1000 flex flex-col md:flex-row"
               >
-                <div className="absolute top-0 right-0 p-6 flex flex-wrap justify-end gap-2 z-10">
-                  <span className="px-3 py-1 bg-amber-accent/20 text-amber-accent text-[10px] font-mono font-bold uppercase tracking-widest rounded-full border border-amber-accent/30 backdrop-blur-sm">
-                    Featured market
-                  </span>
-                  <span className="px-3 py-1 bg-electric-blue/20 text-electric-blue text-[10px] font-mono font-bold uppercase tracking-widest rounded-full border border-electric-blue/30 backdrop-blur-sm">
-                    {currentFeatured.category}
-                  </span>
-                  <span className="px-3 py-1 bg-success-green/20 text-success-green text-[10px] font-mono font-bold uppercase tracking-widest rounded-full border border-success-green/30 backdrop-blur-sm">
-                    Live
-                  </span>
+                {/* Visual Accent Side */}
+                <div className="w-full md:w-1/3 bg-gradient-to-br from-electric-blue/20 via-transparent to-transparent p-8 flex flex-col justify-between border-r border-white/5">
+                   <div className="space-y-4">
+                      <span className="px-3 py-1 bg-amber-accent/10 text-amber-accent text-[10px] font-mono font-bold uppercase tracking-[0.2em] rounded-full border border-amber-accent/20 backdrop-blur-sm w-fit block">
+                        Featured intel
+                      </span>
+                      <div className="pt-4 space-y-2">
+                        <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest leading-none">Market Sentiment</p>
+                        <div className="flex items-center gap-2">
+                           <TrendingUp className="w-5 h-5 text-success-green" />
+                           <span className="text-2xl font-bold font-mono text-success-green">{Math.round(parseFloat(currentFeatured.yesPrice) * 100)}% YES</span>
+                        </div>
+                      </div>
+                   </div>
+
+                   <div className="space-y-4">
+                      <div className="p-4 bg-slate-950/50 border border-white/5 rounded-sm">
+                         <p className="text-[9px] font-mono text-slate-600 uppercase mb-2">Network activity</p>
+                         <div className="flex items-center gap-3">
+                            <Users className="w-4 h-4 text-slate-500" />
+                            <span className="text-sm font-bold font-mono text-white">{currentFeatured.totalBets} Position Holders</span>
+                         </div>
+                      </div>
+                   </div>
                 </div>
 
-                <div className="p-4 space-y-5 relative z-10 flex-1 flex flex-col justify-center">
-                  <div className="space-y-3">
-                    <h1 className="text-3xl font-bold text-white leading-tight tracking-tight group-hover:text-electric-blue transition-colors duration-300">
-                      {currentFeatured.question}
-                    </h1>
-                  </div>
+                {/* Content Side */}
+                <div className="flex-1 p-8 md:p-12 flex flex-col justify-center relative">
+                   <div className="absolute top-8 right-8 flex gap-2">
+                      <span className="px-3 py-1 bg-white/5 text-slate-400 text-[9px] font-mono font-bold uppercase tracking-widest rounded-full border border-white/10">
+                        {currentFeatured.category}
+                      </span>
+                      <div className="flex items-center gap-1 px-3 py-1 bg-success-green/10 text-success-green text-[9px] font-mono font-bold uppercase tracking-widest rounded-full border border-success-green/20">
+                         <div className="w-1.5 h-1.5 rounded-full bg-success-green animate-pulse" />
+                         LIVE
+                      </div>
+                   </div>
 
-                  <div className="flex flex-wrap items-center gap-6 text-xs font-mono text-slate-400">
-                    <div className="flex items-center gap-2">
-                      <BarChart3 className="w-4 h-4 text-electric-blue" />
-                      <span>
-                        {(parseFloat(currentFeatured.totalVolume) / 1000).toFixed(1)}K NIGHT Vol
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-slate-500" />
-                      <span>{currentFeatured.totalBets} Positions</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-slate-500" />
-                      <span>Ends {new Date(currentFeatured.endTime).toLocaleDateString()}</span>
-                    </div>
-                  </div>
+                   <div className="space-y-6">
+                      <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight tracking-tight group-hover:text-electric-blue transition-colors duration-500 drop-shadow-2xl">
+                        {currentFeatured.question}
+                      </h1>
+                      
+                      <div className="flex items-center gap-6 text-[10px] font-mono text-slate-500 uppercase tracking-widest">
+                         <div className="flex items-center gap-2">
+                            <BarChart3 className="w-4 h-4 text-electric-blue" />
+                            <span>{(parseFloat(currentFeatured.totalVolume) / 1000).toFixed(1)}K Vol</span>
+                         </div>
+                         <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-slate-500" />
+                            <span>Ends {new Date(currentFeatured.endTime).toLocaleDateString()}</span>
+                         </div>
+                      </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                    <Link
-                      to={`/markets/${currentFeatured.slug || currentFeatured.id}`}
-                      className="flex flex-col items-center justify-center p-6 bg-success-green/5 border border-success-green/20 rounded-sm group/btn hover:bg-success-green/10 transition-all"
-                    >
-                      <span className="text-[9px] font-mono text-success-green uppercase mb-2 tracking-widest">
-                        Yes price
-                      </span>
-                      <span className="text-4xl font-mono font-bold text-success-green">
-                        {Math.round(parseFloat(currentFeatured.yesPrice) * 100)}%
-                      </span>
-                    </Link>
-                    <Link
-                      to={`/markets/${currentFeatured.slug || currentFeatured.id}`}
-                      className="flex flex-col items-center justify-center p-6 bg-red-500/5 border border-red-500/20 rounded-sm group/btn hover:bg-red-500/10 transition-all"
-                    >
-                      <span className="text-[9px] font-mono text-red-400 uppercase mb-2 tracking-widest">
-                        No price
-                      </span>
-                      <span className="text-4xl font-mono font-bold text-red-500">
-                        {Math.round(parseFloat(currentFeatured.noPrice) * 100)}%
-                      </span>
-                    </Link>
-                  </div>
-
-                  <div className="pt-4">
-                    <Link
-                      to={`/markets/${currentFeatured.slug || currentFeatured.id}`}
-                      className="inline-flex items-center gap-2 px-8 py-4 bg-electric-blue text-white rounded-sm font-bold tracking-[0.1em] uppercase text-xs hover:brightness-110 transition-all shadow-[0_0_30px_rgba(59,130,246,0.2)]"
-                    >
-                      Trade this market
-                      <ChevronRight className="w-4 h-4" />
-                    </Link>
-                  </div>
+                      <div className="pt-6">
+                        <Link
+                          to={`/markets/${currentFeatured.slug || currentFeatured.id}`}
+                          className="inline-flex items-center gap-3 px-10 py-4 bg-electric-blue text-white rounded-sm font-bold tracking-[0.2em] uppercase text-[10px] hover:brightness-110 transition-all shadow-[0_4px_30px_rgba(59,130,246,0.3)] hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                          Execute Trade
+                          <ChevronRight className="w-4 h-4" />
+                        </Link>
+                      </div>
+                   </div>
                 </div>
 
                 {/* Carousel Indicators */}
-                <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                <div className="absolute bottom-8 right-12 flex gap-3 z-10">
                   {featuredForCarousel.map((_: any, idx: number) => (
                     <button
                       key={idx}
-                      onClick={() => setCurrentIndex(idx)}
-                      className={`h-1 transition-all duration-500 ${
-                        idx === currentIndex ? 'w-6 bg-electric-blue' : 'w-1.5 bg-white/10'
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentIndex(idx);
+                      }}
+                      className={`h-1 transition-all duration-500 hover:bg-white/30 ${
+                        idx === currentIndex ? 'w-10 bg-electric-blue' : 'w-2 bg-white/10'
                       } rounded-full`}
                     />
                   ))}
                 </div>
-              </div>
-
-              {/* Decorative Background Effects */}
-              <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-0 right-0 w-80 h-80 bg-electric-blue/5 blur-[100px]" />
-                <div className="absolute bottom-0 left-0 w-60 h-60 bg-amber-accent/5 blur-[80px]" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
               </div>
             </div>
           )}
@@ -284,14 +275,14 @@ export function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {allFeaturedMarkets.slice(5).map((market: Market) => (
+          {allFeaturedMarkets.slice(0, 12).map((market: Market) => (
             <MarketIntelligenceCard key={market.id} market={market} />
           ))}
-          {/* Fallback if not enough featured markets */}
-          {allFeaturedMarkets.length <= 5 && (
+          {/* Fallback if no markets available */}
+          {allFeaturedMarkets.length === 0 && (
             <div className="col-span-full border border-dashed border-white/5 p-12 text-center rounded-sm">
               <p className="text-sm font-mono text-slate-600 uppercase tracking-widest">
-                No supplemental markets available.
+                No active markets available on the ledger.
               </p>
             </div>
           )}

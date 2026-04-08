@@ -67,7 +67,7 @@ export function MarketHistory({ marketId }: MarketHistoryProps) {
           </div>
           <div>
             <h3 className="text-white font-bold text-[11px] uppercase tracking-widest leading-none mb-1">
-              On-Chain Audit Trail
+              Network Transactions
             </h3>
             <p className="text-[9px] text-slate-500 font-mono uppercase">Verified by Shadow Indexer</p>
           </div>

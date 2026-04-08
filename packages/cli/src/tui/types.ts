@@ -6,7 +6,8 @@ export type ViewType =
   | 'portfolio' 
   | 'wallet' 
   | 'login' 
-  | 'link';
+  | 'link'
+  | 'bet-detail';
 
 export interface Market {
   id: string;

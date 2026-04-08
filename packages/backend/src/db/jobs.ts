@@ -8,48 +8,62 @@ import { OnChainService } from '../services/onchain.service.js';
 
 /**
  * Background job to sync market data from blockchain
+ * @deprecated This job is being replaced by real-time event processing. 
+ * Use with caution as it may cause N+1 query issues.
  */
 export async function syncMarketPrices() {
+  logger.warn('DEPRECATED: syncMarketPrices background job is running. Transition to real-time events planned.');
   try {
     // Get latest ledger from Midnight Indexer
     const ledger = await OnChainService.getLatestLedger();
-    if (!ledger) return;
+    if (!ledger) {
+      logger.debug('No on-chain ledger data found during sync');
+      return;
+    }
 
     // Get all open markets from local DB
     const openMarkets = await db.query.markets.findMany({
       where: eq(markets.status, 'OPEN'),
     });
 
+    if (openMarkets.length === 0) return;
+
+    logger.info(`Starting background sync for ${openMarkets.length} markets...`);
+
     for (const market of openMarkets) {
-      // Lookup on-chain state for this market
-      const onchainMarket = ledger.markets.get(market.onchainId);
-      if (!onchainMarket) continue;
+      try {
+        // Lookup on-chain state for this market
+        const onchainMarket = ledger.markets.get(market.onchainId);
+        if (!onchainMarket) continue;
 
-      // Update local DB with on-chain volume and pool totals
-      await db.update(markets)
-        .set({
-          totalVolume: (onchainMarket.yesTotal + onchainMarket.noTotal).toString(),
-          yesPrice: onchainMarket.yesTotal > 0n 
-            ? (Number(onchainMarket.yesTotal) / Number(onchainMarket.yesTotal + onchainMarket.noTotal)).toFixed(2)
-            : '0.50',
-          noPrice: onchainMarket.noTotal > 0n
-            ? (Number(onchainMarket.noTotal) / Number(onchainMarket.yesTotal + onchainMarket.noTotal)).toFixed(2)
-            : '0.50',
-          status: onchainMarket.status.toString() as any, // Sync status if it changed
-        })
-        .where(eq(markets.id, market.id));
+        // Update local DB with on-chain volume and pool totals
+        await db.update(markets)
+          .set({
+            totalVolume: (onchainMarket.yesTotal + onchainMarket.noTotal).toString(),
+            yesPrice: (onchainMarket.yesTotal + onchainMarket.noTotal) > 0n 
+              ? (Number(onchainMarket.yesTotal) / Number(onchainMarket.yesTotal + onchainMarket.noTotal)).toFixed(17)
+              : '0.5',
+            noPrice: (onchainMarket.yesTotal + onchainMarket.noTotal) > 0n
+              ? (Number(onchainMarket.noTotal) / Number(onchainMarket.yesTotal + onchainMarket.noTotal)).toFixed(17)
+              : '0.5',
+            status: onchainMarket.status.toString() as any, // Sync status if it changed
+          })
+          .where(eq(markets.id, market.id));
 
-      // Broadcast update to subscribed clients
-      broadcastToMarket(market.id, 'market:update', {
-        yesPrice: market.yesPrice,
-        noPrice: market.noPrice,
-        totalVolume: market.totalVolume,
-      });
+        // Broadcast update to subscribed clients
+        broadcastToMarket(market.id, 'market:update', {
+          yesPrice: market.yesPrice,
+          noPrice: market.noPrice,
+          totalVolume: market.totalVolume,
+        });
+      } catch (marketError) {
+        logger.error(`Failed to sync market ${market.id}`, { error: marketError });
+      }
     }
 
     logger.debug('Market prices synced from chain', { count: openMarkets.length });
   } catch (error) {
-    logger.error('Market sync failed', { error });
+    logger.error('CRITICAL: Market sync background job failed', { error });
   }
 }
 

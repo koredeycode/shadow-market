@@ -1,5 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { betsApi } from '../api/bets';
 import { 
   ArrowLeft, 
@@ -9,19 +11,50 @@ import {
   Clock, 
   ShieldCheck,
   Calendar,
-  Wallet
+  Wallet,
+  Zap,
+  Loader2
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { getTxExplorerUrl, isExplorerAvailable } from '../utils/explorer';
+import { useContract } from '../hooks/useContract';
+import { useWallet } from '../hooks/useWallet';
 
 export default function BetDetails() {
   const { id } = useParams<{ id: string }>();
+  const { claimPoolWinnings, isInitialized } = useContract();
+  const queryClient = useQueryClient();
+  const { isConnected } = useWallet();
+  const [isClaiming, setIsClaiming] = useState(false);
 
-  const { data: bet, isLoading, error } = useQuery({
+  const { data: bet, isLoading, error, refetch } = useQuery({
     queryKey: ['bet', id],
     queryFn: () => betsApi.getBetById(id!),
     enabled: !!id,
   });
+
+  const handleClaim = async () => {
+    if (!id || !isInitialized || !isConnected) return;
+    
+    setIsClaiming(true);
+    try {
+      // Execute ZK circuit on-chain
+      const success = await claimPoolWinnings(id);
+      if (success) {
+        // Sync with backend reservoir
+        await betsApi.claimWinnings(id);
+        toast.success('Protocol Winnings Distributed!');
+        refetch();
+        queryClient.invalidateQueries({ queryKey: ['portfolio'] });
+      } else {
+          throw new Error('On-chain transaction failed');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Identity Verification Failed during claim.');
+    } finally {
+      setIsClaiming(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -49,7 +82,6 @@ export default function BetDetails() {
 
   const isProfitable = parseFloat(bet.profitLoss || '0') >= 0;
   const pnlNum = parseFloat(bet.profitLoss || '0');
-  // const amountNum = parseFloat(bet.amount);
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-20">
@@ -62,6 +94,32 @@ export default function BetDetails() {
           Back to Dashboard
         </Link>
         <div className="flex items-center gap-2">
+            <button
+              onClick={handleClaim}
+              disabled={isClaiming || !isInitialized || bet.marketStatus !== 'RESOLVED' || bet.isSettled}
+              className={`flex items-center gap-2 px-4 py-2 rounded-sm text-[11px] font-bold uppercase tracking-widest transition-all ${
+                bet.isSettled 
+                  ? 'bg-white/5 text-slate-500 border border-white/10 cursor-not-allowed'
+                  : bet.marketStatus === 'RESOLVED'
+                    ? 'bg-success-green text-black hover:brightness-110 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
+                    : 'bg-white/5 text-slate-500 border border-white/10 cursor-not-allowed'
+              }`}
+            >
+              {isClaiming ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : bet.isSettled ? (
+                <ShieldCheck className="w-4 h-4" />
+              ) : (
+                <Zap className={`w-4 h-4 ${bet.marketStatus === 'RESOLVED' ? 'fill-current' : ''}`} />
+              )}
+              {isClaiming 
+                ? 'TRANSMITTING...' 
+                : bet.isSettled 
+                  ? 'SETTLED' 
+                  : bet.marketStatus === 'RESOLVED' 
+                    ? 'CLAIM_PAYOUT' 
+                    : 'WAITING FOR RESOLUTION'}
+            </button>
            <span className={`px-2 py-1 border rounded-sm text-[10px] font-bold uppercase tracking-widest ${
              bet.isSettled ? 'bg-slate-500/10 text-slate-400 border-white/5' : 'bg-success-green/10 text-success-green border-success-green/20'
            }`}>
@@ -137,7 +195,7 @@ export default function BetDetails() {
 
       <div className="bg-slate-900/40 border-stealth rounded-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-white/5 bg-black/40 flex items-center justify-between">
-          <h3 className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-white">Transaction Data</h3>
+          <h3 className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-white">Network Transaction Details</h3>
           <ShieldCheck className="w-4 h-4 text-electric-blue" />
         </div>
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -186,9 +244,9 @@ export default function BetDetails() {
              {bet.isSettled && (
                <div className="flex items-start gap-4">
                   <Calendar className="w-4 h-4 text-slate-600 mt-1" />
-                  <div className="space-y-1">
+                   <div className="space-y-1">
                      <p className="text-[10px] font-mono text-slate-500 uppercase">Settlement date</p>
-                     <p className="text-xs text-white font-bold">{new Date().toLocaleString()}</p>
+                     <p className="text-xs text-white font-bold">{bet.settledAt ? new Date(bet.settledAt).toLocaleString() : new Date().toLocaleString()}</p>
                   </div>
                </div>
              )}

@@ -74,9 +74,15 @@ export const wagersApi = {
     return response.data.data;
   },
 
-  // Claim winnings from settled position
+  // Claim winnings from settled position (AMM)
   claimWinnings: async (positionId: string) => {
     const response = await api.post(`/wagers/${positionId}/claim`);
+    return response.data.data;
+  },
+
+  // Claim winnings from settled P2P wager
+  claimWagerWinnings: async (wagerId: string) => {
+    const response = await api.post(`/wagers/p2p/${wagerId}/claim`);
     return response.data.data;
   },
 

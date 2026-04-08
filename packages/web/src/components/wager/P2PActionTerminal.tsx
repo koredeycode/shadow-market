@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Info, Zap, Loader2, X, DollarSign } from 'lucide-react';
+import { Info, Zap, Loader2, X, DollarSign, ShieldCheck } from 'lucide-react';
 import { useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
@@ -16,9 +16,9 @@ const p2pWagerSchema = z.object({
     message: 'Amount must be greater than 0',
   }),
   side: z.enum(['yes', 'no']),
-  oddsNumerator: z.number().min(1).max(100),
-  oddsDenominator: z.number().min(1).max(100),
-  durationHours: z.number().min(1).max(168),
+  odds_numerator: z.number().min(1).max(100),
+  odds_denominator: z.number().min(1).max(100),
+  duration_hours: z.number().min(1).max(168),
 });
 
 type P2PWagerFormData = z.infer<typeof p2pWagerSchema>;
@@ -42,21 +42,21 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
     defaultValues: {
       amount: '',
       side: 'yes',
-      oddsNumerator: 1,
-      oddsDenominator: 1,
-      durationHours: 24,
+      odds_numerator: 1,
+      odds_denominator: 1,
+      duration_hours: 24,
     },
   });
 
   const amount = watch('amount');
   const side = watch('side');
-  const oddsNumerator = watch('oddsNumerator');
-  const oddsDenominator = watch('oddsDenominator');
+  const odds_numerator = watch('odds_numerator');
+  const odds_denominator = watch('odds_denominator');
 
   const payoutInfo = useMemo(() => {
     if (!amount || isNaN(parseFloat(amount))) return null;
     const betAmount = parseFloat(amount);
-    const odds = oddsNumerator / oddsDenominator;
+    const odds = odds_numerator / odds_denominator;
     const yourPotentialWin = betAmount * odds;
     const opponentStake = yourPotentialWin;
     const totalPool = betAmount + opponentStake;
@@ -66,10 +66,10 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
       yourPotentialWin,
       opponentStake,
       totalPool,
-      oddsDisplay: `${oddsNumerator}:${oddsDenominator}`,
-      impliedProbability: (oddsDenominator / (oddsNumerator + oddsDenominator)) * 100,
+      oddsDisplay: `${odds_numerator}:${odds_denominator}`,
+      impliedProbability: (odds_denominator / (odds_numerator + odds_denominator)) * 100,
     };
-  }, [amount, oddsNumerator, oddsDenominator]);
+  }, [amount, odds_numerator, odds_denominator]);
 
   const acceptMutation = useMutation({
     mutationFn: async () => {
@@ -124,7 +124,7 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
         market.onchainId || market.id,
         data.side.toUpperCase() as 'YES' | 'NO',
         parseFloat(data.amount),
-        [data.oddsNumerator, data.oddsDenominator]
+        [data.odds_numerator, data.odds_denominator]
       );
 
       if (!result) throw new Error('On-chain transaction failed or was cancelled');
@@ -135,8 +135,8 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
         marketId: market.id,
         amount: data.amount,
         side: data.side,
-        odds: [data.oddsNumerator, data.oddsDenominator],
-        duration: data.durationHours * 3600,
+        odds: [data.odds_numerator, data.odds_denominator],
+        duration: data.duration_hours * 3600,
         txHash,
         onchainId,
       });
@@ -225,16 +225,31 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
                         </button>
                     )}
                     
-                    {selectedWager.status === 'RESOLVED' && (
+                    {selectedWager.status === 'MATCHED' && (
                         <button
                             type="button"
                             onClick={() => claimMutation.mutate()}
-                            disabled={claimMutation.isPending}
-                            className="w-full py-4 bg-amber-500 text-black rounded-sm font-bold text-[11px] tracking-[0.2em] uppercase hover:brightness-110 transition-all flex items-center justify-center gap-2"
+                            disabled={claimMutation.isPending || market.status !== 'RESOLVED'}
+                            className={`w-full py-4 rounded-sm font-bold text-[11px] tracking-[0.2em] uppercase transition-all flex items-center justify-center gap-2 ${
+                                market.status === 'RESOLVED'
+                                    ? 'bg-amber-500 text-black hover:brightness-110 shadow-[0_0_30px_rgba(245,158,11,0.3)]'
+                                    : 'bg-white/5 text-slate-500 border border-white/10 cursor-not-allowed'
+                            }`}
                         >
-                             {claimMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <DollarSign className="w-4 h-4" />}
-                             CLAIM_PROTOCOL_WINNINGS
+                             {claimMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <DollarSign className={`w-4 h-4 ${market.status === 'RESOLVED' ? 'fill-current' : ''}`} />}
+                             {claimMutation.isPending 
+                                ? 'TRANSMITTING...' 
+                                : market.status === 'RESOLVED' 
+                                    ? 'CLAIM_PROTOCOL_WINNINGS' 
+                                    : 'WAITING FOR RESOLUTION'}
                         </button>
+                    )}
+
+                    {selectedWager.status === 'SETTLED' && (
+                        <div className="w-full py-4 bg-white/5 text-slate-500 border border-white/10 rounded-sm font-bold text-[11px] tracking-[0.2em] uppercase text-center flex items-center justify-center gap-2">
+                            <ShieldCheck className="w-4 h-4 text-success-green" />
+                            PROTOCOL_SETTLED
+                        </div>
                     )}
                 </div>
             </div>
@@ -243,7 +258,7 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
                 {/* Position Selection */}
         <CustomSelect
           label="Select Position"
-          value={side}
+          value={side as string}
           onChange={(val) => reset({ ...watch(), side: val as 'yes' | 'no' })}
           options={[
             { label: 'YES (SUPPORT)', value: 'yes', description: 'Wager that this outcome will occur' },
@@ -284,7 +299,7 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
           <div className="flex items-center gap-4">
             <div className="flex-1 space-y-1">
               <Controller
-                name="oddsNumerator"
+                name="odds_numerator"
                 control={control}
                 render={({ field }) => (
                   <input
@@ -300,7 +315,7 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
             <span className="text-xl text-white/20 font-mono">:</span>
             <div className="flex-1 space-y-1">
               <Controller
-                name="oddsDenominator"
+                name="odds_denominator"
                 control={control}
                 render={({ field }) => (
                   <input

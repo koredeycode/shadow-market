@@ -17,7 +17,7 @@ const HowItWorks = lazy(() => import('./pages/HowItWorks'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const LinkCLI = lazy(() => import('./pages/auth/LinkCLI'));
 const BetDetails = lazy(() => import('./pages/BetDetails'));
-const WagerDetails = lazy(() => import('./pages/BetDetails')); // Use same for now since we're viewing bets/wagers
+const WagerDetails = lazy(() => import('./pages/WagerDetails'));
 
 // Admin pages
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));

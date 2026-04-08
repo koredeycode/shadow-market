@@ -273,6 +273,14 @@ async function main() {
     console.log('Calling initialize() circuit...');
     await api.initialize();
 
+    // Print Admin Identity for backup
+    const { toHex } = await import('@midnight-ntwrk/midnight-js-utils');
+    const { deriveAdminKey } = await import('../deployment/config.js');
+    const adminIdentityKey = toHex(deriveAdminKey(seed));
+    console.log('\n  🛡️  ADMIN IDENTITY KEY (PORTABLE ZK-IDENTITY):');
+    console.log(`  ${adminIdentityKey}`);
+    console.log('  (Backup this hex key for use in the CLI or Web Dashboard)\n');
+
     console.log('\n+--------------------------------------------------------------+');
     console.log('|                INITIALIZATION SUCCESS                        |');
     console.log('+--------------------------------------------------------------+\n');

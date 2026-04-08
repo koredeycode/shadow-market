@@ -55,7 +55,7 @@ function WagerCard({
   return (
     <div
       onClick={onSelect}
-      className={`p-4 bg-slate-900/40 border rounded-sm transition-all backdrop-blur-sm cursor-pointer ${
+      className={`glass-card glass-shine p-4 bg-slate-900/40 border rounded-sm transition-all backdrop-blur-sm cursor-pointer ${
         isSelected
           ? 'border-electric-blue bg-electric-blue/5 shadow-[0_0_20px_rgba(59,130,246,0.15)] ring-1 ring-electric-blue/30'
           : isUserCreator

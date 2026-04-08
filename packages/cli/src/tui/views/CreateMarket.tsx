@@ -30,7 +30,7 @@ export const CreateMarket: React.FC<CreateMarketProps> = ({
   const [error, setError] = useState('');
   const [focusedField, setFocusedField] = useState<'MONTH' | 'DAY' | 'SUBMIT'>('MONTH');
 
-  const cleanInput = (val: string) => val.replace(/[\x00-\x1F\x7F]/g, '').trim();
+  const cleanInput = (val: string) => val.replace(/[\x00-\x1F\x7F]/g, '');
 
   const handleNext = () => {
     setError('');
