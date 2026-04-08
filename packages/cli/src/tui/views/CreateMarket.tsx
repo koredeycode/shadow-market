@@ -30,6 +30,8 @@ export const CreateMarket: React.FC<CreateMarketProps> = ({
   const [error, setError] = useState('');
   const [focusedField, setFocusedField] = useState<'MONTH' | 'DAY' | 'SUBMIT'>('MONTH');
 
+  const cleanInput = (val: string) => val.replace(/[\x00-\x1F\x7F]/g, '').trim();
+
   const handleNext = () => {
     setError('');
     if (step === 0 && formData.question.length < 10) {
@@ -47,7 +49,10 @@ export const CreateMarket: React.FC<CreateMarketProps> = ({
 
   useInput((input, key) => {
     if (isSubmitting) return;
-    if (key.escape) handlePrev();
+    if (key.escape) {
+       handlePrev();
+       return;
+    }
     
     if (step === 4) {
         if (key.leftArrow || key.rightArrow || key.tab) {
@@ -107,12 +112,12 @@ export const CreateMarket: React.FC<CreateMarketProps> = ({
       ) : (
         <Box marginTop={1} flexDirection="column">
           {step === 0 && (
-            <Box flexDirection="column">
+            <Box flexDirection="column" backgroundColor="black">
               <Text color="cyan" bold>Step 1/5: Enter Market Question</Text>
               <Box borderStyle="single" borderColor="gray" paddingX={1} marginY={1}>
                 <TextInput
                   value={formData.question}
-                  onChange={(v) => setFormData(p => ({ ...p, question: v }))}
+                  onChange={(v) => setFormData(p => ({ ...p, question: cleanInput(v) }))}
                   onSubmit={handleNext}
                   placeholder="e.g. Will Midnight Network launch mainnet in 2024?"
                 />
@@ -122,12 +127,12 @@ export const CreateMarket: React.FC<CreateMarketProps> = ({
           )}
 
           {step === 1 && (
-            <Box flexDirection="column">
+            <Box flexDirection="column" backgroundColor="black">
               <Text color="cyan" bold>Step 2/5: Description (Optional)</Text>
               <Box borderStyle="single" borderColor="gray" paddingX={1} marginY={1}>
                 <TextInput
                   value={formData.description}
-                  onChange={(v) => setFormData(p => ({ ...p, description: v }))}
+                  onChange={(v) => setFormData(p => ({ ...p, description: cleanInput(v) }))}
                   onSubmit={handleNext}
                   placeholder="Provide context or resolution criteria..."
                 />
@@ -137,7 +142,7 @@ export const CreateMarket: React.FC<CreateMarketProps> = ({
           )}
 
           {step === 2 && (
-            <Box flexDirection="column">
+            <Box flexDirection="column" backgroundColor="black">
               <Text color="cyan" bold>Step 3/5: Select Category</Text>
               <Box marginTop={1}>
                 <SelectInput
@@ -164,21 +169,24 @@ export const CreateMarket: React.FC<CreateMarketProps> = ({
           )}
 
           {step === 3 && (
-            <Box flexDirection="column">
+            <Box flexDirection="column" backgroundColor="black">
                <Text color="cyan" bold>Step 4/5: Set Resolution Year (YYYY)</Text>
                <Box borderStyle="single" borderColor="white" paddingX={1} marginTop={1}>
                   <TextInput
                      value={formData.endTimeYear}
-                     onChange={(v) => setFormData(p => ({ ...p, endTimeYear: v }))}
+                     onChange={(v) => setFormData(p => ({ ...p, endTimeYear: cleanInput(v) }))}
                      onSubmit={handleNext}
                   />
                </Box>
                <Text dimColor>Current selection: {formData.endTimeYear}</Text>
+               <Box marginTop={1}>
+                  <Text color="gray" italic>Tip: Press ENTER to confirm and proceed.</Text>
+               </Box>
             </Box>
           )}
 
           {step === 4 && (
-            <Box flexDirection="column">
+            <Box flexDirection="column" backgroundColor="black">
                <Text color="cyan" bold>Step 5/5: Finalize Day & Month</Text>
                 <Box flexDirection="row" marginTop={1}>
                   <Box flexDirection="column" borderStyle="single" borderColor={focusedField === 'MONTH' ? "cyan" : "gray"} paddingX={1} width={15}>
@@ -189,7 +197,7 @@ export const CreateMarket: React.FC<CreateMarketProps> = ({
                     <TextInput
                        focus={focusedField === 'MONTH'}
                        value={formData.endTimeMonth}
-                       onChange={(v) => { if (focusedField === 'MONTH') setFormData(p => ({ ...p, endTimeMonth: v })) }}
+                       onChange={(v) => { if (focusedField === 'MONTH') setFormData(p => ({ ...p, endTimeMonth: cleanInput(v) })) }}
                        onSubmit={() => setFocusedField('DAY')}
                     />
                   </Box>
@@ -201,10 +209,14 @@ export const CreateMarket: React.FC<CreateMarketProps> = ({
                     <TextInput
                        focus={focusedField === 'DAY'}
                        value={formData.endTimeDay}
-                       onChange={(v) => { if (focusedField === 'DAY') setFormData(p => ({ ...p, endTimeDay: v })) }}
-                       onSubmit={() => setFocusedField('MONTH')}
+                       onChange={(v) => { if (focusedField === 'DAY') setFormData(p => ({ ...p, endTimeDay: cleanInput(v) })) }}
+                       onSubmit={() => setFocusedField('SUBMIT')}
                     />
                   </Box>
+                </Box>
+
+                <Box marginTop={1}>
+                  <Text color="yellow" bold italic>Navigation Hint: Use TAB to switch between Month and Day fields.</Text>
                 </Box>
 
                <Box marginTop={2} padding={1} borderStyle="round" borderColor="magenta">
@@ -218,7 +230,7 @@ export const CreateMarket: React.FC<CreateMarketProps> = ({
                <Box marginTop={1}>
                  <Text color="cyan" bold>Press ENTER to broadcast market creation, ESC to go back.</Text>
                </Box>
-                              {/* Final confirmation in this step */}
+                               {/* Final confirmation in this step */}
                 <Box marginTop={1} borderStyle="single" borderColor={focusedField === 'SUBMIT' ? "yellow" : "gray"} paddingX={1}>
                   <SelectInput 
                      isFocused={focusedField === 'SUBMIT'}

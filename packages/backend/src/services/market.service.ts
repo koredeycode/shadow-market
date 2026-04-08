@@ -1,6 +1,6 @@
 import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { markets, marketUpvotes, bets, pricePoints } from '../db/schema.js';
+import { markets, marketUpvotes, bets, pricePoints, wagers } from '../db/schema.js';
 import type {
   CreateMarketRequest,
   MarketFilters,
@@ -415,8 +415,7 @@ export class MarketService {
   /**
    * Get public transaction history for a market (masked for privacy)
    */
-  async getMarketTransactions(marketId: string, limit: number = 50) {
-    // Resolve internal market ID first (it could be a slug or onchainId)
+  async getMarketTransactions(marketId: string, limit: number = 20) {
     const market = await db.query.markets.findFirst({
       where: or(
         eq(markets.id, marketId),
@@ -428,10 +427,12 @@ export class MarketService {
 
     if (!market) return [];
 
-    const transactions = await db
+    // Fetch pooled bets
+    const poolBets = await db
       .select({
         id: bets.id,
         txHash: bets.txHash,
+        type: sql<string>`'POOL'`.as('type'),
         entryPrice: bets.entryPrice,
         timestamp: bets.entryTimestamp,
       })
@@ -440,6 +441,24 @@ export class MarketService {
       .orderBy(desc(bets.entryTimestamp))
       .limit(limit);
 
-    return transactions;
+    // Fetch P2P wagers
+    const p2pWagers = await db
+      .select({
+        id: wagers.id,
+        txHash: wagers.txHash,
+        type: sql<string>`'P2P'`.as('type'),
+        // For wagers, we derive the 'entry price' from the odds ratio
+        entryPrice: sql<string>`((${wagers.odds}->>0)::numeric / ((${wagers.odds}->>0)::numeric + (${wagers.odds}->>1)::numeric))::text`,
+        timestamp: wagers.createdAt,
+      })
+      .from(wagers)
+      .where(eq(wagers.marketId, market.id))
+      .orderBy(desc(wagers.createdAt))
+      .limit(limit);
+
+    // Merge and sort
+    return [...poolBets, ...p2pWagers]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, limit);
   }
 }

@@ -1,20 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Text, useInput, useApp } from 'ink';
-import Gradient from 'ink-gradient';
+import { Box, Text, useApp, useInput } from 'ink';
 import BigText from 'ink-big-text';
-import { walletManager } from '../core/wallet.js';
+import Gradient from 'ink-gradient';
+import { useCallback, useEffect, useState } from 'react';
 import { backendClient } from '../core/backend.js';
+import { walletManager } from '../core/wallet.js';
 
 // Types
-import { ViewType, Market, WalletStatus, UserProfile } from './types.js';
+import { Market, UserProfile, ViewType, WalletStatus } from './types.js';
 
 // Views
-import { Dashboard } from './views/Dashboard.js';
-import { MarketList } from './views/MarketList.js';
-import { MarketDetail } from './views/MarketDetail.js';
 import { CreateMarket } from './views/CreateMarket.js';
-import { LoginView } from './views/LoginView.js';
+import { Dashboard } from './views/Dashboard.js';
 import { LinkView } from './views/LinkView.js';
+import { LoginView } from './views/LoginView.js';
+import { MarketDetail } from './views/MarketDetail.js';
+import { MarketList } from './views/MarketList.js';
 
 // Components
 import { ConfirmationModal } from './components/ConfirmationModal.js';
@@ -38,7 +38,7 @@ export const App = () => {
     const [showQuitConfirm, setShowQuitConfirm] = useState(false);
     const [showResolveConfirm, setShowResolveConfirm] = useState<any>(null);
     const [showBetConfirm, setShowBetConfirm] = useState<{ amount: string, side: 'YES' | 'NO' } | null>(null);
-    const [showWagerConfirm, setShowWagerConfirm] = useState<{ amount: string, side: 'YES' | 'NO' } | null>(null);
+    const [showWagerConfirm, setShowWagerConfirm] = useState<{ amount: string, side: 'YES' | 'NO', odds: string } | null>(null);
     const [globalError, setGlobalError] = useState<string | null>(null);
 
     const activeView = viewStack[viewStack.length - 1];
@@ -213,7 +213,7 @@ export const App = () => {
         }
     };
 
-    const executeWager = async (amountStr: string, side: 'YES' | 'NO') => {
+    const executeWager = async (amountStr: string, side: 'YES' | 'NO', oddsStr: string) => {
         if (!selectedMarket) return;
         setIsSubmitting(true);
         setShowWagerConfirm(null);
@@ -228,18 +228,37 @@ export const App = () => {
             });
 
             const amount = BigInt(Math.floor(parseFloat(amountStr) * 1_000_000));
-            // In a real P2P wager, this would involve creating a wager offer on-chain
-            // For now, we use the same placeBet pattern but tagged as P2P in backend
-            const res = await api.placeBet(selectedMarket.onchainId, amount, side === 'YES');
+            
+            // Parse Ratio Odds (e.g. 1:3 or 3:1)
+            let oddsNumerator = 1n;
+            let oddsDenominator = 1n;
+            if (oddsStr.includes(':')) {
+                const [n, d] = oddsStr.split(':').map(val => BigInt(val.trim() || '1'));
+                oddsNumerator = n;
+                oddsDenominator = d;
+            } else {
+                // decimal fallback (e.g. 2.5 -> 250/100)
+                oddsNumerator = BigInt(Math.floor(parseFloat(oddsStr) * 100) || 100);
+                oddsDenominator = 100n;
+            }
+
+            const res = await api.createWager(
+                selectedMarket.onchainId, 
+                side === 'YES', 
+                amount,
+                oddsNumerator,
+                oddsDenominator
+            );
 
             setSubmitStatus('Success! Syncing wager with backend...');
-            await backendClient.placeBet(selectedMarket.id, {
+            await backendClient.createP2PWager(selectedMarket.id, {
                 onchainId: res.onchainId,
                 side: side.toLowerCase(),
                 amount: amountStr,
                 txHash: res.txHash,
-                type: 'P2P'
-            } as any);
+                odds: [Number(oddsNumerator), Number(oddsDenominator)],
+                duration: 60 * 60 * 24 * 7 // 7 days default
+            });
 
             setSubmitStatus('P2P WAGER CREATED SUCCESSFULLY!');
             setTimeout(() => {
@@ -404,8 +423,8 @@ export const App = () => {
                                 onBack={popView} 
                                 isSubmitting={isSubmitting}
                                 submitStatus={submitStatus}
-                                onPlaceBet={(amount, side) => setShowBetConfirm({ amount, side })}
-                                onPlaceWager={(amount, side) => setShowWagerConfirm({ amount, side })}
+                                onPlaceBet={(amount: string, side: 'YES' | 'NO') => setShowBetConfirm({ amount, side })}
+                                onPlaceWager={(amount: string, side: 'YES' | 'NO', odds: string) => setShowWagerConfirm({ amount, side, odds })}
                                 onOpenBrowser={handleOpenMarketInBrowser}
                                 isAdmin={adminAddress ? walletManager.getAddress() === adminAddress : false}
                                 onAdminAction={handleAdminAction}
@@ -446,11 +465,35 @@ export const App = () => {
                         {activeView === 'portfolio' && (
                             <Box flexDirection="column" borderStyle="single" borderColor="cyan" padding={1}>
                                 <Text bold color="cyan">PORTFOLIO VIEW</Text>
-                                <Box marginTop={1}>
+                                <Box marginTop={1} flexDirection="column">
                                     <Text dimColor italic>Syncing your ZK-Shielded history from indexer...</Text>
+                                    
+                                    <Box marginTop={1} flexDirection="column">
+                                        <Box justifyContent="space-between" borderStyle="single" borderColor="gray" paddingX={1}>
+                                            <Text bold>MARKET POSITION</Text>
+                                            <Text bold>SIDE</Text>
+                                            <Text bold>STAKE</Text>
+                                            <Text bold>STATUS</Text>
+                                        </Box>
+                                        
+                                        {(me?.bets || []).length === 0 ? (
+                                            <Box paddingY={1} justifyContent="center">
+                                                <Text dimColor>No positions found in your ledger.</Text>
+                                            </Box>
+                                        ) : (
+                                            me?.bets.map((b: any) => (
+                                                <Box key={b.id} justifyContent="space-between" paddingX={1} borderStyle="single" borderColor="gray" borderDimColor marginTop={-1}>
+                                                    <Box flexGrow={1}><Text>{b.market?.question.slice(0, 25)}...</Text></Box>
+                                                    <Box width={10} marginLeft={1}><Text color={b.side === 'yes' ? 'green' : 'red'}>{b.side.toUpperCase()}</Text></Box>
+                                                    <Box width={15} marginLeft={1}><Text>{b.amount} NIGHT</Text></Box>
+                                                    <Box width={10} marginLeft={1}><Text color="yellow">{b.isSettled ? 'SETTLED' : 'ACTIVE'}</Text></Box>
+                                                </Box>
+                                            ))
+                                        )}
+                                    </Box>
                                 </Box>
                                 <Box marginTop={1}>
-                                    <Text>Total Bets: {me?.bets?.length || 0}</Text>
+                                    <Text>Total Active Positions: {me?.bets?.length || 0}</Text>
                                 </Box>
                                 <Box marginTop={2}>
                                     <Text color="gray">Press ESC to go back.</Text>
@@ -508,8 +551,8 @@ export const App = () => {
                 {showWagerConfirm && (
                    <ConfirmationModal 
                       title="CONFIRM P2P WAGER"
-                      message={`Create a P2P WAGER of ${showWagerConfirm.amount} NIGHT on ${showWagerConfirm.side} for:\n"${selectedMarket?.question}"\n\nThis will be matched with opposing custom wagers.`}
-                      onConfirm={() => executeWager(showWagerConfirm.amount, showWagerConfirm.side)}
+                      message={`Create a P2P WAGER of ${showWagerConfirm.amount} NIGHT on ${showWagerConfirm.side} for:\n"${selectedMarket?.question}"\n\nTarget Odds: ${showWagerConfirm.odds}\nThis will be matched with opposing custom wagers.`}
+                      onConfirm={() => executeWager(showWagerConfirm.amount, showWagerConfirm.side, showWagerConfirm.odds)}
                       onCancel={() => setShowWagerConfirm(null)}
                       confirmColor="yellow"
                       confirmLabel="Confirm Wager (y)"

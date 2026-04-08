@@ -3,7 +3,6 @@ import { format } from 'date-fns';
 import { 
   History as HistoryIcon,
   Loader2,
-  ExternalLink,
   ShieldCheck,
   Hash,
   EyeOff,
@@ -103,13 +102,15 @@ export function MarketHistory({ marketId }: MarketHistoryProps) {
                     >
                       <Hash className="w-3 h-3" />
                       {tx.txHash ? tx.txHash.slice(0, 12) + '...' : 'pending'}
-                      <ExternalLink className="w-2.5 h-2.5 ml-1" />
                     </a>
+                    <div className={`px-2 py-0.5 rounded-sm text-[9px] font-bold font-mono tracking-widest ${tx.type === 'P2P' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/20' : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/20'}`}>
+                       {tx.type || 'POOL'}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                      <EyeOff className="w-3 h-3 text-slate-600" />
                      <span className="text-[11px] font-mono text-slate-500">
-                       Position: <span className="text-white/60 font-bold italic tracking-wider">ZK-SHIELDED</span>
+                       Signal: <span className="text-white/60 font-bold italic tracking-wider">ZK-SHIELDED</span>
                      </span>
                   </div>
                 </div>

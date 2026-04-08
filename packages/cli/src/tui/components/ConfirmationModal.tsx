@@ -38,22 +38,27 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     >
       <Box 
         flexDirection="column" 
-        borderStyle="double" 
+        borderStyle="bold" 
         borderColor={confirmColor} 
-        padding={1} 
-        paddingX={3}
+        padding={2} 
+        paddingX={4}
         alignItems="center"
-        width={50}
+        width={60}
+        backgroundColor="black"
       >
         <Box marginBottom={1}>
-           <Text bold color={confirmColor}> ⚠️ {title} ⚠️ </Text>
+           <Text bold color={confirmColor}> 🔒 {title} 🔒 </Text>
         </Box>
         <Box marginY={1}>
           <Text color="white" wrap="wrap">{message}</Text>
         </Box>
-        <Box marginTop={1} justifyContent="space-around" width="100%">
-          <Text color="gray">[n] {cancelLabel}</Text>
-          <Text color={confirmColor} bold>[y] {confirmLabel}</Text>
+        <Box marginTop={2} justifyContent="space-around" width="100%">
+          <Box borderStyle="single" borderColor="gray" paddingX={1}>
+            <Text color="gray">{cancelLabel}</Text>
+          </Box>
+          <Box borderStyle="bold" borderColor={confirmColor} paddingX={1}>
+            <Text color={confirmColor} bold>{confirmLabel}</Text>
+          </Box>
         </Box>
       </Box>
     </Box>
