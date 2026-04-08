@@ -59,8 +59,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <Box marginTop={1} borderStyle="round" borderColor="white" padding={1} flexDirection="column">
            <Text bold color="magenta">USER ACCOUNT: {me.username || 'Anonymous'}</Text>
            <Box marginTop={1} justifyContent="space-between">
-              <Text color="gray">Recent Bets: {me.bets?.length || 0}</Text>
-              <Text color="gray">Total Wagers: 0</Text>
+              <Text color="gray">RECENT BETS: {me.bets?.length || 0}</Text>
+              <Text color="gray">TOTAL WAGERS: {me.wagers?.length || 0}</Text>
            </Box>
         </Box>
       )}

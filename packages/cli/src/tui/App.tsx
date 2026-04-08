@@ -1,6 +1,7 @@
 import { Box, Text, useApp, useInput } from 'ink';
 import BigText from 'ink-big-text';
 import Gradient from 'ink-gradient';
+import { format } from 'date-fns';
 import { useCallback, useEffect, useState } from 'react';
 import { backendClient } from '../core/backend.js';
 import { walletManager } from '../core/wallet.js';
@@ -15,6 +16,8 @@ import { LinkView } from './views/LinkView.js';
 import { LoginView } from './views/LoginView.js';
 import { MarketDetail } from './views/MarketDetail.js';
 import { MarketList } from './views/MarketList.js';
+import { Portfolio } from './views/Portfolio.js';
+import { Wallet } from './views/Wallet.js';
 
 // Components
 import { ConfirmationModal } from './components/ConfirmationModal.js';
@@ -39,6 +42,7 @@ export const App = () => {
     const [showResolveConfirm, setShowResolveConfirm] = useState<any>(null);
     const [showBetConfirm, setShowBetConfirm] = useState<{ amount: string, side: 'YES' | 'NO' } | null>(null);
     const [showWagerConfirm, setShowWagerConfirm] = useState<{ amount: string, side: 'YES' | 'NO', odds: string } | null>(null);
+    const [showCreateConfirm, setShowCreateConfirm] = useState<any | null>(null);
     const [globalError, setGlobalError] = useState<string | null>(null);
 
     const activeView = viewStack[viewStack.length - 1];
@@ -65,7 +69,7 @@ export const App = () => {
             const [m, s, user, adminConfig] = await Promise.all([
                 backendClient.getMarkets({ limit: 12 }),
                 walletManager.isLoggedIn() ? walletManager.getStatus() : null,
-                walletManager.isLinked() ? backendClient.getMe() : null,
+                walletManager.isLinked() ? backendClient.getPortfolio() : null,
                 walletManager.isLoggedIn() ? backendClient.getAdminConfig().catch(() => null) : null
             ]);
             setMarkets(m as any);
@@ -145,6 +149,7 @@ export const App = () => {
     const handleCreateMarket = async (formData: any) => {
         setIsSubmitting(true);
         setSubmitStatus('Generating on-chain reference...');
+        setShowCreateConfirm(null);
         try {
             const api = await walletManager.getAPI();
             api.setStatusCallback(setSubmitStatus);
@@ -164,7 +169,7 @@ export const App = () => {
             };
 
             await backendClient.createMarket(payload);
-            setSubmitStatus('Market Created Successfully!');
+            setSubmitStatus('MARKET CREATED SUCCESSFULLY!');
 
             setTimeout(() => {
                 setIsSubmitting(false);
@@ -250,7 +255,7 @@ export const App = () => {
                 oddsDenominator
             );
 
-            setSubmitStatus('Success! Syncing wager with backend...');
+            setSubmitStatus('Success! Syncing WAGER with backend...');
             await backendClient.createP2PWager(selectedMarket.id, {
                 onchainId: res.onchainId,
                 side: side.toLowerCase(),
@@ -351,12 +356,6 @@ export const App = () => {
         if (key.escape) {
             popView();
         }
-
-        // Automatic browser opening for link session
-        if (input === 'o' && activeView === 'link' && pairingSession) {
-            const url = `${process.env.SHADOW_MARKET_WEB_URL || 'http://localhost:5173'}/auth/link?code=${pairingSession.pairingCode}`;
-            import('open').then(m => (m.default || m)(url)).catch(() => {});
-        }
     });
 
     useEffect(() => {
@@ -394,7 +393,7 @@ export const App = () => {
                 )}
                 {loading ? (
                     <Box justifyContent="center" alignItems="center" width="100%">
-                        <Text color="cyan">… Syncing with Ledger Hub …</Text>
+                        <Text color="cyan">SYNCING WITH LEDGER HUB</Text>
                     </Box>
                 ) : (
                     <Box flexDirection="column" width="100%" minHeight={15}>
@@ -436,12 +435,20 @@ export const App = () => {
                                 onCancel={popView} 
                                 isSubmitting={isSubmitting}
                                 submitStatus={submitStatus}
-                                onSubmit={handleCreateMarket}
+                                onSubmit={(data) => setShowCreateConfirm(data)}
                             />
                         )}
 
                         {activeView === 'login' && (
                             <LoginView onLogin={handleLogin} onQuit={() => setShowQuitConfirm(true)} />
+                        )}
+
+                        {activeView === 'portfolio' && (
+                             <Portfolio me={me} onBack={popView} />
+                        )}
+
+                        {activeView === 'wallet' && (
+                             <Wallet walletStatus={walletStatus} onBack={popView} />
                         )}
 
                         {activeView === 'link' && (
@@ -457,65 +464,11 @@ export const App = () => {
                                 />
                             ) : (
                                 <Box justifyContent="center" alignItems="center" height={10}>
-                                    <Text color="yellow">… Initializing secure pairing session …</Text>
+                                    <Text color="yellow">INITIALIZING SECURE PAIRING SESSION</Text>
                                 </Box>
                             )
                         )}
 
-                        {activeView === 'portfolio' && (
-                            <Box flexDirection="column" borderStyle="single" borderColor="cyan" padding={1}>
-                                <Text bold color="cyan">PORTFOLIO VIEW</Text>
-                                <Box marginTop={1} flexDirection="column">
-                                    <Text dimColor italic>Syncing your ZK-Shielded history from indexer...</Text>
-                                    
-                                    <Box marginTop={1} flexDirection="column">
-                                        <Box justifyContent="space-between" borderStyle="single" borderColor="gray" paddingX={1}>
-                                            <Text bold>MARKET POSITION</Text>
-                                            <Text bold>SIDE</Text>
-                                            <Text bold>STAKE</Text>
-                                            <Text bold>STATUS</Text>
-                                        </Box>
-                                        
-                                        {(me?.bets || []).length === 0 ? (
-                                            <Box paddingY={1} justifyContent="center">
-                                                <Text dimColor>No positions found in your ledger.</Text>
-                                            </Box>
-                                        ) : (
-                                            me?.bets.map((b: any) => (
-                                                <Box key={b.id} justifyContent="space-between" paddingX={1} borderStyle="single" borderColor="gray" borderDimColor marginTop={-1}>
-                                                    <Box flexGrow={1}><Text>{b.market?.question.slice(0, 25)}...</Text></Box>
-                                                    <Box width={10} marginLeft={1}><Text color={b.side === 'yes' ? 'green' : 'red'}>{b.side.toUpperCase()}</Text></Box>
-                                                    <Box width={15} marginLeft={1}><Text>{b.amount} NIGHT</Text></Box>
-                                                    <Box width={10} marginLeft={1}><Text color="yellow">{b.isSettled ? 'SETTLED' : 'ACTIVE'}</Text></Box>
-                                                </Box>
-                                            ))
-                                        )}
-                                    </Box>
-                                </Box>
-                                <Box marginTop={1}>
-                                    <Text>Total Active Positions: {me?.bets?.length || 0}</Text>
-                                </Box>
-                                <Box marginTop={2}>
-                                    <Text color="gray">Press ESC to go back.</Text>
-                                </Box>
-                            </Box>
-                        )}
-
-                        {activeView === 'wallet' && (
-                            <Box flexDirection="column" borderStyle="single" borderColor="blue" padding={1}>
-                                <Text bold color="blue">WALLET HUB</Text>
-                                <Box marginTop={1} flexDirection="column">
-                                    <Text color="gray">Address: <Text color="magenta">{walletManager.getAddress()}</Text></Text>
-                                    <Box marginTop={1} flexDirection="column">
-                                        <Text color="gray">Balance (NIGHT): {walletStatus?.balance.toString() || '0'}</Text>
-                                        <Text color="gray">Balance (DUST): {walletStatus?.dust.toString() || '0'}</Text>
-                                    </Box>
-                                </Box>
-                                <Box marginTop={2}>
-                                    <Text color="gray">Press ESC to go back.</Text>
-                                </Box>
-                            </Box>
-                        )}
 
                         {/* Catch-all for unknown views to prevent blank screens */}
                         {!['dashboard', 'markets', 'market-detail', 'create', 'login', 'link', 'portfolio', 'wallet'].includes(activeView) && (
@@ -527,6 +480,17 @@ export const App = () => {
                 )}
 
                 {/* Modals Layer */}
+                 {showCreateConfirm && (
+                    <ConfirmationModal 
+                       title="CONFIRM MARKET CREATION"
+                       message={`You are about to broadcast this market to the Midnight Network:\n\n"${showCreateConfirm.question}"\n\nResolution: ${showCreateConfirm.targetDate ? format(showCreateConfirm.targetDate, 'PPP') : 'Unknown'}\nCategory: ${showCreateConfirm.category}`}
+                       onConfirm={() => handleCreateMarket(showCreateConfirm)}
+                       onCancel={() => setShowCreateConfirm(null)}
+                       confirmColor="cyan"
+                       confirmLabel="Create Market (y)"
+                    />
+                 )}
+
                 {showQuitConfirm && (
                    <ConfirmationModal 
                       title="TERMINAL EXIT"
@@ -540,7 +504,7 @@ export const App = () => {
                 {showBetConfirm && (
                    <ConfirmationModal 
                       title="CONFIRM TRANSACTION"
-                      message={`Place a ${showBetConfirm.side} bet of ${showBetConfirm.amount} NIGHT on:\n"${selectedMarket?.question}"`}
+                      message={`Place a ${showBetConfirm.side} BET of ${showBetConfirm.amount} NIGHT on:\n"${selectedMarket?.question}"`}
                       onConfirm={() => executeBet(showBetConfirm.amount, showBetConfirm.side)}
                       onCancel={() => setShowBetConfirm(null)}
                       confirmColor="green"

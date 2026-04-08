@@ -69,6 +69,11 @@ export const marketsApi = {
     return data.data!;
   },
 
+  getWagers: async (id: string): Promise<any[]> => {
+    const { data } = await api.get<ApiResponse<any[]>>(`/markets/${id}/wagers`);
+    return data.data!;
+  },
+
   create: async (data: {
     question: string;
     description?: string;

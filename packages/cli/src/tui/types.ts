@@ -36,4 +36,5 @@ export interface UserProfile {
   id: string;
   username: string;
   bets: any[];
+  wagers: any[];
 }

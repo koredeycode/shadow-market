@@ -4,6 +4,7 @@ import inquirer from 'inquirer';
 import ora from 'ora';
 import { walletManager } from '../core/wallet.js';
 import { backendClient } from '../core/backend.js';
+import { getExplorerLink } from '@shadow-market/api';
 
 export const adminCommands = new Command('admin')
   .description('Administrative tools for Shadow Market owners');
@@ -27,7 +28,11 @@ adminCommands
     try {
       const api = await walletManager.getAPI();
       const txHash = await api.initialize();
-      spinner.succeed(chalk.green(`Contract successfully initialized! TX: ${txHash}`));
+      spinner.succeed(chalk.green(`Contract successfully initialized!`));
+      const link = getExplorerLink('transactions', txHash);
+      if (link) {
+        console.log(chalk.blue.underline(`Explorer: ${link}`));
+      }
     } catch (err: any) {
       spinner.fail(chalk.red(`Initialization failed: ${err.message}`));
     }
@@ -65,7 +70,11 @@ adminCommands
       const api = await walletManager.getAPI();
 
       const txHash = await api.resolveMarket(marketId, outcome);
-      spinner.succeed(chalk.green(`Market resolved successfully! TX: ${txHash}`));
+      spinner.succeed(chalk.green(`Market resolved successfully!`));
+      const link = getExplorerLink('transactions', txHash);
+      if (link) {
+        console.log(chalk.blue.underline(`Explorer: ${link}`));
+      }
       
       console.log(chalk.gray('Note: You may need to refresh the backend manually or wait for the indexer to sync.'));
     } catch (err: any) {
@@ -92,7 +101,11 @@ adminCommands
     try {
       const api = await walletManager.getAPI();
       const txHash = await api.lockMarket(marketId);
-      spinner.succeed(chalk.green(`Market locked! TX: ${txHash}`));
+      spinner.succeed(chalk.green(`Market locked!`));
+      const link = getExplorerLink('transactions', txHash);
+      if (link) {
+        console.log(chalk.blue.underline(`Explorer: ${link}`));
+      }
     } catch (err: any) {
       spinner.fail(chalk.red(`Failed to lock market: ${err.message}`));
     }

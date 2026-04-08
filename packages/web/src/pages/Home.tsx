@@ -118,7 +118,7 @@ export function Home() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4 text-slate-500" />
-                      <span>{currentFeatured.totalBets} Traders</span>
+                      <span>{currentFeatured.totalBets} Positions</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-slate-500" />

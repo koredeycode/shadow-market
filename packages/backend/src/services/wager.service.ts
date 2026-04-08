@@ -344,12 +344,20 @@ export class WagerService {
    * Get full portfolio for a user
    */
   async getFullPortfolio(userId: string): Promise<any> {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { id: true, address: true, username: true, createdAt: true }
+    });
     const allBets = await this.getUserBets(userId);
+    const wagers = await this.getUserWagers(userId);
     const stats = await this.getPortfolioStats(userId);
 
     return {
-      activeBets: allBets.filter(p => !p.isSettled),
-      settledBets: allBets.filter(p => p.isSettled),
+      ...user,
+      bets: allBets,
+      activeBets: allBets.filter(b => !b.isSettled),
+      settledBets: allBets.filter(b => b.isSettled),
+      wagers: wagers.active.concat(wagers.completed),
       stats,
     };
   }

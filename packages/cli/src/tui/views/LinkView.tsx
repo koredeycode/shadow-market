@@ -40,8 +40,8 @@ export const LinkView: React.FC<LinkViewProps> = ({
             <Text color="gray">This authorizes your CLI to use your web profile.</Text>
         </Box>
 
-        <Box marginTop={2} justifyContent="center">
-            <Text color="yellow">… Waiting for browser confirmation …</Text>
+        <Box marginTop={2} justifyContent="center" borderStyle="single" borderColor="yellow" paddingX={2}>
+            <Text color="yellow">[ WAITING FOR BROWSER CONFIRMATION ]</Text>
         </Box>
     </Box>
   );

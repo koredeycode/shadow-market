@@ -47,7 +47,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         backgroundColor="black"
       >
         <Box marginBottom={1}>
-           <Text bold color={confirmColor}> 🔒 {title} 🔒 </Text>
+           <Text bold color={confirmColor}> [ {title} ] </Text>
         </Box>
         <Box marginY={1}>
           <Text color="white" wrap="wrap">{message}</Text>

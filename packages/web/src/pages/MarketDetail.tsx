@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLayoutEffect } from 'react';
 import { format } from 'date-fns';
-import { ArrowLeft, BarChart3, Clock, Info, Share2, Zap, ChevronUp, Wallet } from 'lucide-react';
+import { ArrowLeft, BarChart3, Clock, Info, Share2, ChevronUp, Wallet } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -29,6 +29,14 @@ export function MarketDetail() {
     return 'chart';
   }, [location.pathname]);
   
+  const [terminalMode, setTerminalMode] = useState<'pool' | 'p2p'>('pool');
+  
+  // Sync terminal mode with active tab on mount/navigation
+  useLayoutEffect(() => {
+    if (activeTab === 'p2p') setTerminalMode('p2p');
+    else if (activeTab === 'chart') setTerminalMode('pool');
+  }, [activeTab]);
+
   const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d' | '30d' | 'all'>('24h');
   const [selectedWager, setSelectedWager] = useState<Wager | null>(null);
 
@@ -94,7 +102,9 @@ export function MarketDetail() {
 
   const marketPositions = useMemo(() => {
     if (!portfolio || !market) return [];
-    return [...portfolio.activeBets, ...portfolio.settledBets].filter(bet => bet.marketId === market.id);
+    const active = portfolio.activeBets || [];
+    const settled = portfolio.settledBets || [];
+    return [...active, ...settled].filter(bet => bet.marketId === market.id);
   }, [portfolio, market]);
 
   const handleUpvote = async () => {
@@ -217,7 +227,8 @@ export function MarketDetail() {
             }`}
           >
             <ChevronUp className={`w-3.5 h-3.5 ${market.hasUpvoted ? 'text-white' : ''}`} />
-            {market.upvotes}
+            <span className="ml-1">UPVOTE</span>
+            <span className="ml-2 border-l border-white/20 pl-2">{market.upvotes}</span>
           </button>
         </div>
 
@@ -233,7 +244,7 @@ export function MarketDetail() {
       </div>
 
       {/* Unified Interaction Level */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Market Graphical Area */}
         <div className="lg:col-span-8 bg-slate-900/40 border border-white/5 rounded-sm overflow-hidden flex flex-col min-h-[500px]">
           <div className="flex items-center border-b border-white/5 bg-black/40">
@@ -245,7 +256,7 @@ export function MarketDetail() {
                   : 'text-slate-500 hover:text-slate-300'
               }`}
             >
-              Market Center
+              Pool Prediction
             </button>
             <button
               onClick={() => navigate(`/markets/${slug}/wagers`)}
@@ -255,7 +266,7 @@ export function MarketDetail() {
                   : 'text-slate-500 hover:text-slate-300'
               }`}
             >
-              Wagers Hub
+              P2P Wagers
             </button>
             <button
               onClick={() => navigate(`/markets/${slug}/history`)}
@@ -265,7 +276,7 @@ export function MarketDetail() {
                   : 'text-slate-500 hover:text-slate-300'
               }`}
             >
-              Order History
+              Audit Trail
             </button>
             <div className="flex-1" />
             {activeTab === 'chart' && (
@@ -321,23 +332,31 @@ export function MarketDetail() {
         </div>
 
         {/* Execution Terminal */}
-        <div className="lg:col-span-4 flex flex-col h-full">
+        <div className="lg:col-span-4 flex flex-col lg:sticky lg:top-8 self-start">
           <div className="bg-slate-900/40 border border-white/10 rounded-sm overflow-hidden flex-1 flex flex-col">
             <div className="px-6 py-4 border-b border-white/5 bg-black/40 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Zap className="w-3.5 h-3.5 text-electric-blue" />
-                <h2 className="text-white font-bold text-[10px] uppercase tracking-[0.25em]">
-                  {activeTab === 'p2p' ? 'P2P protocol terminal' : 'Execution terminal'}
-                </h2>
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => setTerminalMode('pool')}
+                  className={`text-[9px] font-bold font-mono tracking-widest uppercase transition-colors ${terminalMode === 'pool' ? 'text-electric-blue' : 'text-slate-500'}`}
+                >
+                  [ Pool ]
+                </button>
+                <span className="text-white/10">|</span>
+                <button 
+                  onClick={() => setTerminalMode('p2p')}
+                  className={`text-[9px] font-bold font-mono tracking-widest uppercase transition-colors ${terminalMode === 'p2p' ? 'text-electric-blue' : 'text-slate-500'}`}
+                >
+                  [ P2P ]
+                </button>
               </div>
               <div className="flex gap-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-success-green animate-pulse" />
                 <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
-                <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
               </div>
             </div>
             <div className="p-1 flex-1">
-              {activeTab === 'p2p' ? (
+              {terminalMode === 'p2p' ? (
                 <P2PActionTerminal 
                   market={market} 
                   selectedWager={selectedWager}
@@ -411,15 +430,19 @@ export function MarketDetail() {
               </h3>
               <div className="space-y-4">
                 {marketPositions.map(pos => (
-                  <div key={pos.id} className="border border-white/5 p-4 rounded-sm space-y-3 bg-black/20">
+                  <Link 
+                    key={pos.id} 
+                    to={`/portfolio/bets/${pos.id}`}
+                    className="block border border-white/5 p-4 rounded-sm space-y-3 bg-black/20 hover:border-electric-blue/30 transition-all group"
+                  >
                     <div className="flex justify-between items-center">
                       <span className={`text-[10px] font-mono font-bold uppercase tracking-widest ${
                         pos.side === 'yes' ? 'text-success-green' : 'text-danger-red'
                       }`}>
                         {pos.side} Position
                       </span>
-                      <span className="text-[9px] text-slate-500 font-mono">
-                        {format(new Date(pos.entryTimestamp), 'MMM dd, HH:mm')}
+                      <span className="text-[9px] text-slate-500 font-mono group-hover:text-electric-blue uppercase">
+                        VIEW DATA (ZK)
                       </span>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -440,7 +463,7 @@ export function MarketDetail() {
                          {parseFloat(pos.profitLoss) >= 0 ? '+' : ''}{pos.profitLoss} NIGHT
                        </span>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>

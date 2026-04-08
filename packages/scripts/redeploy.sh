@@ -175,7 +175,12 @@ if should_run 4; then
         exit 1
     fi
 
-    echo -e "${GREEN}New Contract Address: ${NEW_ADDRESS}${NC}"
+    echo -e "${GREEN}  ✓ Contract Address: ${NEW_ADDRESS}${NC}"
+    if [[ "$NETWORK" == "preview" ]]; then
+        echo -e "${BLUE}  🔗 Explorer: https://explorer.preview.midnight.network/contracts/${NEW_ADDRESS}${NC}\n"
+    elif [[ "$NETWORK" == "preprod" ]]; then
+        echo -e "${BLUE}  🔗 Explorer: https://explorer.preprod.midnight.network/contracts/${NEW_ADDRESS}${NC}\n"
+    fi
 
     # 5. Update Contract Address in Environment Files
     echo -e "\n${YELLOW}[5/11] Updating contract address in environment files...${NC}"
@@ -246,8 +251,7 @@ if should_run 11; then
 fi
 
 # Final checks
-echo -e "\n${GREEN}==============================================================${NC}"
-echo -e "${GREEN}            REDEPLOYMENT STEP COMPLETED SUCCESSFULLY!         ${NC}"
+echo -e "${GREEN}            REDEPLOYMENT COMPLETED SUCCESSFULLY!              ${NC}"
 echo -e "${GREEN}==============================================================${NC}"
 echo -e "${BLUE}Network:          ${YELLOW}${NETWORK}${NC}"
-echo -e "${BLUE}Project-wide environment files have been synchronized.${NC}\n"
+echo -e "${BLUE}Environment files updated and synchronized.${NC}\n"

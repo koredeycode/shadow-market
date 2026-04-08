@@ -1,4 +1,4 @@
-import { BarChart3, Users, Clock, CheckCircle2, Database } from 'lucide-react';
+import { BarChart3, Users, Clock, CheckCircle2, Database, TrendingUp } from 'lucide-react';
 import { Market } from '../../types';
 
 interface MarketStatsProps {
@@ -38,7 +38,6 @@ export function MarketStats({ market }: MarketStatsProps) {
       value: formatVolume(market.totalVolume),
       textColor: 'text-white',
     },
-
     {
       icon: <Users className="w-4 h-4" />,
       label: 'Positions',
@@ -46,10 +45,16 @@ export function MarketStats({ market }: MarketStatsProps) {
       textColor: 'text-white',
     },
     {
-      icon: <Users className="w-4 h-4 opacity-50" />,
-      label: 'Traders',
-      value: (market.uniqueTraders || market.totalBets).toLocaleString(),
-      textColor: 'text-slate-400',
+      icon: <TrendingUp className="w-4 h-4 text-success-green" />,
+      label: 'Yes Price',
+      value: `${(parseFloat(market.yesPrice) * 100).toFixed(0)}%`,
+      textColor: 'text-success-green',
+    },
+    {
+      icon: <TrendingUp className="w-4 h-4 text-red-500" />,
+      label: 'No Price',
+      value: `${(parseFloat(market.noPrice) * 100).toFixed(0)}%`,
+      textColor: 'text-red-500',
     },
     {
       icon: <Clock className="w-4 h-4" />,
@@ -62,12 +67,6 @@ export function MarketStats({ market }: MarketStatsProps) {
       label: 'Genesis',
       value: new Date(market.createdAt).toLocaleDateString(),
       textColor: 'text-slate-400',
-    },
-    {
-      icon: <Database className="w-4 h-4" />,
-      label: 'ID',
-      value: market.onchainId.slice(0, 12),
-      textColor: 'text-slate-500',
     },
   ];
 

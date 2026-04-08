@@ -496,8 +496,13 @@ async function main() {
     );
 
     const contractAddress = deployed.deployTxData.public.contractAddress;
-    console.log('Contract deployed successfully!\n');
-    console.log(`Contract Address: ${contractAddress}\n`);
+    console.log(chalk.green('  ✓ Contract deployed successfully!\n'));
+    console.log(`  Address: ${chalk.cyan(contractAddress)}`);
+    if (NETWORK_CONFIG.explorerBaseUrl.includes('midnight.network')) {
+      console.log(`  Explorer: ${chalk.blue.underline(`${NETWORK_CONFIG.explorerBaseUrl}/contracts/${contractAddress}`)}\n`);
+    } else {
+      console.log('\n');
+    }
 
     // Step: Initialize contract
     console.log('─── Step: Initialize Contract ──────────────────────────────────\n');

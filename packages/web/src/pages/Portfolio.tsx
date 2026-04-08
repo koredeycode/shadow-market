@@ -106,7 +106,9 @@ export function Portfolio() {
     );
   }
 
-  const { activeBets, settledBets, stats } = portfolio;
+  const activeBets = portfolio.activeBets || [];
+  const settledBets = portfolio.settledBets || [];
+  const stats = portfolio.stats;
 
   const formatCurrency = (value: string) => {
     const num = parseFloat(value || '0');
@@ -139,7 +141,7 @@ export function Portfolio() {
           <div className="px-3 py-1.5 bg-white/[0.02] border border-white/5 rounded-sm flex items-center gap-2">
             <Clock className="w-3 h-3 text-slate-500" />
             <span className="text-[9px] font-mono text-slate-400 uppercase tracking-tight">
-              Last sync: Just now
+              Updated: Just now
             </span>
           </div>
           <ExportDataButton type="portfolio" />
@@ -166,7 +168,7 @@ export function Portfolio() {
           color={isProfitable ? 'text-success-green' : 'text-red-500'}
         />
         <StatCard
-          title="Terminal precision"
+          title="Win Rate"
           value={`${stats.winRate.toFixed(1)}%`}
           icon={<Trophy className="w-5 h-5" />}
           trend={{
@@ -176,7 +178,7 @@ export function Portfolio() {
           color="text-electric-blue"
         />
         <StatCard
-          title="Aggregated volume"
+          title="Total Volume"
           value={formatCurrency(stats.totalVolume)}
           icon={<Activity className="w-5 h-5" />}
           trend={{
@@ -201,7 +203,7 @@ export function Portfolio() {
                 }`}
               >
                 <Activity className="w-3 h-3" />
-                Active units ({activeBets.length})
+                Active Bets ({activeBets.length})
               </button>
               <button
                 onClick={() => setActiveTab('settled')}
@@ -231,7 +233,7 @@ export function Portfolio() {
             <div className="flex items-center gap-2 text-white">
               <BoxIcon className="w-4 h-4 text-electric-blue" />
               <h3 className="text-[10px] font-mono font-bold uppercase tracking-widest">
-                Risk allocation
+                Exposure
               </h3>
             </div>
 
@@ -260,8 +262,7 @@ export function Portfolio() {
               <div className="flex items-start gap-3">
                 <div className="w-1 h-1 rounded-full bg-success-green mt-1.5" />
                 <p className="text-[10px] text-slate-500 leading-relaxed font-light">
-                  Standard risk parameters detected. Your current exposure complies with the Shadow
-                  Protocol safety margins.
+                  Your portfolio is within safe limits.
                 </p>
               </div>
             </div>
@@ -269,7 +270,7 @@ export function Portfolio() {
 
           <div className="bg-gradient-to-br from-electric-blue/10 to-transparent border border-electric-blue/20 p-6 rounded-sm space-y-4">
             <h4 className="text-white font-bold text-xs uppercase tracking-widest">
-              Advanced recon
+              Insights
             </h4>
             <p className="text-[10px] text-slate-400 font-light leading-relaxed font-mono italic">
               "Data is the ultimate currency. Analyze your patterns to out-trade the noise."

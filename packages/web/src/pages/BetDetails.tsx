@@ -12,6 +12,7 @@ import {
   Wallet
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { getTxExplorerUrl, isExplorerAvailable } from '../utils/explorer';
 
 export default function BetDetails() {
   const { id } = useParams<{ id: string }>();
@@ -27,7 +28,7 @@ export default function BetDetails() {
       <div className="flex flex-col items-center justify-center py-24 space-y-4">
         <div className="w-12 h-12 border-4 border-electric-blue/20 border-t-electric-blue rounded-full animate-spin" />
         <p className="text-slate-500 font-mono text-xs uppercase tracking-widest animate-pulse">
-          Decrypting Bet Data...
+          Retrieving Bet Details...
         </p>
       </div>
     );
@@ -93,10 +94,10 @@ export default function BetDetails() {
           <div className="bg-slate-900/40 border-stealth p-6 rounded-sm min-w-[200px] text-right space-y-1">
              <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Current Performance</span>
              <h2 className={`text-4xl font-bold font-mono tracking-tighter ${isProfitable ? 'text-success-green' : 'text-red-500'}`}>
-               {isProfitable ? '+' : ''}{pnlNum.toFixed(2)} USD
+               {isProfitable ? '+' : ''}{pnlNum.toFixed(2)} NIGHT
              </h2>
              <p className={`text-[11px] font-mono font-bold ${isProfitable ? 'text-success-green/60' : 'text-red-500/60'}`}>
-                {bet.isSettled ? 'FINAL PAYOUT: ' : 'TOTAL EXPOSURE: '} {bet.payout || bet.currentValue} USD
+                {bet.isSettled ? 'FINAL PAYOUT: ' : 'TOTAL EXPOSURE: '} {bet.payout || bet.currentValue} NIGHT
              </p>
           </div>
         </div>
@@ -109,7 +110,7 @@ export default function BetDetails() {
           </div>
           <div className="space-y-1">
             <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Staked amount</p>
-            <h3 className="text-xl font-bold text-white font-mono">{parseFloat(bet.amount).toFixed(2)} USD</h3>
+            <h3 className="text-xl font-bold text-white font-mono">{parseFloat(bet.amount).toFixed(2)} NIGHT</h3>
           </div>
         </div>
         <div className="bg-slate-900/40 border-stealth p-6 rounded-sm space-y-4 text-center">
@@ -136,17 +137,29 @@ export default function BetDetails() {
 
       <div className="bg-slate-900/40 border-stealth rounded-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-white/5 bg-black/40 flex items-center justify-between">
-          <h3 className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-white">Execution details</h3>
+          <h3 className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-white">Transaction Data</h3>
           <ShieldCheck className="w-4 h-4 text-electric-blue" />
         </div>
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
            <div className="space-y-6">
-             <div className="space-y-2">
-               <label className="text-[9px] font-mono text-slate-500 uppercase tracking-widest">On-chain transaction hash</label>
-               <div className="p-3 bg-black/20 border border-white/5 rounded-sm font-mono text-[10px] break-all text-slate-300">
-                 {Math.random().toString(16).slice(2) + Math.random().toString(16).slice(2)}
-               </div>
-             </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-[9px] font-mono text-slate-500 uppercase tracking-widest">Transaction Hash</label>
+                  {isExplorerAvailable() && bet.txHash && (
+                    <a 
+                      href={getTxExplorerUrl(bet.txHash)} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-[9px] text-electric-blue hover:underline flex items-center gap-1"
+                    >
+                      View Explorer <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  )}
+                </div>
+                <div className="p-3 bg-black/20 border border-white/5 rounded-sm font-mono text-[10px] break-all text-slate-300">
+                  {bet.txHash || bet.id}
+                </div>
+              </div>
              <div className="space-y-2">
                <label className="text-[9px] font-mono text-slate-500 uppercase tracking-widest">Wager ID (Internal)</label>
                <div className="p-3 bg-black/20 border border-white/5 rounded-sm font-mono text-[10px] text-slate-300">
@@ -159,15 +172,15 @@ export default function BetDetails() {
              <div className="flex items-start gap-4">
                 <Calendar className="w-4 h-4 text-slate-600 mt-1" />
                 <div className="space-y-1">
-                   <p className="text-[10px] font-mono text-slate-500 uppercase">Execution timestamp</p>
+                   <p className="text-[10px] font-mono text-slate-500 uppercase">Time</p>
                    <p className="text-xs text-white">{new Date(bet.entryTimestamp).toLocaleString()}</p>
                 </div>
              </div>
              <div className="flex items-start gap-4">
                 <ShieldCheck className="w-4 h-4 text-slate-600 mt-1" />
                 <div className="space-y-1">
-                   <p className="text-[10px] font-mono text-slate-500 uppercase">Proof verification</p>
-                   <p className="text-xs text-success-green">Verified by Midnight Protocol v4.0</p>
+                   <p className="text-[10px] font-mono text-slate-500 uppercase">Status</p>
+                   <p className="text-xs text-success-green">Confirmed on Midnight</p>
                 </div>
              </div>
              {bet.isSettled && (

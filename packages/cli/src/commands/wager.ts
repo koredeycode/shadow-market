@@ -6,6 +6,7 @@ import Table from 'cli-table3';
 import { walletManager } from '../core/wallet.js';
 import { backendClient } from '../core/backend.js';
 import { getStatusColor, formatCurrency } from '../utils/format.js';
+import { getExplorerLink } from '@shadow-market/api';
 
 export const wagerCommands = new Command('wager')
   .description('Manage P2P prediction wagers');
@@ -104,7 +105,10 @@ wagerCommands
       );
 
       spinner.succeed(chalk.green(`P2P Wager created on-chain! ID: ${result.onchainId}`));
-      console.log(chalk.gray(`TX Hash: ${result.txHash}`));
+      const link = getExplorerLink('transactions', result.txHash);
+      if (link) {
+        console.log(chalk.blue.underline(`Explorer: ${link}`));
+      }
 
       // 4. Sync with Backend
       const syncSpinner = ora('Syncing wager metadata...').start();
@@ -154,7 +158,10 @@ wagerCommands
       const txHash = await api.acceptWager(wagerId);
 
       spinner.succeed(chalk.green(`Wager #${wagerId} accepted on-chain!`));
-      console.log(chalk.gray(`TX Hash: ${txHash}`));
+      const link = getExplorerLink('transactions', txHash);
+      if (link) {
+        console.log(chalk.blue.underline(`Explorer: ${link}`));
+      }
 
       // Sync backend
       const syncSpinner = ora('Finalizing position in reservoir...').start();

@@ -6,7 +6,7 @@ import { format, isFuture, isValid } from 'date-fns';
 
 interface CreateMarketProps {
   onCancel: () => void;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: any) => void | Promise<void>;
   isSubmitting: boolean;
   submitStatus: string;
 }
@@ -107,7 +107,7 @@ export const CreateMarket: React.FC<CreateMarketProps> = ({
 
       {isSubmitting ? (
         <Box marginTop={1} borderStyle="single" borderColor="cyan" paddingX={1} height={5} justifyContent="center" alignItems="center">
-          <Text color="yellow">… {submitStatus} …</Text>
+          <Text color="yellow">STATUS: {submitStatus}</Text>
         </Box>
       ) : (
         <Box marginTop={1} flexDirection="column">
@@ -192,49 +192,57 @@ export const CreateMarket: React.FC<CreateMarketProps> = ({
                   <Box flexDirection="column" borderStyle="single" borderColor={focusedField === 'MONTH' ? "cyan" : "gray"} paddingX={1} width={15}>
                     <Box justifyContent="space-between">
                         <Text color={focusedField === 'MONTH' ? "cyan" : "gray"}>Month (1-12)</Text>
-                        {focusedField === 'MONTH' && <Text color="cyan">◀</Text>}
                     </Box>
                     <TextInput
                        focus={focusedField === 'MONTH'}
                        value={formData.endTimeMonth}
-                       onChange={(v) => { if (focusedField === 'MONTH') setFormData(p => ({ ...p, endTimeMonth: cleanInput(v) })) }}
+                       onChange={(v) => { 
+                           const n = v.replace(/\D/g, '');
+                           if (n === '' || (parseInt(n) >= 1 && parseInt(n) <= 12)) {
+                               setFormData(p => ({ ...p, endTimeMonth: n }));
+                           }
+                       }}
                        onSubmit={() => setFocusedField('DAY')}
                     />
                   </Box>
                   <Box flexDirection="column" borderStyle="single" borderColor={focusedField === 'DAY' ? "cyan" : "gray"} paddingX={1} width={15} marginLeft={2}>
                     <Box justifyContent="space-between">
                          <Text color={focusedField === 'DAY' ? "cyan" : "gray"}>Day (1-31)</Text>
-                         {focusedField === 'DAY' && <Text color="cyan">◀</Text>}
                     </Box>
                     <TextInput
                        focus={focusedField === 'DAY'}
                        value={formData.endTimeDay}
-                       onChange={(v) => { if (focusedField === 'DAY') setFormData(p => ({ ...p, endTimeDay: cleanInput(v) })) }}
+                       onChange={(v) => { 
+                           const n = v.replace(/\D/g, '');
+                           if (n === '' || (parseInt(n) >= 1 && parseInt(n) <= 31)) {
+                               setFormData(p => ({ ...p, endTimeDay: n }));
+                           }
+                       }}
                        onSubmit={() => setFocusedField('SUBMIT')}
                     />
                   </Box>
                 </Box>
 
                 <Box marginTop={1}>
-                  <Text color="yellow" bold italic>Navigation Hint: Use TAB to switch between Month and Day fields.</Text>
+                  <Text color="yellow" italic>Navigation: [TAB] switch fields | [ENTER] confirm value</Text>
                 </Box>
 
                <Box marginTop={2} padding={1} borderStyle="round" borderColor="magenta">
-                   <Text>Resolution: <Text color="white" bold>
+                   <Text>RESOLUTION DATE: <Text color="white" bold>
                      {getTargetDate() && isValid(getTargetDate()) 
-                       ? format(getTargetDate()!, 'PPP') 
+                       ? format(getTargetDate()!, 'PPP').toUpperCase() 
                        : 'INVALID DATE'}
                    </Text> @ 12:00 PM</Text>
                </Box>
 
                <Box marginTop={1}>
-                 <Text color="cyan" bold>Press ENTER to broadcast market creation, ESC to go back.</Text>
+                 <Text color="cyan" bold>PRESS ENTER TO CONTINUE OR ESC TO BACK</Text>
                </Box>
-                               {/* Final confirmation in this step */}
+
                 <Box marginTop={1} borderStyle="single" borderColor={focusedField === 'SUBMIT' ? "yellow" : "gray"} paddingX={1}>
                   <SelectInput 
                      isFocused={focusedField === 'SUBMIT'}
-                     items={[{label: '🚀 LAUNCH MARKET', value: 'submit'}, {label: 'Wait, I need to check something', value: 'wait'}]}
+                     items={[{label: 'BROADCAST MARKET CREATION', value: 'submit'}, {label: 'RE-EDIT DETAILS', value: 'wait'}]}
                      onSelect={(i: any) => i.value === 'submit' ? validateAndSubmit() : setStep(0)}
                   />
                 </Box>
@@ -243,7 +251,7 @@ export const CreateMarket: React.FC<CreateMarketProps> = ({
 
           {error && (
             <Box marginTop={1}>
-              <Text color="red">⚠ {error}</Text>
+              <Text color="red">ERROR: {error}</Text>
             </Box>
           )}
         </Box>

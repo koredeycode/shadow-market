@@ -41,7 +41,7 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
   const cleanInput = (val: string) => val.replace(/[\x00-\x1F\x7F]/g, '').trim();
 
   const handleWagerNext = () => {
-    if (executionStep < 4) setExecutionStep(prev => prev + 1);
+    if (executionStep < 3) setExecutionStep(prev => prev + 1);
     else onPlaceWager(cleanInput(betAmount), betSide, `${cleanInput(oddsNum)}:${cleanInput(oddsDen)}`);
   };
 
@@ -65,7 +65,7 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
           <Box borderStyle="round" borderColor="magenta" paddingX={2} marginBottom={1} flexDirection="column">
             <Box justifyContent="space-between" width="100%">
                <Text color="cyan" bold>{market.category.toUpperCase()}</Text>
-               <Text color={market.status === 'OPEN' ? 'green' : 'yellow'}>{market.status === 'OPEN' ? '🟢 OPEN' : market.status}</Text>
+               <Text color={market.status === 'OPEN' ? 'green' : 'yellow'}>{market.status === 'OPEN' ? 'OPEN' : market.status}</Text>
             </Box>
             <Box marginTop={1}>
                <Text bold color="white" wrap="wrap">{market.question}</Text>
@@ -132,12 +132,12 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
              <Box marginTop={1}>
                 <SelectInput
                     items={[
-                      { label: '🎯 PLACE POOL BET (AMM)', value: 'bet' },
-                      { label: '🤝 CREATE P2P WAGER (Custom Ratio)', value: 'wager' },
-                      { label: '🌐 VIEW ON WEB DASHBOARD', value: 'browser' },
-                      ...(isAdmin && market.status === 'OPEN' ? [{ label: '🔒 LOCK MARKET (Admin)', value: 'lock' }] : []),
-                      ...(isAdmin && market.status === 'LOCKED' ? [{ label: '🏁 RESOLVE MARKET (Admin)', value: 'resolve' }] : []),
-                      { label: '⏎ GO BACK', value: 'back' }
+                      { label: 'PLACE POOL BET (AMM)', value: 'bet' },
+                      { label: 'CREATE P2P WAGER (Custom Ratio)', value: 'wager' },
+                      { label: 'VIEW ON WEB DASHBOARD', value: 'browser' },
+                      ...(isAdmin && market.status === 'OPEN' ? [{ label: 'LOCK MARKET (Admin)', value: 'lock' }] : []),
+                      ...(isAdmin && market.status === 'LOCKED' ? [{ label: 'RESOLVE MARKET (Admin)', value: 'resolve' }] : []),
+                      { label: 'BACK', value: 'back' }
                     ] as any}
                     onSelect={(i: any) => {
                       if (i.value === 'bet') { setStep('BET'); setExecutionStep(0); }
@@ -183,7 +183,7 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
                     <Text color="white">Confirming <Text color={betSide === 'YES' ? 'green' : 'red'} bold>{betSide}</Text> bet for <Text bold>{betAmount} NIGHT</Text></Text>
                     <Box marginTop={1}>
                       <SelectInput 
-                        items={[{label: '🚀 EXECUTE TRANSACTION', value: 'go'}, {label: 'Wait, I need to check...', value: 'wait'}]}
+                        items={[{label: 'EXECUTE POOL BET', value: 'go'}, {label: 'Wait, I need to check...', value: 'wait'}]}
                         onSelect={(i) => i.value === 'go' ? onPlaceBet(cleanInput(betAmount), betSide) : setStep('DETAILS')}
                       />
                     </Box>
@@ -196,7 +196,7 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
             </Box>
         ) : (
           <Box flexDirection="column">
-             <Text color="yellow" bold>P2P WAGER FLOW: Step {executionStep + 1} of 5</Text>
+              <Text color="yellow" bold>P2P WAGER FLOW: Step {executionStep + 1} of 4</Text>
              <Box flexDirection="column" marginTop={1}>
                 {executionStep === 0 && (
                   <Box flexDirection="column">
@@ -218,44 +218,44 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
                       />
                     </Box>
                     <Box marginTop={1}>
-                      <Text color="gray" italic>Tip: Tab to switch fields (if multiple), ENTER to proceed.</Text>
+                      <Text color="gray" italic>Tip: ENTER to proceed.</Text>
                     </Box>
                   </Box>
                 )}
                 {executionStep === 2 && (
                   <Box flexDirection="column">
-                    <Text color="cyan">Set Odds Ratio - Numerator (e.g. 1):</Text>
-                    <Box borderStyle="single" borderColor="yellow" paddingX={1} marginTop={1} width={10}>
-                      <TextInput 
-                        value={oddsNum} 
-                        onChange={(v) => setOddsNum(cleanInput(v))} 
-                        onSubmit={() => setExecutionStep(3)} 
-                      />
+                    <Text color="cyan">Set Odds Ratio (Numerator : Denominator):</Text>
+                    <Box flexDirection="row" marginTop={1} alignItems="center">
+                      <Box borderStyle="single" borderColor="yellow" paddingX={1} width={8}>
+                        <TextInput 
+                          value={oddsNum} 
+                          onChange={(v) => setOddsNum(cleanInput(v))} 
+                          onSubmit={() => {}} 
+                        />
+                      </Box>
+                      <Text> : </Text>
+                      <Box borderStyle="single" borderColor="yellow" paddingX={1} width={8}>
+                        <TextInput 
+                          value={oddsDen} 
+                          onChange={(v) => setOddsDen(cleanInput(v))} 
+                          onSubmit={() => setExecutionStep(3)} 
+                        />
+                      </Box>
                     </Box>
-                    <Text dimColor>This is the payout multiple you want.</Text>
+                    <Box marginTop={1} flexDirection="column">
+                      <Text dimColor>Potential Payout: <Text color="green" bold>{(Number(cleanInput(betAmount) || 0) * (Number(cleanInput(oddsNum) || 1) / Number(cleanInput(oddsDen) || 1))).toFixed(2)} NIGHT</Text></Text>
+                      <Text dimColor italic>Press ENTER in the denominator box to confirm ratio.</Text>
+                    </Box>
                   </Box>
                 )}
                 {executionStep === 3 && (
-                  <Box flexDirection="column">
-                    <Text color="cyan">Set Odds Ratio - Denominator (e.g. 3):</Text>
-                    <Box borderStyle="single" borderColor="yellow" paddingX={1} marginTop={1} width={10}>
-                      <TextInput 
-                        value={oddsDen} 
-                        onChange={(v) => setOddsDen(cleanInput(v))} 
-                        onSubmit={() => setExecutionStep(4)} 
-                      />
-                    </Box>
-                    <Text dimColor>Ratio: {oddsNum}:{oddsDen}</Text>
-                  </Box>
-                )}
-                {executionStep === 4 && (
                   <Box flexDirection="column">
                     <Text color="white">Verify P2P Offer:</Text>
                     <Text>Stake: <Text bold color={betSide === 'YES' ? 'green' : 'red'}>{betAmount} NIGHT</Text></Text>
                     <Text>Ratio: <Text color="yellow" bold>{oddsNum}:{oddsDen}</Text></Text>
                     <Box marginTop={1}>
                        <SelectInput 
-                         items={[{label: '🚀 BROADCAST P2P OFFER', value: 'go'}, {label: 'Cancel', value: 'wait'}]}
+                         items={[{label: 'BROADCAST P2P WAGER', value: 'go'}, {label: 'Cancel', value: 'wait'}]}
                          onSelect={(i) => i.value === 'go' ? onPlaceWager(cleanInput(betAmount), betSide, `${cleanInput(oddsNum)}:${cleanInput(oddsDen)}`) : setStep('DETAILS')}
                        />
                     </Box>
@@ -265,7 +265,7 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
              
              <Box marginTop={1}>
                 {isSubmitting ? (
-                  <Text color="yellow">… {submitStatus} …</Text>
+                  <Text color="yellow">[ STATUS: {submitStatus} ]</Text>
                 ) : (
                   <Text color="gray" dimColor>Press ESC to step back.</Text>
                 )}

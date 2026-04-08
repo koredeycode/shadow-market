@@ -101,6 +101,7 @@ export interface NetworkConfig {
   indexerWS: string;
   proofServer: string;
   nodeUrl: string;
+  explorerBaseUrl: string;
 }
 
 export function getNetworkConfig(): NetworkConfig {
@@ -123,6 +124,12 @@ export function getNetworkConfig(): NetworkConfig {
       config.MIDNIGHT_PROOF_SERVER_URL ||
       'http://127.0.0.1:6300',
     nodeUrl: process.env.MIDNIGHT_NODE_URL || config.MIDNIGHT_NODE_URL || 'ws://127.0.0.1:9944',
+    explorerBaseUrl:
+      process.env.MIDNIGHT_NETWORK === 'preview' || config.MIDNIGHT_NETWORK === 'preview'
+        ? 'https://explorer.preview.midnight.network'
+        : process.env.MIDNIGHT_NETWORK === 'preprod' || config.MIDNIGHT_NETWORK === 'preprod'
+        ? 'https://explorer.preprod.midnight.network'
+        : '', // No local explorer
   };
 }
 

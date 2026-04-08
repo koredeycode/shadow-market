@@ -86,8 +86,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onQuit }) => {
         )}
 
         {stage === 'LOGGING_IN' && (
-            <Box marginTop={1}>
-                <Text color="yellow">… Logging in & Syncing wallet …</Text>
+            <Box marginTop={1} borderStyle="round" borderColor="yellow" paddingX={2}>
+                <Text color="yellow">VERIFYING CREDENTIALS & SYNCING ZK-WALLET...</Text>
             </Box>
         )}
     </Box>

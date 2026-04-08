@@ -13,6 +13,7 @@ import {
 import toast from 'react-hot-toast';
 import { useWallet } from '../../hooks/useWallet';
 import { Link } from 'react-router-dom';
+import { getContractExplorerUrl, isExplorerAvailable } from '../../utils/explorer';
 
 interface WalletDetailViewProps {
   onClose: () => void;
@@ -144,12 +145,24 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
               >
                 <Copy className="w-3.5 h-3.5" />
               </button>
-              <button 
-                className="p-1.5 text-slate-600 hover:text-electric-blue transition-colors hover:bg-white/5 rounded-sm"
-                title="View on Explorer"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-              </button>
+              {isExplorerAvailable() ? (
+                <a
+                  href={getContractExplorerUrl(address || '')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 text-slate-600 hover:text-electric-blue transition-colors hover:bg-white/5 rounded-sm"
+                  title="View on Explorer"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              ) : (
+                <button 
+                  className="p-1.5 text-slate-600 hover:text-electric-blue transition-colors hover:bg-white/5 rounded-sm"
+                  title="View on Explorer"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -184,7 +197,7 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
           >
             <div className="flex items-center gap-3">
                <Monitor className="w-4 h-4 text-electric-blue" />
-               <span>Link CLI Terminal</span>
+               <span>Terminal Link</span>
             </div>
             <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all" />
           </button>
@@ -204,7 +217,7 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
           <Lock className="w-3.5 h-3.5 text-electric-blue" />
         </div>
         <div className="text-[9px] text-slate-500 font-light leading-tight">
-          Secured Wallet Connection
+          Secure Connection Active
         </div>
       </div>
     </div>

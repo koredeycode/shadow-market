@@ -23,7 +23,7 @@ import {
   type MarketPrivateState,
   type MarketProviders,
 } from './providers.js';
-import { stringToBytes32, safeRandomNonce, fromHex } from './utils.js';
+import { stringToBytes32, safeRandomNonce, fromHex, getExplorerLink } from './utils.js';
 import { setBetContext, setPayoutContext, setWagerAmount, createWitnessProviders } from './witnesses.js';
 
 
@@ -71,6 +71,7 @@ export class ShadowMarketAPI {
   private privateState: MarketPrivateState;
   public readonly state$: Observable<MarketDerivedState>;
   public readonly deployedContractAddress: ContractAddress;
+  private readonly networkId: string;
 
   /**
    * Private constructor - use ShadowMarketAPI.connect() instead
@@ -83,6 +84,7 @@ export class ShadowMarketAPI {
     this.deployedContract = deployedContract;
     this.providers = providers;
     this.privateState = privateState;
+    this.networkId = (process.env.MIDNIGHT_NETWORK_ID || 'undeployed');
     this.deployedContractAddress = deployedContract.deployTxData.public.contractAddress;
 
     // Set up observable state stream from contract ledger
@@ -109,7 +111,10 @@ export class ShadowMarketAPI {
         shareReplay(1)
       );
 
-    console.log('ShadowMarketAPI connected to contract:', this.deployedContractAddress);
+    const explorerLink = getExplorerLink('contracts', this.deployedContractAddress, this.networkId);
+    if (explorerLink) {
+      console.log(`Explorer: ${explorerLink}`);
+    }
   }
 
   /**
@@ -158,6 +163,13 @@ export class ShadowMarketAPI {
       return null;
     }
   }
+  private logTx(message: string, txHash: string) {
+    console.log(`${message}: ${txHash}`);
+    const link = getExplorerLink('transactions', txHash, this.networkId);
+    if (link) {
+      console.log(`Explorer Link: ${link}`);
+    }
+  }
 
   /**
    * Initialize the contract (sets adminKey and marks as initialized)
@@ -169,7 +181,7 @@ export class ShadowMarketAPI {
     try {
       const initializeFn = this.deployedContract.callTx.initialize;
       const txData = await (initializeFn as any)();
-      console.log('Contract initialized! Transaction:', txData.public.txHash);
+      this.logTx('Contract initialized', txData.public.txHash);
       return txData.public.txHash;
     } catch (error: any) {
       console.error('initialize circuit execution failed:', error);
@@ -223,8 +235,8 @@ export class ShadowMarketAPI {
         await this.providers.privateStateProvider.set('shadow-market-private-state', this.privateState);
       }
 
+      this.logTx('Bet placed', txData.public.txHash);
       return { txHash: txData.public.txHash, onchainId };
-
     } catch (error: any) {
       console.error('placeBet circuit execution failed:', error);
       throw new Error(`Failed to place bet: ${error.message}`);
@@ -279,7 +291,7 @@ export class ShadowMarketAPI {
         userAddress
       );
 
-      console.log('Winnings claimed! Transaction:', txData.public.txHash);
+      this.logTx('Winnings claimed', txData.public.txHash);
       return txData.public.txHash;
     } catch (error: any) {
       console.error('claimPoolWinnings circuit execution failed:', error);
@@ -315,6 +327,7 @@ export class ShadowMarketAPI {
       const onchainId = this.getDisclosedId(txData);
       console.log('Disclosed Market ID:', onchainId);
       
+      this.logTx('Market created', txData.public.txHash);
       return { txHash: txData.public.txHash, onchainId };
     } catch (error: any) {
       console.error('createMarket circuit execution failed:', error);
@@ -331,7 +344,7 @@ export class ShadowMarketAPI {
     try {
       const txData = await (this.deployedContract.callTx.lockMarket as any)(BigInt(marketId));
 
-      console.log('Market locked! Transaction:', txData.public.txHash);
+      this.logTx('Market locked', txData.public.txHash);
       return txData.public.txHash;
     } catch (error: any) {
       console.error('lockMarket circuit execution failed:', error);
@@ -353,7 +366,7 @@ export class ShadowMarketAPI {
         outcomeEnum
       );
 
-      console.log('Market resolved! Transaction:', txData.public.txHash);
+      this.logTx('Market resolved', txData.public.txHash);
       return txData.public.txHash;
     } catch (error: any) {
       console.error('resolveMarket circuit execution failed:', error);
@@ -393,6 +406,7 @@ export class ShadowMarketAPI {
       const onchainId = this.getDisclosedId(txData);
       console.log('Disclosed Wager ID:', onchainId);
 
+      this.logTx('Wager created', txData.public.txHash);
       return { txHash: txData.public.txHash, onchainId };
     } catch (error: any) {
       console.error('createWager circuit execution failed:', error);
@@ -409,7 +423,7 @@ export class ShadowMarketAPI {
     try {
       const txData = await (this.deployedContract.callTx.acceptWager as any)(BigInt(wagerId));
 
-      console.log('Wager accepted! Transaction:', txData.public.txHash);
+      this.logTx('Wager accepted', txData.public.txHash);
       return txData.public.txHash;
     } catch (error: any) {
       console.error('acceptWager circuit execution failed:', error);
@@ -426,7 +440,7 @@ export class ShadowMarketAPI {
     try {
       const txData = await (this.deployedContract.callTx.cancelWager as any)(BigInt(wagerId));
 
-      console.log('Wager cancelled! Transaction:', txData.public.txHash);
+      this.logTx('Wager cancelled', txData.public.txHash);
       return txData.public.txHash;
     } catch (error: any) {
       console.error('cancelWager circuit execution failed:', error);
@@ -447,7 +461,7 @@ export class ShadowMarketAPI {
         userAddress
       );
 
-      console.log('Wager winnings claimed! Transaction:', txData.public.txHash);
+      this.logTx('Wager winnings claimed', txData.public.txHash);
       return txData.public.txHash;
     } catch (error: any) {
       console.error('claimWagerWinnings circuit execution failed:', error);
@@ -612,4 +626,5 @@ export class ShadowMarketAPI {
 // Export types and utilities
 export { createProvidersFromWallet, getOrCreatePrivateState } from './providers.js';
 export { createWitnessProviders } from './witnesses.js';
+export { getExplorerLink, getExplorerBaseUrl } from './utils.js';
 export type { MarketPrivateState, MarketProviders };

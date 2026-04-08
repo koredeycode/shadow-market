@@ -275,22 +275,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
           </div>
         </div>
 
-        <div className="space-y-4 pt-4 border-t border-white/5">
-          <div className="bg-slate-950/80 border border-white/5 p-4 rounded-sm space-y-3">
-            <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-widest text-slate-400">
-              Potential reward
-            </div>
-            <div className="flex items-end justify-between">
-              <div className="text-2xl font-mono text-success-green font-bold leading-none">
-                {estimate ? `+${estimate.potentialProfit.toFixed(2)}` : '0.00'}
-                <span className="text-xs ml-1 font-light opacity-50">NIGHT</span>
-              </div>
-              <div className="text-[10px] font-mono bg-success-green/10 text-success-green px-2 py-0.5 rounded-sm border border-success-green/20">
-                {estimate ? `+${estimate.returnPercentage.toFixed(1)}%` : '--'}
-              </div>
-            </div>
-          </div>
-        </div>
+
 
 
 

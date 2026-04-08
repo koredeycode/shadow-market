@@ -75,3 +75,22 @@ export const bytes32ToString = (bytes: Uint8Array): string => {
   // Remove null padding (\0) from the end
   return rawString.replace(/\0+$/, '');
 };
+
+/**
+ * Get the explorer base URL for a given network
+ */
+export const getExplorerBaseUrl = (networkId?: string): string | null => {
+  const nid = networkId || process.env.MIDNIGHT_NETWORK_ID || 'undeployed';
+  if (nid === 'preview') return 'https://explorer.preview.midnight.network';
+  if (nid === 'preprod') return 'https://explorer.preprod.midnight.network';
+  return null;
+};
+
+/**
+ * Generate an explorer link for a transaction or contract
+ */
+export const getExplorerLink = (type: 'transactions' | 'contracts', id: string, networkId?: string): string | null => {
+  const base = getExplorerBaseUrl(networkId);
+  if (!base) return null;
+  return `${base}/${type}/${id}`;
+};

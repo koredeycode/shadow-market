@@ -1,5 +1,6 @@
-import { CheckCircle2, Copy, X, ArrowUpRight, Zap, Terminal } from 'lucide-react';
+import { CheckCircle2, Copy, X, ArrowUpRight, Zap, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getTxExplorerUrl, isExplorerAvailable } from '../../utils/explorer';
 
 interface TxSuccessModalProps {
   isOpen: boolean;
@@ -64,10 +65,10 @@ export function TxSuccessModal({
           <div className="w-full bg-black/40 border border-white/5 rounded-sm p-4 mb-8 text-left space-y-3 relative group">
             <div className="flex justify-between items-center text-[10px] uppercase font-mono tracking-widest text-slate-500 underline decoration-electric-blue/30 underline-offset-4">
               <span className="flex items-center gap-2">
-                <Terminal className="w-3 h-3 text-electric-blue" />
-                Proof submission
+                <CheckCircle2 className="w-3 h-3 text-electric-blue" />
+                Network Status
               </span>
-              <span className="text-success-green">SECURED</span>
+              <span className="text-success-green">SUCCESSFUL</span>
             </div>
             
             <div className="flex items-center gap-3">
@@ -76,13 +77,26 @@ export function TxSuccessModal({
                   {txHash}
                 </p>
               </div>
-              <button 
-                onClick={copyToClipboard}
-                className="p-2 hover:bg-white/10 rounded-sm text-slate-500 hover:text-electric-blue transition-all"
-                title="Copy Hash"
-              >
-                <Copy className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button 
+                  onClick={copyToClipboard}
+                  className="p-2 hover:bg-white/10 rounded-sm text-slate-500 hover:text-electric-blue transition-all"
+                  title="Copy Hash"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+                {isExplorerAvailable() && (
+                  <a
+                    href={getTxExplorerUrl(txHash)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 hover:bg-white/10 rounded-sm text-slate-500 hover:text-electric-blue transition-all"
+                    title="View on Explorer"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
             </div>
           </div>
 
@@ -99,9 +113,9 @@ export function TxSuccessModal({
             )}
             <button
               onClick={onClose}
-              className="w-full py-3 border border-white/5 hover:bg-white/5 text-[10px] font-mono font-bold text-slate-500 transition-all"
+              className="w-full py-3 border border-white/5 hover:bg-white/5 text-[10px] font-mono font-bold text-slate-500 transition-all uppercase tracking-widest"
             >
-              Close terminal
+              Continue
             </button>
           </div>
         </div>
@@ -110,7 +124,7 @@ export function TxSuccessModal({
         <div className="px-8 py-3 bg-black/20 border-t border-white/5 flex items-center justify-center gap-2">
            <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
            <span className="text-[9px] font-mono text-slate-600 uppercase tracking-widest">
-             Finalized via Midnight ZK-Protocol
+             Verified via Midnight Privacy Protocol
            </span>
         </div>
       </div>

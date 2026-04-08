@@ -4,6 +4,7 @@ import inquirer from 'inquirer';
 import ora from 'ora';
 import { walletManager } from '../core/wallet.js';
 import { backendClient } from '../core/backend.js';
+import { getExplorerLink } from '@shadow-market/api';
 
 export const betCommands = new Command('bet')
   .description('Place bets on prediction markets');
@@ -95,7 +96,10 @@ betCommands
       // 4. Place bet
       const result = await api.placeBet(marketId, betAmount, betOutcome);
       spinner.succeed(chalk.green(`Bet placed successfully! Bet ID: ${result.onchainId}`));
-      console.log(chalk.gray(`TX Hash: ${result.txHash}`));
+      const link = getExplorerLink('transactions', result.txHash);
+      if (link) {
+        console.log(chalk.blue.underline(`Explorer: ${link}`));
+      }
 
       // Sync with backend
       const syncSpinner = ora('Syncing with backend...').start();
@@ -140,7 +144,11 @@ betCommands
     try {
       const api = await walletManager.getAPI();
       const txHash = await api.claimWinnings(betId);
-      spinner.succeed(chalk.green(`Winnings claimed! Transaction: ${txHash}`));
+      spinner.succeed(chalk.green(`Winnings claimed!`));
+      const link = getExplorerLink('transactions', txHash);
+      if (link) {
+        console.log(chalk.blue.underline(`Explorer: ${link}`));
+      }
     } catch (err: any) {
       spinner.fail(chalk.red(`Failed to claim winnings: ${err.message}`));
     }

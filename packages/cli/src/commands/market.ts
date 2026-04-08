@@ -6,6 +6,7 @@ import Table from 'cli-table3';
 import { walletManager } from '../core/wallet.js';
 import { backendClient } from '../core/backend.js';
 import { getStatusColor, formatAddress } from '../utils/format.js';
+import { getExplorerLink } from '@shadow-market/api';
 
 export const marketCommands = new Command('market')
   .description('Interact with prediction markets');
@@ -158,7 +159,10 @@ marketCommands
       // 3. Execute circuit
       const result = await api.createMarket(question, resolutionTime);
       spinner.succeed(chalk.green(`Market created on-chain! ID: ${result.onchainId}`));
-      console.log(chalk.gray(`TX Hash: ${result.txHash}`));
+      const link = getExplorerLink('transactions', result.txHash);
+      if (link) {
+        console.log(chalk.blue.underline(`Explorer: ${link}`));
+      }
 
       // 4. Sync with Backend
       const syncSpinner = ora('Syncing with backend reservoir...').start();

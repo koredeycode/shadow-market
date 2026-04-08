@@ -158,6 +158,8 @@ function WagerCard({
   );
 }
 
+import { marketsApi } from '../../api/markets';
+
 export function P2PWagersList({ marketId, selectedWagerId, onSelectWager }: P2PWagersListProps) {
   const { address } = useWallet();
 
@@ -167,11 +169,8 @@ export function P2PWagersList({ marketId, selectedWagerId, onSelectWager }: P2PW
     error,
   } = useQuery({
     queryKey: ['p2p-wagers', marketId],
-    queryFn: async () => {
-      // In real implementation, this would call an API endpoint
-      return [] as Wager[];
-    },
-    refetchInterval: 60000,
+    queryFn: () => marketsApi.getWagers(marketId),
+    refetchInterval: 30000,
   });
 
   // Logic removed here as it lives in P2PActionTerminal now

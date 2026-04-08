@@ -237,12 +237,12 @@ export function BetsList({ bets, isActive, onClaimSuccess }: BetsListProps) {
         </div>
         <div className="space-y-1">
           <h4 className="text-white font-bold text-xs uppercase tracking-widest">
-            {isActive ? 'Zero Active Units' : 'History Empty'}
+            {isActive ? 'No Active Bets' : 'No Past Bets'}
           </h4>
           <p className="text-slate-500 text-[10px] font-mono max-w-[200px] leading-relaxed">
             {isActive
-              ? 'Initiate on-chain wagers to begin tracking bets.'
-              : 'Resolved wagers will be archived here upon market settlement.'}
+              ? 'Place a bet to see it here.'
+              : 'Your old bets will show up here.'}
           </p>
         </div>
       </div>
@@ -252,11 +252,11 @@ export function BetsList({ bets, isActive, onClaimSuccess }: BetsListProps) {
   return (
     <div className="flex flex-col min-h-[400px]">
       <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-3 border-b border-white/5 text-[9px] font-mono text-slate-500 uppercase tracking-widest bg-white/[0.01]">
-        <div className="col-span-4">Market_Asset</div>
-        <div className="col-span-2 text-center">Outcome</div>
-        <div className="col-span-2 text-right">Position_Size</div>
-        <div className="col-span-2 text-right">Performance</div>
-        <div className="col-span-2 text-right">Execution</div>
+        <div className="col-span-4">Market</div>
+        <div className="col-span-2 text-center">Status</div>
+        <div className="col-span-2 text-right">Amount</div>
+        <div className="col-span-2 text-right">P/L</div>
+        <div className="col-span-2 text-right">Action</div>
       </div>
       <div>
         {bets.map(bet => (
