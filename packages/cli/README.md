@@ -6,7 +6,7 @@ The **Shadow Market Terminal** is a high-performance, low-latency trading interf
 
 ## 🚀 Two Interaction Modes
 
-### 1. **Interactive TUI** (Recommended)
+### 1. **Shadow Terminal** (Recommended)
 A visually rich terminal dashboard built with **Ink** (React for the CLI).
 ```bash
 pnpm dev
@@ -20,9 +20,9 @@ pnpm start create-market ...
 
 ---
 
-## 📟 TUI Controller & Keybindings
+## 📟 Terminal Controller & Keybindings
 
-The TUI is built on a responsive component system that adapts to terminal resizing.
+The Shadow Terminal is built on a responsive component system that adapts to terminal resizing.
 
 | Key | Action |
 | :--- | :--- |

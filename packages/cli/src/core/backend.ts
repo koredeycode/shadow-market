@@ -135,6 +135,44 @@ export class BackendClient {
     return response.data.data;
   }
 
+  async getPlatformStats() {
+    const response = await axios.get(`${this.baseUrl}/analytics/platform-stats`, {
+      headers: this.getHeaders()
+    });
+    return response.data.data;
+  }
+
+  async acceptWager(marketId: string, wagerId: string, data: { txHash: string }) {
+    const response = await axios.patch(`${this.baseUrl}/markets/${marketId}/wagers/${wagerId}`, {
+      status: 'MATCHED',
+      txHash: data.txHash
+    }, {
+      headers: this.getHeaders()
+    });
+    return response.data.data;
+  }
+
+  async claimWinnings(betId: string) {
+    const response = await axios.post(`${this.baseUrl}/wagers/${betId}/claim`, {}, {
+      headers: this.getHeaders()
+    });
+    return response.data.data;
+  }
+
+  async claimWagerWinnings(wagerId: string) {
+    const response = await axios.post(`${this.baseUrl}/wagers/p2p/${wagerId}/claim`, {}, {
+      headers: this.getHeaders()
+    });
+    return response.data.data;
+  }
+
+  async cancelWager(wagerId: string) {
+    const response = await axios.delete(`${this.baseUrl}/wagers/p2p/${wagerId}`, {
+      headers: this.getHeaders()
+    });
+    return response.data.data;
+  }
+
   private getHeaders() {
     return this.token ? { Authorization: `Bearer ${this.token}` } : {};
   }

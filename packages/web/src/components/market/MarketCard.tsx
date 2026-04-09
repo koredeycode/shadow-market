@@ -56,7 +56,11 @@ export function MarketCard({ market }: MarketCardProps) {
         {/* Sentiment Analysis */}
         <div className="space-y-3 mb-6">
           <div className="flex justify-between text-[10px] font-mono font-bold uppercase tracking-widest">
-            <span className="text-success-green">{yesPercent.toFixed(0)}% Likely</span>
+            {yesPercent >= 50 ? (
+              <span className="text-success-green">{yesPercent.toFixed(0)}% YES Likely</span>
+            ) : (
+              <span className="text-red-500">{(100 - yesPercent).toFixed(0)}% NO Likely</span>
+            )}
             <span className="text-slate-500">Vol: {volume}</span>
           </div>
 

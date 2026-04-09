@@ -57,8 +57,8 @@ export function MarketIntelligenceCard({ market }: MarketIntelligenceCardProps) 
         <div className="flex justify-between items-end">
            <div className="flex flex-col">
               <span className="text-[9px] text-slate-500 font-mono uppercase">Probability</span>
-              <span className="text-2xl font-bold font-mono text-white leading-none">
-                {yesPriceNum.toFixed(0)}% <span className="text-xs text-slate-500 font-normal">YES</span>
+              <span className={`text-2xl font-bold font-mono leading-none ${yesPriceNum >= noPriceNum ? 'text-success-green' : 'text-red-500'}`}>
+                {Math.max(yesPriceNum, noPriceNum).toFixed(0)}% <span className="text-xs text-slate-500 font-normal">{yesPriceNum >= noPriceNum ? 'YES' : 'NO'}</span>
               </span>
            </div>
            <div className="text-right">

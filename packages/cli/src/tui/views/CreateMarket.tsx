@@ -116,6 +116,7 @@ export const CreateMarket: React.FC<CreateMarketProps> = ({
               <Text color="cyan" bold>Step 1/5: Enter Market Question</Text>
               <Box borderStyle="single" borderColor="gray" paddingX={1} marginY={1}>
                 <TextInput
+                  focus={!isSubmitting}
                   value={formData.question}
                   onChange={(v) => setFormData(p => ({ ...p, question: cleanInput(v) }))}
                   onSubmit={handleNext}
@@ -131,6 +132,7 @@ export const CreateMarket: React.FC<CreateMarketProps> = ({
               <Text color="cyan" bold>Step 2/5: Description (Optional)</Text>
               <Box borderStyle="single" borderColor="gray" paddingX={1} marginY={1}>
                 <TextInput
+                  focus={!isSubmitting}
                   value={formData.description}
                   onChange={(v) => setFormData(p => ({ ...p, description: cleanInput(v) }))}
                   onSubmit={handleNext}
@@ -173,6 +175,7 @@ export const CreateMarket: React.FC<CreateMarketProps> = ({
                <Text color="cyan" bold>Step 4/5: Set Resolution Year (YYYY)</Text>
                <Box borderStyle="single" borderColor="white" paddingX={1} marginTop={1}>
                   <TextInput
+                     focus={!isSubmitting}
                      value={formData.endTimeYear}
                      onChange={(v) => setFormData(p => ({ ...p, endTimeYear: cleanInput(v) }))}
                      onSubmit={handleNext}
@@ -242,8 +245,16 @@ export const CreateMarket: React.FC<CreateMarketProps> = ({
                 <Box marginTop={1} borderStyle="single" borderColor={focusedField === 'SUBMIT' ? "yellow" : "gray"} paddingX={1}>
                   <SelectInput 
                      isFocused={focusedField === 'SUBMIT'}
-                     items={[{label: 'BROADCAST MARKET CREATION', value: 'submit'}, {label: 'RE-EDIT DETAILS', value: 'wait'}]}
-                     onSelect={(i: any) => i.value === 'submit' ? validateAndSubmit() : setStep(0)}
+                     items={[
+                       {label: 'BROADCAST MARKET CREATION', value: 'submit'}, 
+                       {label: 'STEP BACK (EDIT DATE)', value: 'back'},
+                       {label: 'START OVER', value: 'reset'}
+                     ]}
+                     onSelect={(i: any) => {
+                       if (i.value === 'submit') validateAndSubmit();
+                       else if (i.value === 'back') handlePrev();
+                       else setStep(0);
+                     }}
                   />
                 </Box>
             </Box>

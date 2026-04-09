@@ -74,11 +74,11 @@ registerLazyCommand('identity', 'Manage your ZK Identity Key (Backup/Import)', (
 registerLazyCommand('admin', 'Administrative tools for Shadow Market owners', () => import('./commands/admin.js'));
 
 program
-  .command('tui')
-  .description('Launch interactive TUI dashboard')
+  .command('terminal')
+  .description('Launch interactive prediction terminal')
   .action(async () => {
-    const { startTUI } = await import('./tui/index.js');
-    startTUI();
+    const { startTerminal } = await import('./tui/index.js');
+    startTerminal();
   });
 
 program.parse(process.argv);

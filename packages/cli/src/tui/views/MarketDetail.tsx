@@ -3,12 +3,14 @@ import { Box, Text, useInput } from 'ink';
 import SelectInput from 'ink-select-input';
 import TextInput from 'ink-text-input';
 import { format } from 'date-fns';
-import { Market } from '../types.js';
+import { Market, UserProfile } from '../types.js';
 
 interface MarketDetailProps {
   market: Market;
+  me: UserProfile | null;
   onPlaceBet: (amount: string, side: 'YES' | 'NO') => void;
   onPlaceWager: (amount: string, side: 'YES' | 'NO', odds: string) => void;
+  onSelectPosition: (pos: any) => void;
   onBack: () => void;
   isSubmitting: boolean;
   submitStatus: string;
@@ -20,8 +22,10 @@ interface MarketDetailProps {
 
 export const MarketDetail: React.FC<MarketDetailProps> = ({
   market,
+  me,
   onPlaceBet,
   onPlaceWager,
+  onSelectPosition,
   onBack,
   isSubmitting,
   submitStatus,
@@ -36,7 +40,11 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
   const [oddsDen, setOddsDen] = useState('1');
   const [executionStep, setExecutionStep] = useState(0); 
   const [oddsFocus, setOddsFocus] = useState(0); 
-  const [step, setStep] = useState<'DETAILS' | 'BET' | 'WAGER'>('DETAILS');
+  const [step, setStep] = useState<'DETAILS' | 'BET' | 'WAGER' | 'POSITIONS'>('DETAILS');
+
+  const myBets = (me?.bets || []).filter(b => b.marketId === market.id);
+  const myWagers = (me?.wagers || []).filter(w => w.marketId === market.id);
+  const totalMyPositions = myBets.length + myWagers.length;
 
   // Sanitization helper to remove DEL (\x7F) and other control characters
   const cleanInput = (val: string) => val.replace(/[\x00-\x1F\x7F]/g, '');
@@ -60,7 +68,7 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
   });
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" height="100%">
       <Box flexDirection="row" marginBottom={1}>
         {/* Left Side: Market Data */}
         <Box flexDirection="column" width="55%" marginRight={2}>
@@ -102,7 +110,7 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
             <Text bold color="white">TRANSACTIONS: PUBLIC LEDGER</Text>
             {history.length === 0 ? (
               <Box paddingY={1} flexGrow={1} justifyContent="center" alignItems="center">
-                  <Text dimColor italic>Syncing public activity from Indexer...</Text>
+                  <Text dimColor italic>Syncing activity from Indexer...</Text>
               </Box>
             ) : (
               <Box flexDirection="column" marginTop={1}>
@@ -127,7 +135,7 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
       </Box>
 
       {/* Bottom: Action terminal section */}
-      <Box borderStyle="bold" borderColor="yellow" paddingX={2} paddingY={1} flexDirection="column" backgroundColor="black">
+      <Box borderStyle="bold" borderColor="yellow" paddingX={2} paddingY={1} flexDirection="column" backgroundColor="black" minHeight={8}>
         {step === 'DETAILS' ? (
           <Box flexDirection="column">
              <Text color="cyan" bold underline>Terminal Action Menu</Text>
@@ -136,6 +144,7 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
                     items={[
                       { label: 'PLACE POOL BET (AMM)', value: 'bet' },
                       { label: 'CREATE P2P WAGER (Custom Ratio)', value: 'wager' },
+                      ...(totalMyPositions > 0 ? [{ label: `MY POSITIONS FOR THIS MARKET (${totalMyPositions})`, value: 'positions' }] : []),
                       { label: 'VIEW ON WEB DASHBOARD', value: 'browser' },
                       ...(isAdmin && market.status === 'OPEN' ? [{ label: 'LOCK MARKET (Admin)', value: 'lock' }] : []),
                       ...(isAdmin && market.status === 'LOCKED' ? [{ label: 'RESOLVE MARKET (Admin)', value: 'resolve' }] : []),
@@ -144,6 +153,7 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
                     onSelect={(i: any) => {
                       if (i.value === 'bet') { setStep('BET'); setExecutionStep(0); }
                       if (i.value === 'wager') { setStep('WAGER'); setExecutionStep(0); }
+                      if (i.value === 'positions') setStep('POSITIONS');
                       if (i.value === 'browser' && onOpenBrowser) onOpenBrowser(market);
                       if (i.value === 'lock' && onAdminAction) onAdminAction('lock');
                       if (i.value === 'resolve' && onAdminAction) onAdminAction('resolve');
@@ -154,7 +164,7 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
           </Box>
         ) : step === 'BET' ? (
             <Box flexDirection="column">
-              <Text color="yellow" bold>POOL BET EXECUTION: (1/2) Choose Side</Text>
+              <Text color="yellow" bold>POOL BET EXECUTION: ({executionStep + 1}/3) {executionStep === 2 ? 'Final Confirmation' : executionStep === 1 ? 'Enter Amount' : 'Choose Side'}</Text>
               <Box flexDirection="row" marginTop={1}>
                 {executionStep === 0 && (
                   <Box flexDirection="column">
@@ -173,11 +183,26 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
                         focus={!isSubmitting}
                         value={betAmount} 
                         onChange={(v) => setBetAmount(cleanInput(v))} 
-                        onSubmit={() => onPlaceBet(cleanInput(betAmount), betSide)} 
+                        onSubmit={() => setExecutionStep(2)} 
                       />
                     </Box>
-                    <Box marginTop={1}>
-                       <Text dimColor italic>Confirming on-chain after ENTER.</Text>
+                  </Box>
+                )}
+                {executionStep === 2 && (
+                  <Box flexDirection="column" marginTop={1}>
+                    <Text color="white">Summary: <Text color="green" bold>{betSide}</Text> | <Text color="cyan" bold>{betAmount} NIGHT</Text></Text>
+                    <Box marginTop={1} borderStyle="single" borderColor="yellow" paddingX={1}>
+                      <SelectInput 
+                        isFocused={!isSubmitting}
+                        items={[
+                          { label: 'BROADCAST POOL BET', value: 'submit' },
+                          { label: 'RE-EDIT DETAILS', value: 'reset' }
+                        ]}
+                        onSelect={(i) => {
+                          if (i.value === 'submit') onPlaceBet(cleanInput(betAmount), betSide);
+                          else setExecutionStep(0);
+                        }}
+                      />
                     </Box>
                   </Box>
                 )}
@@ -190,10 +215,10 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
                  )}
               </Box>
             </Box>
-        ) : (
+        ) : step === 'WAGER' ? (
           <Box flexDirection="column">
-              <Text color="yellow" bold>P2P WAGER FLOW: Step {executionStep + 1} of 3</Text>
-             <Box flexDirection="column" marginTop={1}>
+              <Text color="yellow" bold>P2P WAGER FLOW: Step {executionStep + 1} of 4</Text>
+              <Box flexDirection="column" marginTop={1}>
                 {executionStep === 0 && (
                   <Box flexDirection="column">
                     <Text color="cyan">Choose Side to Back:</Text>
@@ -234,13 +259,31 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
                           focus={!isSubmitting && oddsFocus === 1}
                           value={oddsDen} 
                           onChange={(v) => setOddsDen(cleanInput(v))} 
-                          onSubmit={() => onPlaceWager(cleanInput(betAmount), betSide, `${cleanInput(oddsNum)}:${cleanInput(oddsDen)}`)} 
+                          onSubmit={() => setExecutionStep(3)} 
                         />
                       </Box>
                     </Box>
                     <Box marginTop={1} flexDirection="column">
                        <Text dimColor italic>Potential Payout: <Text color="green" bold>{(Number(cleanInput(betAmount) || 0) * (Number(cleanInput(oddsNum) || 1) / Number(cleanInput(oddsDen) || 1))).toFixed(2)} NIGHT</Text></Text>
                        <Text color="gray" dimColor>Press [TAB] to switch inputs.</Text>
+                    </Box>
+                  </Box>
+                )}
+                {executionStep === 3 && (
+                  <Box flexDirection="column">
+                    <Text color="white">Summary: <Text color="green" bold>{betSide}</Text> | <Text color="cyan" bold>{betAmount} NIGHT</Text> | Odds <Text color="yellow" bold>{oddsNum}:{oddsDen}</Text></Text>
+                    <Box marginTop={1} borderStyle="single" borderColor="yellow" paddingX={1}>
+                      <SelectInput 
+                        isFocused={!isSubmitting}
+                        items={[
+                          { label: 'BROADCAST P2P WAGER', value: 'submit' },
+                          { label: 'RE-EDIT DETAILS', value: 'reset' }
+                        ]}
+                        onSelect={(i) => {
+                          if (i.value === 'submit') onPlaceWager(cleanInput(betAmount), betSide, `${cleanInput(oddsNum)}:${cleanInput(oddsDen)}`);
+                          else setExecutionStep(0);
+                        }}
+                      />
                     </Box>
                   </Box>
                 )}
@@ -254,6 +297,23 @@ export const MarketDetail: React.FC<MarketDetailProps> = ({
                 )}
              </Box>
           </Box>
+        ) : (
+            <Box flexDirection="column">
+                <Text color="green" bold underline>YOUR DEPLOYED POSITIONS ON THIS MARKET</Text>
+                <Box marginTop={1}>
+                    <SelectInput 
+                        items={[
+                            ...myBets.map(b => ({ label: `[POOL] BET ${b.side.toUpperCase()} | ${b.amount} NIGHT | PnL: ${b.profitLoss}`, value: b.id, data: b })),
+                            ...myWagers.map(w => ({ label: `[P2P] WAGER ${w.creatorSide.toUpperCase()} | ${w.amount} NIGHT | Status: ${w.status}`, value: w.id, data: w })),
+                            { label: '--- BACK ---', value: 'back' }
+                        ] as any}
+                        onSelect={(i: any) => {
+                            if (i.value === 'back') setStep('DETAILS');
+                            else onSelectPosition(i.data);
+                        }}
+                    />
+                </Box>
+            </Box>
         )}
       </Box>
     </Box>

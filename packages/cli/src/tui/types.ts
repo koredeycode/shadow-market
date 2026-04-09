@@ -7,7 +7,12 @@ export type ViewType =
   | 'wallet' 
   | 'login' 
   | 'link'
-  | 'bet-detail';
+  | 'bet-detail'
+  | 'wager-detail'
+  | 'analytics'
+  | 'help'
+  | 'terms'
+  | 'privacy';
 
 export interface Market {
   id: string;

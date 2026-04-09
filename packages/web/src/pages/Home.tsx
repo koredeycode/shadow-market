@@ -100,8 +100,10 @@ export function Home() {
                       <div className="pt-4 space-y-2">
                         <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest leading-none">Market Sentiment</p>
                         <div className="flex items-center gap-2">
-                           <TrendingUp className="w-5 h-5 text-success-green" />
-                           <span className="text-2xl font-bold font-mono text-success-green">{Math.round(parseFloat(currentFeatured.yesPrice) * 100)}% YES</span>
+                           <TrendingUp className={`w-5 h-5 ${parseFloat(currentFeatured.yesPrice) >= 0.5 ? 'text-success-green' : 'text-red-500'}`} />
+                           <span className={`text-2xl font-bold font-mono ${parseFloat(currentFeatured.yesPrice) >= 0.5 ? 'text-success-green' : 'text-red-500'}`}>
+                             {Math.max(Math.round(parseFloat(currentFeatured.yesPrice) * 100), Math.round((1 - parseFloat(currentFeatured.yesPrice)) * 100))}% {parseFloat(currentFeatured.yesPrice) >= 0.5 ? 'YES' : 'NO'}
+                           </span>
                         </div>
                       </div>
                    </div>
@@ -150,7 +152,7 @@ export function Home() {
                           to={`/markets/${currentFeatured.slug || currentFeatured.id}`}
                           className="inline-flex items-center gap-3 px-10 py-4 bg-electric-blue text-white rounded-sm font-bold tracking-[0.2em] uppercase text-[10px] hover:brightness-110 transition-all shadow-[0_4px_30px_rgba(59,130,246,0.3)] hover:scale-[1.02] active:scale-[0.98]"
                         >
-                          Execute Trade
+                          Trade Market
                           <ChevronRight className="w-4 h-4" />
                         </Link>
                       </div>
@@ -206,8 +208,8 @@ export function Home() {
                         {(parseFloat(market.totalVolume) / 1000).toFixed(1)}K NIGHT Vol
                       </span>
                       <span className="text-slate-800">|</span>
-                      <span className="text-success-green">
-                        {Math.round(parseFloat(market.yesPrice) * 100)}% YES
+                      <span className={parseFloat(market.yesPrice) >= 0.5 ? 'text-success-green' : 'text-red-500'}>
+                        {Math.max(Math.round(parseFloat(market.yesPrice) * 100), Math.round((1 - parseFloat(market.yesPrice)) * 100))}% {parseFloat(market.yesPrice) >= 0.5 ? 'YES' : 'NO'}
                       </span>
                     </div>
                   </div>

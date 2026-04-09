@@ -2,11 +2,11 @@ import React from 'react';
 import { render } from 'ink';
 import { App } from './App.js';
 
-export const startTUI = () => {
+export const startTerminal = () => {
     // Clear terminal 
     process.stdout.write('\u001b[2J\u001b[0;0H');
     
-    // Suppress console logs to avoid TUI corruption
+    // Suppress console logs to avoid Terminal corruption
     const originalLog = console.log;
     const originalError = console.error;
     const originalWarn = console.warn;

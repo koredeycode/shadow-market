@@ -1,26 +1,42 @@
 import React from 'react';
-import { Box, Text } from 'ink';
+import { Box, Text, useInput } from 'ink';
 import { format } from 'date-fns';
 
 interface BetDetailProps {
   bet: any;
   onBack: () => void;
+  userAddress: string;
+  onClaim?: (bet: any) => void;
 }
 
-export const BetDetail: React.FC<BetDetailProps> = ({ bet, onBack }) => {
+export const BetDetail: React.FC<BetDetailProps> = ({ 
+  bet, 
+  onBack, 
+  userAddress,
+  onClaim
+}) => {
   if (!bet) return null;
 
-  const isWager = !!bet.odds;
   const isProfitable = parseFloat(bet.profitLoss || '0') >= 0;
-  const side = (isWager ? bet.creatorSide : bet.side) || 'unknown';
-  const question = isWager ? bet.market?.question : bet.marketQuestion;
-  const timestamp = isWager ? bet.createdAt : bet.entryTimestamp;
-  const entryPriceOrOdds = isWager ? `${bet.odds[0]}:${bet.odds[1]}` : `${(Number(bet.entryPrice || 0) * 100).toFixed(1)}%`;
+  const side = bet.side || 'unknown';
+  const question = bet.marketQuestion;
+  const timestamp = bet.entryTimestamp;
+  const entryPrice = `${(Number(bet.entryPrice || 0) * 100).toFixed(1)}%`;
+  
+  const status = bet.isSettled ? 'SETTLED' : 'ACTIVE';
+  const marketStatus = bet.marketStatus;
+
+  const canClaim = marketStatus === 'RESOLVED' && status !== 'SETTLED';
+
+  useInput((input, key) => {
+    if (key.escape) onBack();
+    if (input === 'c' && canClaim && onClaim) onClaim(bet);
+  });
 
   return (
     <Box flexDirection="column" paddingX={1}>
-      <Box borderStyle="double" borderColor="cyan" paddingX={2} marginBottom={1} justifyContent="space-between">
-        <Text bold color="cyan">{isWager ? 'P2P WAGER' : 'POOL BET'} RECEIPT: {bet.id.toUpperCase().slice(0, 12)}</Text>
+      <Box borderStyle="double" borderColor="cyan" paddingX={2} marginBottom={1} justifyContent="space-between" width="100%">
+        <Text bold color="cyan">POOL BET RECEIPT: {bet.id.toUpperCase().slice(0, 12)}</Text>
         <Text color="gray">[ESC] TO BACK</Text>
       </Box>
 
@@ -28,13 +44,13 @@ export const BetDetail: React.FC<BetDetailProps> = ({ bet, onBack }) => {
         <Text bold color="white">{question || 'Synchronizing market data...'}</Text>
         <Box marginTop={1} justifyContent="space-between">
            <Text dimColor>Market ID: {bet.marketId}</Text>
-           <Text color="yellow">Status: {bet.isSettled || bet.status === 'SETTLED' ? 'SETTLED' : bet.status || 'ACTIVE'}</Text>
+           <Text color="yellow">Status: {status}</Text>
         </Box>
       </Box>
 
       <Box flexDirection="row" marginBottom={1}>
         <Box flexDirection="column" width="50%" borderStyle="single" borderColor="gray" paddingX={1}>
-          <Text color="gray">POSITION DATA</Text>
+          <Text color="gray">AMM POSITION DATA</Text>
           <Box justifyContent="space-between" marginTop={1}>
             <Text>SIDE:</Text>
             <Text color={side === 'yes' ? 'green' : 'red'} bold>{side.toUpperCase()}</Text>
@@ -44,8 +60,8 @@ export const BetDetail: React.FC<BetDetailProps> = ({ bet, onBack }) => {
             <Text color="white" bold>{bet.amount} NIGHT</Text>
           </Box>
           <Box justifyContent="space-between">
-            <Text>{isWager ? 'ODDS:' : 'ENTRY:'}</Text>
-            <Text color="white">{entryPriceOrOdds}</Text>
+            <Text>ENTRY:</Text>
+            <Text color="white" bold>{entryPrice}</Text>
           </Box>
         </Box>
 
@@ -65,19 +81,26 @@ export const BetDetail: React.FC<BetDetailProps> = ({ bet, onBack }) => {
       </Box>
 
       <Box flexDirection="column" borderStyle="single" borderColor="blue" paddingX={1}>
-        <Text color="gray">ON-CHAIN EVIDENCE</Text>
+        <Text color="gray">ON-CHAIN PROOF</Text>
         <Box marginTop={1} flexDirection="column">
            <Text color="cyan">Transaction Hash:</Text>
            <Text color="white" wrap="wrap" dimColor>{bet.txHash || 'PENDING_INDEXER_SYNC'}</Text>
         </Box>
         <Box marginTop={1} justifyContent="space-between">
-           <Text color="gray">Contract Reference: {bet.onchainId || 'ZK_SHIELDED_LINK'}</Text>
+           <Text color="gray">Contract Reference: {bet.onchainId || 'ZK_SHIELDED_POOL'}</Text>
            <Text color="gray">Time: {timestamp ? format(new Date(timestamp), 'PPP p') : 'Unknown'}</Text>
         </Box>
       </Box>
 
-      <Box marginTop={1} justifyContent="center">
-        <Text dimColor italic>Verified by Midnight Network Transactions • Confidentiality Guaranteed</Text>
+      <Box marginTop={1} flexDirection="column" alignItems="center">
+        {canClaim && (
+          <Box borderStyle="round" borderColor="green" paddingX={2}>
+            <Text bold color="green">[c] CLAIM POOL PAYOUT</Text>
+          </Box>
+        )}
+        <Box marginTop={1}>
+          <Text dimColor italic>Verified by Midnight Network Transactions • Confidentiality Guaranteed</Text>
+        </Box>
       </Box>
     </Box>
   );

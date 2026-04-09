@@ -7,17 +7,18 @@ interface PortfolioProps {
   me: UserProfile | null;
   onBack: () => void;
   onSelectBet: (bet: any) => void;
+  onSelectWager: (wager: any) => void;
 }
 
-export const Portfolio: React.FC<PortfolioProps> = ({ me, onBack, onSelectBet }) => {
+export const Portfolio: React.FC<PortfolioProps> = ({ me, onBack, onSelectBet, onSelectWager }) => {
   const betItems = (me?.bets || []).map((b: any) => ({
-    label: `[${b.id.slice(0, 8)}] BET ${b.side.toUpperCase()} @ ${(Number(b.entryPrice) * 100).toFixed(0)}% | ${b.amount} NIGHT`,
+    label: `[POOL] BET ${b.side.toUpperCase()} @ ${(Number(b.entryPrice) * 100).toFixed(0)}% | ${b.amount} NIGHT`,
     value: b.id,
     bet: b
   }));
 
   const wagerItems = (me?.wagers || []).map((w: any) => ({
-    label: `[${w.id.slice(0, 8)}] WAGER ${w.creatorSide.toUpperCase()} (${w.odds}) | ${w.amount} NIGHT`,
+    label: `[P2P] WAGER ${w.creatorSide.toUpperCase()} (${w.odds}) | ${w.amount} NIGHT`,
     value: w.id,
     wager: w
   }));
@@ -30,7 +31,7 @@ export const Portfolio: React.FC<PortfolioProps> = ({ me, onBack, onSelectBet })
 
   return (
     <Box flexDirection="column" paddingX={1}>
-      <Box borderStyle="double" borderColor="cyan" paddingX={2} marginBottom={1} justifyContent="space-between">
+      <Box borderStyle="double" borderColor="cyan" paddingX={2} marginBottom={1} justifyContent="space-between" width="100%">
         <Text bold color="cyan">USER PORTFOLIO: {me?.username?.toUpperCase() || 'ANONYMOUS'}</Text>
         <Box flexDirection="row">
            <Text color="gray">[ESC] TO BACK </Text>
@@ -69,11 +70,16 @@ export const Portfolio: React.FC<PortfolioProps> = ({ me, onBack, onSelectBet })
                 onSelect={(item: any) => {
                     if (item.value === 'back') onBack();
                     else if (item.bet) onSelectBet(item.bet);
-                    // Wagers could be handled similarly if we have a WagerDetail view
+                    else if (item.wager) onSelectWager(item.wager);
                 }} 
             />
           </Box>
         )}
+      </Box>
+
+      <Box marginTop={1} justifyContent="space-between">
+         <Text color="gray"> [a] Analytics [h] Help </Text>
+         <Text dimColor>Synced: {new Date().toLocaleTimeString()}</Text>
       </Box>
     </Box>
   );

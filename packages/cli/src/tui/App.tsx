@@ -19,6 +19,10 @@ import { MarketList } from './views/MarketList.js';
 import { Portfolio } from './views/Portfolio.js';
 import { Wallet } from './views/Wallet.js';
 import { BetDetail } from './views/BetDetail.js';
+import { WagerDetail } from './views/WagerDetail.js';
+import { Analytics } from './views/Analytics.js';
+import { HowItWorks } from './views/HowItWorks.js';
+import { Legal } from './views/Legal.js';
 
 // Components
 import { ConfirmationModal } from './components/ConfirmationModal.js';
@@ -45,9 +49,19 @@ export const App = () => {
     const [showBetConfirm, setShowBetConfirm] = useState<{ amount: string, side: 'YES' | 'NO' } | null>(null);
     const [showWagerConfirm, setShowWagerConfirm] = useState<{ amount: string, side: 'YES' | 'NO', odds: string } | null>(null);
     const [showCreateConfirm, setShowCreateConfirm] = useState<any | null>(null);
-    const [showSuccess, setShowSuccess] = useState<{ title: string, message: string, txHash?: string } | null>(null);
+    const [showClaimConfirm, setShowClaimConfirm] = useState<any | null>(null);
+    const [showMatchConfirm, setShowMatchConfirm] = useState<any | null>(null);
+    const [showWithdrawConfirm, setShowWithdrawConfirm] = useState<any | null>(null);
+    const [showSuccess, setShowSuccess] = useState<{ 
+        title: string, 
+        message: string, 
+        txHash?: string,
+        onClose?: () => void 
+    } | null>(null);
     const [globalError, setGlobalError] = useState<string | null>(null);
     const [viewingBet, setViewingBet] = useState<any>(null);
+    const [viewingWager, setViewingWager] = useState<any>(null);
+    const [platformStats, setPlatformStats] = useState<any>(null);
 
     const activeView = viewStack[viewStack.length - 1];
 
@@ -70,15 +84,17 @@ export const App = () => {
                 if (session?.token) backendClient.setToken(session.token);
             }
 
-            const [m, s, user, adminConfig] = await Promise.all([
+            const [m, s, user, adminConfig, stats] = await Promise.all([
                 backendClient.getMarkets({ limit: 12 }),
                 walletManager.isLoggedIn() ? walletManager.getStatus() : null,
                 walletManager.isLinked() ? backendClient.getPortfolio() : null,
-                walletManager.isLoggedIn() ? backendClient.getAdminConfig().catch(() => null) : null
+                walletManager.isLoggedIn() ? backendClient.getAdminConfig().catch(() => null) : null,
+                backendClient.getPlatformStats().catch(() => null)
             ]);
             setMarkets(m as any);
             setWalletStatus(s as any);
             setMe(user as any);
+            setPlatformStats(stats);
             if (adminConfig) setAdminAddress(adminConfig.adminAddress);
             setGlobalError(null);
         } catch (err: any) {
@@ -152,7 +168,7 @@ export const App = () => {
 
     const handleCreateMarket = async (formData: any) => {
         setIsSubmitting(true);
-        setSubmitStatus('Generating on-chain reference...');
+        setSubmitStatus('Generating transaction references...');
         setShowCreateConfirm(null);
         try {
             const api = await walletManager.getAPI();
@@ -172,13 +188,20 @@ export const App = () => {
                 txHash: res?.txHash
             };
 
-            await backendClient.createMarket(payload);
+            const market = await backendClient.createMarket(payload);
             setSubmitStatus('MARKET CREATED SUCCESSFULLY!');
 
-            setTimeout(() => {
-                setIsSubmitting(false);
-                navigateTo('markets');
-            }, 1500);
+            setShowSuccess({
+                title: 'Market Created Successfully',
+                message: `The prediction market "${formData.question}" has been successfully broadcast and indexed.`,
+                txHash: res?.txHash,
+                onClose: () => {
+                    setShowSuccess(null);
+                    setSelectedMarket(market);
+                    navigateTo('market-detail');
+                }
+            });
+            setIsSubmitting(false);
         } catch (err: any) {
             setSubmitStatus(`Error: ${err.message}`);
             setTimeout(() => setIsSubmitting(false), 4000);
@@ -189,7 +212,7 @@ export const App = () => {
         if (!selectedMarket) return;
         setIsSubmitting(true);
         setShowBetConfirm(null);
-        setSubmitStatus('Initializing ZK circuit...');
+        setSubmitStatus('Generating transaction references...');
 
         try {
             const api = await walletManager.getAPI();
@@ -202,8 +225,7 @@ export const App = () => {
             const amount = BigInt(Math.floor(parseFloat(amountStr) * 1_000_000));
             const res = await api.placeBet(selectedMarket.onchainId, amount, side === 'YES');
 
-            setSubmitStatus('Success! Syncing backend...');
-            await backendClient.placeBet(selectedMarket.id, {
+            const bet = await backendClient.placeBet(selectedMarket.id, {
                 onchainId: res.onchainId,
                 side: side.toLowerCase(),
                 amount: amountStr,
@@ -212,9 +234,14 @@ export const App = () => {
 
             setSubmitStatus('BET PLACED SUCCESSFULLY!');
             setShowSuccess({
-                title: 'Position Secured',
+                title: 'Bet Created Successfully',
                 message: `Successfully deposited ${amountStr} NIGHT into the ZK-escrow pool for the ${side} outcome on market:\n"${selectedMarket.question}"`,
-                txHash: res.txHash
+                txHash: res.txHash,
+                onClose: () => {
+                    setShowSuccess(null);
+                    setViewingBet(bet);
+                    navigateTo('bet-detail');
+                }
             });
             setIsSubmitting(false);
         } catch (err: any) {
@@ -227,7 +254,7 @@ export const App = () => {
         if (!selectedMarket) return;
         setIsSubmitting(true);
         setShowWagerConfirm(null);
-        setSubmitStatus('Initializing P2P execution environment...');
+        setSubmitStatus('Generating transaction references...');
 
         try {
             const api = await walletManager.getAPI();
@@ -260,8 +287,7 @@ export const App = () => {
                 oddsDenominator
             );
 
-            setSubmitStatus('Success! Syncing WAGER with backend...');
-            await backendClient.createP2PWager(selectedMarket.id, {
+            const wager = await backendClient.createP2PWager(selectedMarket.id, {
                 onchainId: res.onchainId,
                 side: side.toLowerCase(),
                 amount: amountStr,
@@ -272,9 +298,14 @@ export const App = () => {
 
             setSubmitStatus('P2P WAGER CREATED SUCCESSFULLY!');
             setShowSuccess({
-                title: 'Wager Offering Active',
+                title: 'Wager Created Successfully',
                 message: `Your P2P wager for ${amountStr} NIGHT on ${side} with ${oddsStr} odds has been broadcast to the Midnight ledger.`,
-                txHash: res.txHash
+                txHash: res.txHash,
+                onClose: () => {
+                    setShowSuccess(null);
+                    setViewingWager(wager);
+                    navigateTo('wager-detail');
+                }
             });
             setIsSubmitting(false);
         } catch (err: any) {
@@ -333,33 +364,135 @@ export const App = () => {
         }
     };
 
-    const isEditing = activeView === 'create' || activeView === 'login';
+    const handleClaimBet = async (bet: any) => {
+        setIsSubmitting(true);
+        setSubmitStatus('Executing ZK settlement proof...');
+        setShowClaimConfirm(null);
+        try {
+            const api = await walletManager.getAPI();
+            const isWager = !!bet.odds;
+            
+            const txHash = isWager 
+                ? await api.claimWagerWinnings(bet.onchainId || bet.id)
+                : await api.claimWinnings(bet.id);
+
+            if (txHash) {
+                const updatedBet = isWager 
+                    ? await backendClient.claimWagerWinnings(bet.id)
+                    : await backendClient.claimWinnings(bet.id);
+                
+                setShowSuccess({
+                    title: 'Payout Distributed',
+                    message: `Strategic settlement successful. Funds have been distributed via shielded transaction to your Midnight address.`,
+                    onClose: () => {
+                        setShowSuccess(null);
+                        if (isWager) {
+                            setViewingWager(updatedBet);
+                            navigateTo('wager-detail');
+                        } else {
+                            setViewingBet(updatedBet);
+                            navigateTo('bet-detail');
+                        }
+                    }
+                });
+                await loadData();
+            } else {
+                throw new Error('On-chain verification failed');
+            }
+        } catch (err: any) {
+            setSubmitStatus(`Error: ${err.message}`);
+            setTimeout(() => setIsSubmitting(false), 4000);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleMatchWager = async (wager: any) => {
+        setIsSubmitting(true);
+        setSubmitStatus('Matching P2P offer on-chain...');
+        setShowMatchConfirm(null);
+        try {
+            const api = await walletManager.getAPI();
+            const txHash = await api.acceptWager(wager.onchainId || wager.id);
+            if (txHash) {
+                const updatedWager = await backendClient.acceptWager(wager.marketId, wager.id, { txHash });
+                setShowSuccess({
+                    title: 'Wager Matched',
+                    message: `You have successfully matched the P2P offer for ${wager.amount} NIGHT. Position is now active.`,
+                    txHash,
+                    onClose: () => {
+                        setShowSuccess(null);
+                        setViewingWager(updatedWager);
+                        navigateTo('wager-detail');
+                    }
+                });
+                await loadData();
+            }
+        } catch (err: any) {
+            setSubmitStatus(`Error: ${err.message}`);
+            setTimeout(() => setIsSubmitting(false), 4000);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleWithdrawWager = async (wager: any) => {
+        setIsSubmitting(true);
+        setSubmitStatus('Withdrawing P2P offer...');
+        setShowWithdrawConfirm(null);
+        try {
+            const api = await walletManager.getAPI();
+            const success = await api.cancelWager(wager.onchainId || wager.id);
+            if (success) {
+                setSubmitStatus('Syncing withdrawal...');
+                await backendClient.cancelWager(wager.id);
+                setShowSuccess({
+                    title: 'Offer Withdrawn',
+                    message: `Your P2P offer has been removed from the ledger and funds returned to your wallet.`,
+                    onClose: () => {
+                        setShowSuccess(null);
+                        navigateTo('portfolio');
+                    }
+                });
+                await loadData();
+            }
+        } catch (err: any) {
+            setSubmitStatus(`Error: ${err.message}`);
+            setTimeout(() => setIsSubmitting(false), 4000);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const isEditing = ['create', 'login', 'market-detail', 'bet-detail', 'wager-detail'].includes(activeView);
+    const viewHandlesEscLocally = ['create', 'market-detail', 'bet-detail', 'wager-detail'].includes(activeView);
 
     useInput((input, key) => {
-        if (isSubmitting || showQuitConfirm || showBetConfirm || showResolveConfirm) return;
+        if (isSubmitting || showQuitConfirm || showSuccess || showResolveConfirm || showBetConfirm || showWagerConfirm || showCreateConfirm || showMatchConfirm || showWithdrawConfirm) return;
 
-        // Global Navigation (only if not currently typing in an input field)
-        // Note: TextInput and SelectInput will handle their own keys if they have focus.
-        // But we want to allow jumping back to dashboard or quitting anytime from major views.
-        if (!isEditing) {
-            if (activeView !== 'link') {
-                if (input === 'd') navigateTo('dashboard');
-                if (input === 'm') navigateTo('markets');
-                if (input === 'c') navigateTo('create');
-                if (input === 'p') navigateTo('portfolio');
-                if (input === 'w') navigateTo('wallet');
-                if (input === 'q') setShowQuitConfirm(true);
+        // Global Navigation (Direct keys for non-input views, Ctrl+Key for everywhere)
+        if (!isEditing || key.ctrl) {
+            if (activeView !== 'link' || key.ctrl) {
+                if (input === 'd') { navigateTo('dashboard'); return; }
+                if (input === 'm') { navigateTo('markets'); return; }
+                if (input === 'c') { navigateTo('create'); return; }
+                if (input === 'p') { navigateTo('portfolio'); return; }
+                if (input === 'w') { navigateTo('wallet'); return; }
+                if (input === 'a') { navigateTo('analytics'); return; }
+                if (input === 'h') { navigateTo('help'); return; }
+                if (input === 'q') { setShowQuitConfirm(true); return; }
                 if (input === 'L') {
                     walletManager.logout();
-                    navigateTo('dashboard');
+                    navigateTo('login');
                     setWalletStatus(null);
                     setMe(null);
+                    return;
                 }
             }
         }
 
         // Global Escape to go back
-        if (key.escape) {
+        if (key.escape && !viewHandlesEscLocally) {
             popView();
         }
     });
@@ -424,12 +557,22 @@ export const App = () => {
                         {activeView === 'market-detail' && selectedMarket && (
                             <MarketDetail 
                                 market={selectedMarket} 
+                                me={me}
                                 history={marketHistory}
                                 onBack={popView} 
                                 isSubmitting={isSubmitting}
                                 submitStatus={submitStatus}
                                 onPlaceBet={(amount: string, side: 'YES' | 'NO') => setShowBetConfirm({ amount, side })}
                                 onPlaceWager={(amount: string, side: 'YES' | 'NO', odds: string) => setShowWagerConfirm({ amount, side, odds })}
+                                onSelectPosition={(pos) => { 
+                                    if (pos.odds) {
+                                        setViewingWager(pos);
+                                        pushView('wager-detail');
+                                    } else {
+                                        setViewingBet(pos);
+                                        pushView('bet-detail');
+                                    }
+                                }}
                                 onOpenBrowser={handleOpenMarketInBrowser}
                                 isAdmin={adminAddress ? walletManager.getAddress() === adminAddress : false}
                                 onAdminAction={handleAdminAction}
@@ -454,15 +597,48 @@ export const App = () => {
                                 me={me} 
                                 onBack={popView} 
                                 onSelectBet={(b) => { setViewingBet(b); pushView('bet-detail'); }} 
+                                onSelectWager={(w) => { setViewingWager(w); pushView('wager-detail'); }}
                              />
                         )}
 
                         {activeView === 'bet-detail' && viewingBet && (
-                            <BetDetail bet={viewingBet} onBack={popView} />
+                            <BetDetail 
+                                bet={viewingBet} 
+                                onBack={popView} 
+                                userAddress={walletManager.getAddress()}
+                                onClaim={setShowClaimConfirm}
+                            />
+                        )}
+
+                        {activeView === 'wager-detail' && viewingWager && (
+                            <WagerDetail 
+                                wager={viewingWager} 
+                                onBack={popView} 
+                                userAddress={walletManager.getAddress()}
+                                onClaim={setShowClaimConfirm}
+                                onMatch={setShowMatchConfirm}
+                                onWithdraw={setShowWithdrawConfirm}
+                            />
                         )}
 
                         {activeView === 'wallet' && (
                              <Wallet walletStatus={walletStatus} onBack={popView} />
+                        )}
+
+                        {activeView === 'analytics' && (
+                             <Analytics stats={platformStats} onBack={popView} />
+                        )}
+
+                        {activeView === 'help' && (
+                             <HowItWorks onBack={popView} onNavigate={pushView} />
+                        )}
+
+                        {activeView === 'terms' && (
+                             <Legal type="terms" onBack={popView} />
+                        )}
+
+                        {activeView === 'privacy' && (
+                             <Legal type="privacy" onBack={popView} />
                         )}
 
                         {activeView === 'link' && (
@@ -485,7 +661,7 @@ export const App = () => {
 
 
                         {/* Catch-all for unknown views to prevent blank screens */}
-                        {!['dashboard', 'markets', 'market-detail', 'create', 'login', 'link', 'portfolio', 'wallet'].includes(activeView) && (
+                        {!['dashboard', 'markets', 'market-detail', 'create', 'login', 'link', 'portfolio', 'wallet', 'bet-detail', 'analytics', 'help', 'terms', 'privacy'].includes(activeView) && (
                            <Box justifyContent="center" alignItems="center" height={10}>
                               <Text color="red">ERROR: Invalid Terminal Context - Redirecting...</Text>
                            </Box>
@@ -555,10 +731,46 @@ export const App = () => {
                         message={showSuccess.message}
                         txHash={showSuccess.txHash}
                         onClose={() => {
-                            setShowSuccess(null);
-                            setSelectedMarket(null);
-                            navigateTo('dashboard');
+                            if (showSuccess.onClose) {
+                                showSuccess.onClose();
+                            } else {
+                                setShowSuccess(null);
+                                navigateTo('dashboard');
+                            }
                         }}
+                    />
+                )}
+
+                {showClaimConfirm && (
+                    <ConfirmationModal 
+                        title="BROADCAST PAYOUT CLAIM?"
+                        message={`You are about to execute a ZK settlement proof to claim your winnings for:\n"${showClaimConfirm.market?.question || showClaimConfirm.marketQuestion}"\n\nThis will transfer the shielded funds to your Midnight identity.`}
+                        onConfirm={() => handleClaimBet(showClaimConfirm)}
+                        onCancel={() => setShowClaimConfirm(null)}
+                        confirmColor="green"
+                        confirmLabel="Claim Payout (y)"
+                    />
+                )}
+
+                {showMatchConfirm && (
+                    <ConfirmationModal 
+                        title="BROADCAST WAGER MATCH?"
+                        message={`You are about to match a P2P offer for ${showMatchConfirm.amount} NIGHT on:\n"${showMatchConfirm.market?.question}"\n\nThis will lock your collateral in a P2P ZK-escrow contract.`}
+                        onConfirm={() => handleMatchWager(showMatchConfirm)}
+                        onCancel={() => setShowMatchConfirm(null)}
+                        confirmColor="blue"
+                        confirmLabel="Match Offer (y)"
+                    />
+                )}
+
+                {showWithdrawConfirm && (
+                    <ConfirmationModal 
+                        title="BROADCAST WITHDRAWAL?"
+                        message={`You are about to withdraw your unmatched P2P offer for ${showWithdrawConfirm.amount} NIGHT.\n\nFunds will be returned to your shielded balance.`}
+                        onConfirm={() => handleWithdrawWager(showWithdrawConfirm)}
+                        onCancel={() => setShowWithdrawConfirm(null)}
+                        confirmColor="red"
+                        confirmLabel="Withdraw (y)"
                     />
                 )}
             </Box>
@@ -566,7 +778,7 @@ export const App = () => {
             {/* Global Footer */}
             <Box marginTop={1} borderStyle="single" borderColor="cyan" paddingX={1} justifyContent="space-between">
                 <Box>
-                    <Text color="cyan"> [d] Dash [m] Markets [c] Create [p] Portfolio [w] Wallet [L] Logout [q] Quit </Text>
+                    <Text color="cyan"> [d] Dash [m] Markets [c] Create [p] Portfolio [w] Wallet [a] Analytics [h] Help [L] Logout [q] Quit </Text>
                 </Box>
                 <Box>
                     <Text color="gray"> Net: <Text color={walletStatus?.isSynced ? 'green' : 'yellow'}>{walletStatus?.network || 'undeployed'}</Text></Text>

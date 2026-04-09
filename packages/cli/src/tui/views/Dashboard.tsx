@@ -75,6 +75,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                  { label: 'CREATE MARKET', value: 'create' },
                  { label: 'PORTFOLIO', value: 'portfolio' },
                  { label: 'WALLET HUB', value: 'wallet' },
+                 { label: 'INTELLIGENCE (ANALYTICS)', value: 'analytics' },
+                 { label: 'SYSTEM HELP', value: 'help' },
                ] as any}
                onSelect={(i: any) => onSelectTab(i.value)}
             />
