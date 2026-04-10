@@ -1,21 +1,25 @@
 import { useQuery } from '@tanstack/react-query';
 import {
+  Activity,
   AlertTriangle,
   BarChart3,
   ChevronRight,
   Clock,
   Loader2,
+  Search,
   TrendingUp,
   Users,
   Zap,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { marketsApi } from '../api/markets';
+import { EmptyState } from '../components/common/EmptyState';
 import { MarketIntelligenceCard } from '../components/market/MarketIntelligenceCard';
 import type { Market, TrendingMarket } from '../types';
 
 export function Home() {
+  const navigate = useNavigate();
   const { data: trendingMarkets, isLoading: loadingTrending } = useQuery<TrendingMarket[]>({
     queryKey: ['trending-markets'],
     queryFn: () => marketsApi.getTrending(3),
@@ -83,7 +87,7 @@ export function Home() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* Featured Market Carousel (Left) */}
         <div className="lg:col-span-8 flex flex-col">
-          {currentFeatured && (
+          {currentFeatured ? (
             <div className="glass-card glass-shine relative group overflow-hidden rounded-sm border border-white/10 bg-slate-900/60 hover:border-electric-blue/30 transition-all duration-700 flex-1 min-h-[450px] flex flex-col">
               
               {/* Crossfade Layer */}
@@ -176,6 +180,13 @@ export function Home() {
                 </div>
               </div>
             </div>
+          ) : (
+            <EmptyState 
+              title="No Featured Intel" 
+              description="The network is currently scanning for high-confidence market signals. Check back soon for promoted opportunities."
+              variant="card"
+              icon={<Zap className="w-12 h-12 text-amber-accent/40" />}
+            />
           )}
         </div>
 
@@ -190,32 +201,41 @@ export function Home() {
               </h3>
             </div>
             <div className="flex-1">
-              {trendingMarkets?.map((market, idx) => (
-                <Link
-                  key={market.id}
-                  to={`/markets/${market.slug || market.id}`}
-                  className={`flex items-center gap-4 p-4 hover:bg-white/5 transition-colors group ${
-                    idx !== trendingMarkets.length - 1 ? 'border-b border-white/[0.02]' : ''
-                  }`}
-                >
-                  <span className="text-xs font-mono text-slate-600 w-4 font-bold">{idx + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-slate-300 group-hover:text-white transition-colors truncate">
-                      {market.question}
-                    </p>
-                    <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500 uppercase mt-1">
-                      <span className="text-electric-blue">
-                        {(parseFloat(market.totalVolume) / 1000).toFixed(1)}K NIGHT Vol
-                      </span>
-                      <span className="text-slate-800">|</span>
-                      <span className={parseFloat(market.yesPrice) >= 0.5 ? 'text-success-green' : 'text-red-500'}>
-                        {Math.max(Math.round(parseFloat(market.yesPrice) * 100), Math.round((1 - parseFloat(market.yesPrice)) * 100))}% {parseFloat(market.yesPrice) >= 0.5 ? 'YES' : 'NO'}
-                      </span>
+              {trendingMarkets && trendingMarkets.length > 0 ? (
+                trendingMarkets.map((market, idx) => (
+                  <Link
+                    key={market.id}
+                    to={`/markets/${market.slug || market.id}`}
+                    className={`flex items-center gap-4 p-4 hover:bg-white/5 transition-colors group ${
+                      idx !== trendingMarkets.length - 1 ? 'border-b border-white/[0.02]' : ''
+                    }`}
+                  >
+                    <span className="text-xs font-mono text-slate-600 w-4 font-bold">{idx + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-slate-300 group-hover:text-white transition-colors truncate">
+                        {market.question}
+                      </p>
+                      <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500 uppercase mt-1">
+                        <span className="text-electric-blue">
+                          {(parseFloat(market.totalVolume) / 1000).toFixed(1)}K NIGHT Vol
+                        </span>
+                        <span className="text-slate-800">|</span>
+                        <span className={parseFloat(market.yesPrice) >= 0.5 ? 'text-success-green' : 'text-red-500'}>
+                          {Math.max(Math.round(parseFloat(market.yesPrice) * 100), Math.round((1 - parseFloat(market.yesPrice)) * 100))}% {parseFloat(market.yesPrice) >= 0.5 ? 'YES' : 'NO'}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-slate-800 group-hover:text-electric-blue transition-colors" />
-                </Link>
-              ))}
+                    <ChevronRight className="w-4 h-4 text-slate-800 group-hover:text-electric-blue transition-colors" />
+                  </Link>
+                ))
+              ) : (
+                <EmptyState 
+                  title="Quiet Terminal" 
+                  description="No major market movements detected in this cycle."
+                  variant="minimal"
+                  icon={<Activity className="w-8 h-8 opacity-20" />}
+                />
+              )}
             </div>
           </section>
 
@@ -231,23 +251,32 @@ export function Home() {
               </span>
             </div>
             <div className="px-2 pt-2 space-y-1">
-              {newMarkets?.slice(0, 3).map(market => (
-                <Link
-                  key={market.id}
-                  to={`/markets/${market.slug || market.id}`}
-                  className="block p-3 border border-transparent hover:border-white/5 hover:bg-white/[0.01] rounded-sm transition-all"
-                >
-                  <p className="text-xs font-bold text-slate-400 line-clamp-2 mb-2 group-hover:text-slate-200">
-                    {market.question}
-                  </p>
-                  <div className="flex items-center justify-between text-[9px] font-mono uppercase tracking-widest text-slate-600">
-                    <span className="flex items-center gap-1">{market.category}</span>
-                    <span className="text-electric-blue/60 group-hover:text-electric-blue transition-colors">
-                      Details
-                    </span>
-                  </div>
-                </Link>
-              ))}
+              {newMarkets && newMarkets.length > 0 ? (
+                newMarkets.slice(0, 3).map(market => (
+                  <Link
+                    key={market.id}
+                    to={`/markets/${market.slug || market.id}`}
+                    className="block p-3 border border-transparent hover:border-white/5 hover:bg-white/[0.01] rounded-sm transition-all"
+                  >
+                    <p className="text-xs font-bold text-slate-400 line-clamp-2 mb-2 group-hover:text-slate-200">
+                      {market.question}
+                    </p>
+                    <div className="flex items-center justify-between text-[9px] font-mono uppercase tracking-widest text-slate-600">
+                      <span className="flex items-center gap-1">{market.category}</span>
+                      <span className="text-electric-blue/60 group-hover:text-electric-blue transition-colors">
+                        Details
+                      </span>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <EmptyState 
+                  title="Scanning..." 
+                  description="Waiting for new market propagation."
+                  variant="minimal"
+                  icon={<Clock className="w-6 h-6 opacity-20" />}
+                />
+              )}
             </div>
             <div className="p-2">
               <Link
@@ -277,15 +306,19 @@ export function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {allFeaturedMarkets.slice(0, 12).map((market: Market) => (
-            <MarketIntelligenceCard key={market.id} market={market} />
-          ))}
-          {/* Fallback if no markets available */}
-          {allFeaturedMarkets.length === 0 && (
-            <div className="col-span-full border border-dashed border-white/5 p-12 text-center rounded-sm">
-              <p className="text-sm font-mono text-slate-600 uppercase tracking-widest">
-                No active markets available on the ledger.
-              </p>
+          {allFeaturedMarkets.length > 0 ? (
+            allFeaturedMarkets.slice(0, 12).map((market: Market) => (
+              <MarketIntelligenceCard key={market.id} market={market} />
+            ))
+          ) : (
+            <div className="col-span-full">
+              <EmptyState 
+                title="No Intelligence Found" 
+                description="The market registry is currently empty on your local node. Synchronize or create a new market to begin."
+                actionLabel="Create Market"
+                onAction={() => navigate('/create')}
+                icon={<Search className="w-12 h-12 text-electric-blue/40" />}
+              />
             </div>
           )}
         </div>

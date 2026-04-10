@@ -39,6 +39,7 @@ export interface DeployedShadowMarketConfig {
   networkId: string;
   shieldedCoinPublicKey?: string;
   shieldedEncryptionPublicKey?: string;
+  walletType?: 'lace' | '1am';
 }
 
 /**

@@ -1,6 +1,7 @@
 {
-  "contractAddress": "016e602251a2185392d851c320b0742adc3d5141e4dc2d773a9a32afbf24cdb3",
+  "contractAddress": "2412e3b76e12d85859a9d8fb8720e0a8bb4070daf89879724863ebf1db238110",
+  "adminIdentityKey": "63dd3323edbf4d8d758d7365a9b9431b045b2ca216e2113a036121650d7a5f0c",
   "seed": "dad7b31a5abd2ed25856fdb0c00606f70ee67f3e21c511d175c44ee3675dd3747a86bf0edcdfa9d7c9ae996b2b2f3e2fcfeda57d97ab5e1f90feddac447ed7d2",
   "network": "preprod",
-  "deployedAt": "2026-04-07T00:34:01.938Z"
+  "deployedAt": "2026-04-10T13:49:21.025Z"
 }

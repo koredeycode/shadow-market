@@ -30,7 +30,7 @@ interface PlaceBetModalProps {
 }
 
 export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
-  const { isConnected, unshieldedNightBalance, formattedUnshieldedNightBalance, connectWallet } = useWallet();
+  const { isConnected, unshieldedNightBalance, formattedUnshieldedNightBalance, setWalletModalOpen } = useWallet();
   const { placeBet, isInitialized } = useContract();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successData, setSuccessData] = useState<{ txHash: string; amount: string; side: string } | null>(null);
@@ -212,7 +212,7 @@ export function PlaceBetModal({ open, onClose, market }: PlaceBetModalProps) {
               </p>
               <button
                 type="button"
-                onClick={connectWallet}
+                onClick={() => setWalletModalOpen(true)}
                 className="w-full py-3 bg-electric-blue text-white font-bold text-xs uppercase tracking-[0.2em] rounded-sm hover:brightness-110 transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)]"
               >
                 Connect Wallet

@@ -266,7 +266,7 @@ class WalletManager {
       ),
       zkConfigProvider,
       proofProvider: httpClientProofProvider(
-        process.env.MIDNIGHT_PROOF_SERVER_URL || 'http://localhost:6300',
+        this.getProofServerUrl(),
         zkConfigProvider
       ),
       walletProvider,
@@ -302,6 +302,23 @@ class WalletManager {
     const hex = toHex(bytes);
     this.setIdentityKey(hex);
     return hex;
+  }
+
+  getProofServerUrl(): string {
+    const option = this.config.get('proofServerOption') as string || 'env';
+    if (option === 'local') return 'http://localhost:6300';
+    if (option === 'custom') return this.config.get('proofServerUrl') as string || 'http://localhost:6300';
+    return process.env.MIDNIGHT_PROOF_SERVER_URL || 'http://localhost:6300';
+  }
+
+  getProofServerOption(): string {
+    return this.config.get('proofServerOption') as string || 'env';
+  }
+
+  setProofServer(option: 'env' | 'local' | 'custom', url?: string): void {
+    this.config.set('proofServerOption', option);
+    if (url) this.config.set('proofServerUrl', url);
+    this.api = null; // Reset API to force re-init with new provider
   }
 }
 

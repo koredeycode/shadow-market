@@ -7,7 +7,7 @@ import { api } from '../../lib/api';
 const LinkCLI = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { isConnected, connectWallet, unshieldedAddress } = useMidnight();
+  const { isConnected, setWalletModalOpen, unshieldedAddress } = useMidnight();
   const [status, setStatus] = useState<'IDLE' | 'AUTHORIZING' | 'SUCCESS' | 'ERROR'>('IDLE');
   const [sessionData, setSessionData] = useState<any>(null);
   const code = searchParams.get('code');
@@ -37,7 +37,7 @@ const LinkCLI = () => {
   const handleAuthorize = async () => {
     if (!isConnected) {
       toast.error('Please connect your wallet first');
-      connectWallet();
+      setWalletModalOpen(true);
       return;
     }
 

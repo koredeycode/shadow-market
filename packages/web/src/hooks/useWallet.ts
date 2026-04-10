@@ -25,16 +25,29 @@ const COMPATIBLE_CONNECTOR_API_VERSION = '4.x';
 const NETWORK_ID = (import.meta as any).env?.VITE_NETWORK_ID || 'undeployed';
 
 // Find the first compatible Lace wallet from window.midnight object
-const getFirstCompatibleWallet = (): InitialAPI | undefined => {
+const getFirstCompatibleWallet = (type?: 'lace' | '1am'): InitialAPI | undefined => {
   if (!window.midnight) return undefined;
 
-  return Object.values(window.midnight).find(
-    (wallet): wallet is InitialAPI =>
-      !!wallet &&
-      typeof wallet === 'object' &&
-      'apiVersion' in wallet &&
-      semver.satisfies(wallet.apiVersion, COMPATIBLE_CONNECTOR_API_VERSION)
-  );
+  const entries = Object.entries(window.midnight);
+
+  if (type) {
+    // Look for a wallet that matches the type by key name or its internal name property
+    const found = entries.find(([key, wallet]) => {
+      const lowerType = type.toLowerCase();
+      const matchesKey = key.toLowerCase().includes(lowerType);
+      const matchesName = (wallet as any)?.name?.toLowerCase().includes(lowerType);
+      
+      return (matchesKey || matchesName) && 
+             semver.satisfies(wallet.apiVersion, COMPATIBLE_CONNECTOR_API_VERSION);
+    });
+    
+    return found ? found[1] : undefined;
+  }
+
+  // Fallback to searching all (only if no type specified)
+  return entries.find(([_, wallet]) => 
+    semver.satisfies(wallet.apiVersion, COMPATIBLE_CONNECTOR_API_VERSION)
+  )?.[1];
 };
 
 export function useWallet() {
@@ -50,13 +63,16 @@ export function useWallet() {
     networkId,
     provider,
     isTransacting,
-    autoConnect,
     username: storeUsername,
     connect: storeConnect,
     disconnect: storeDisconnect,
     updateBalances,
     setConnecting,
     setAddressDisplayMode,
+    proofServerUrl,
+    proofServerOption,
+    setProofServer,
+    walletType: storedWalletType,
   } = useWalletStore();
 
   const currentAddress = addressDisplayMode === 'shielded' ? shieldedAddress : (unshieldedAddress || shieldedAddress);
@@ -71,10 +87,14 @@ export function useWallet() {
   }, []);
 
   // Connect to wallet
-  const connectWallet = useCallback(async () => {
-    if (!isWalletInstalled()) {
-      toast.error('Lace wallet not found. Please install Lace wallet extension.');
-      window.open('https://www.lace.io/', '_blank');
+  const connectWallet = useCallback(async (type?: 'lace' | '1am') => {
+    if (typeof window === 'undefined') return;
+
+    const initialAPI = getFirstCompatibleWallet(type);
+    
+    if (!initialAPI) {
+      toast.error(`${type === '1am' ? '1AM' : 'Lace'} wallet not found. Please install the extension.`);
+      window.open(type === '1am' ? 'https://1am.xyz' : 'https://www.lace.io/', '_blank');
       return;
     }
 
@@ -83,13 +103,18 @@ export function useWallet() {
     setConnecting(true);
 
     try {
-      const initialAPI = getFirstCompatibleWallet();
-
-      if (!initialAPI) {
-        throw new Error('Could not find compatible Midnight Lace wallet');
+      // Determine the actual type if it was generic
+      let resolvedType: 'lace' | '1am' = 'lace';
+      if (type === '1am' || type === 'lace') {
+        resolvedType = type;
+      } else {
+        const found = Object.keys(window.midnight || {}).find(k => window.midnight![k] === initialAPI);
+        if (found === '1am' || found === 'lace') {
+          resolvedType = found;
+        }
       }
 
-      console.log('Connecting to Lace wallet with network:', NETWORK_ID);
+      console.log(`Connecting to ${resolvedType} wallet with network:`, NETWORK_ID);
 
       // Connect to wallet with network ID
       const connectedAPI = await initialAPI.connect(NETWORK_ID);
@@ -214,17 +239,26 @@ export function useWallet() {
         toast.error('Failed to authenticate with backend. Some features may not work.');
       }
 
-      storeConnect(connectedAPI, { shielded: shieldedAddressVal, unshielded: unshieldedAddressVal }, NETWORK_ID, usernameVal);
+      storeConnect(connectedAPI, { shielded: shieldedAddressVal, unshielded: unshieldedAddressVal }, NETWORK_ID, resolvedType, usernameVal);
 
       // Initialize contract connection
       // Note: SDK v4 doesn't expose getPrivateStateProvider on ConnectedAPI
       // Private state management is handled internally by the wallet now
       let contractInitialized = false;
       try {
-        const result = await initializeContract(connectedAPI, {
-          shieldedCoinPublicKey: shieldedAddresses.shieldedCoinPublicKey,
-          shieldedEncryptionPublicKey: shieldedAddresses.shieldedEncryptionPublicKey,
-        });
+        const effectiveProofUrl = proofServerOption === 'env' 
+          ? (import.meta as any).env?.VITE_MIDNIGHT_PROOF_SERVER_URL 
+          : proofServerUrl;
+
+        const result = await initializeContract(
+          connectedAPI,
+          resolvedType,
+          {
+            shieldedCoinPublicKey: shieldedAddresses.shieldedCoinPublicKey,
+            shieldedEncryptionPublicKey: shieldedAddresses.shieldedEncryptionPublicKey,
+          },
+          effectiveProofUrl
+        );
         contractInitialized = result === true;
         if (contractInitialized) {
           console.log('Contract initialized successfully');
@@ -416,24 +450,12 @@ export function useWallet() {
     };
   }, [disconnectWallet]);
 
-  // Auto-refresh balance every 30 seconds
+  // Cleanup on unmount
   useEffect(() => {
-    if (!isConnected || isTransacting) return;
-
-    const interval = setInterval(() => {
-      refreshBalance();
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [isConnected, isTransacting, refreshBalance]);
-  
-  // Auto-connect on mount if previously connected
-  useEffect(() => {
-    if (!isConnected && !isConnecting && autoConnect) {
-      console.log('DEBUG: Auto-connecting wallet...');
-      connectWallet();
-    }
-  }, [isConnected, isConnecting, autoConnect, connectWallet]);
+    return () => {
+      // Any specific cleanup if needed
+    };
+  }, []);
 
   return {
     // State
@@ -449,6 +471,8 @@ export function useWallet() {
     networkId,
     provider,
     username: storeUsername,
+    walletType: storedWalletType,
+    isTransacting,
     isWalletInstalled: isWalletInstalled(),
 
     // Computed
@@ -469,5 +493,8 @@ export function useWallet() {
     importUserSecretKey,
     isWalletModalOpen: useWalletStore(s => s.isWalletModalOpen),
     setWalletModalOpen: useWalletStore(s => s.setWalletModalOpen),
+    proofServerUrl,
+    proofServerOption,
+    setProofServer,
   };
 }

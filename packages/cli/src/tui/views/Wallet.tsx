@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 import { WalletStatus } from '../types.js';
+import { walletManager } from '../../core/wallet.js';
 
 interface WalletProps {
   walletStatus: WalletStatus | null;
@@ -45,6 +46,21 @@ export const Wallet: React.FC<WalletProps> = ({ walletStatus, onBack }) => {
         <Box justifyContent="space-between" marginTop={1}>
            <Text color="gray">SHIELDED DUST:</Text>
            <Text color="gray">{walletStatus?.dust?.toString() || '0'} DUST</Text>
+        </Box>
+      </Box>
+
+      <Box marginTop={1} flexDirection="column" borderStyle="round" borderColor="yellow" padding={1}>
+        <Text color="yellow" bold>PROOF SERVER CONFIGURATION</Text>
+        <Box justifyContent="space-between" marginTop={1}>
+           <Text color="gray">SELECTION:</Text>
+           <Text color="white" bold>{walletManager.getProofServerOption().toUpperCase()}</Text>
+        </Box>
+        <Box justifyContent="space-between" marginTop={1}>
+           <Text color="gray">ACTIVE URL:</Text>
+           <Text color="cyan">{walletManager.getProofServerUrl()}</Text>
+        </Box>
+        <Box marginTop={1}>
+          <Text dimColor>[S] TO CYCLE SERVERS | [P] TO SET CUSTOM URL</Text>
         </Box>
       </Box>
 

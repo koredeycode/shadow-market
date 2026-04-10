@@ -24,7 +24,7 @@ interface MidnightContextType {
   contractError: string | null;
 
   // Actions
-  connectWallet: () => Promise<void>;
+  connectWallet: (type?: 'lace' | '1am') => Promise<void>;
   disconnectWallet: () => void;
   refreshBalance: () => Promise<void>;
 
@@ -51,6 +51,28 @@ export const MidnightProvider: React.FC<{ children: ReactNode }> = ({ children }
   // We can also pull directly from stores if needed for more granular updates
   const isWalletModalOpen = useWalletStore(s => s.isWalletModalOpen);
   const setWalletModalOpen = useWalletStore(s => s.setWalletModalOpen);
+  const autoConnect = useWalletStore(s => s.autoConnect);
+  const storedWalletType = useWalletStore(s => s.walletType);
+
+  // Auto-connect on mount if previously connected
+  React.useEffect(() => {
+    if (!wallet.isConnected && !wallet.isConnecting && autoConnect) {
+      console.log('DEBUG [MidnightProvider]: Auto-connecting wallet...', storedWalletType || 'lace');
+      // Silently attempt connection without Toast noise during auto-connect
+      wallet.connectWallet(storedWalletType || 'lace').catch(console.error);
+    }
+  }, []); // Run ONLY once on provider mount
+
+  // Auto-refresh balance every 45 seconds (increased from 30 to reduce load)
+  React.useEffect(() => {
+    if (!wallet.isConnected || wallet.isTransacting) return;
+
+    const interval = setInterval(() => {
+      wallet.refreshBalance();
+    }, 45000);
+
+    return () => clearInterval(interval);
+  }, [wallet.isConnected, wallet.isTransacting, wallet.refreshBalance]);
 
   const value: MidnightContextType = {
     // Wallet

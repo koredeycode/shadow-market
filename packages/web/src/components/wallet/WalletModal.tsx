@@ -19,6 +19,16 @@ const walletTypes = [
     ),
     description: 'Midnight Testnet Optimized',
   },
+  {
+    id: '1am',
+    name: '1AM Wallet',
+    icon: (
+      <div className="w-8 h-8 bg-amber-500/20 rounded-full border border-amber-500/40 flex items-center justify-center text-amber-500 font-bold">
+        1
+      </div>
+    ),
+    description: 'Dust-Free ZK Execution',
+  },
 ];
 
 export function WalletModal({ isOpen, onClose }: WalletModalProps) {
@@ -42,7 +52,7 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
 
   const handleConnect = async (id: string) => {
     console.log(`Connecting to ${id}...`);
-    await connectWallet();
+    await connectWallet(id as any);
     if (needsIdentity) setSetupStep('CHOICE');
   };
 
@@ -239,7 +249,7 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
           ) : (
             <>
               <p className="text-slate-400 text-sm font-light leading-relaxed mb-6">
-                Authorize your Lace vault to access the Shadow Network and execute confidential wagers.
+                Authorize your Midnight vault to access the Shadow Network and execute confidential wagers.
               </p>
 
               <div className="space-y-3">

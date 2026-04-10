@@ -5,6 +5,8 @@ import { toast } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import { betsApi } from '../../api/bets';
 import type { Bet } from '../../types';
+import { EmptyState } from '../common/EmptyState';
+import { useNavigate } from 'react-router-dom';
 
 interface BetRowProps {
   bet: Bet;
@@ -227,23 +229,19 @@ interface BetsListProps {
 }
 
 export function BetsList({ bets, isActive, onClaimSuccess }: BetsListProps) {
+  const navigate = useNavigate();
   if (bets.length === 0) {
     return (
-      <div className="py-20 flex flex-col items-center justify-center text-center space-y-4">
-        <div className="p-4 bg-white/[0.02] border border-white/5 rounded-full text-slate-600">
-          <Activity className="w-8 h-8 opacity-20" />
-        </div>
-        <div className="space-y-1">
-          <h4 className="text-white font-bold text-xs uppercase tracking-widest">
-            {isActive ? 'No Active Bets' : 'No Past Bets'}
-          </h4>
-          <p className="text-slate-500 text-[10px] font-mono max-w-[200px] leading-relaxed">
-            {isActive
-              ? 'Place a bet to see it here.'
-              : 'Your old bets will show up here.'}
-          </p>
-        </div>
-      </div>
+      <EmptyState 
+        title={isActive ? 'No Active Bets' : 'No Past Bets'}
+        description={isActive 
+          ? 'Your strategic positions will appear here once deployed to the network. Currently monitoring null signal.' 
+          : 'Historical data is empty. No settled dossiers found in your private vault records.'
+        }
+        actionLabel={isActive ? "Deploy Capital" : undefined}
+        onAction={isActive ? () => navigate("/markets") : undefined}
+        icon={isActive ? <Activity className="w-10 h-10 text-electric-blue/40" /> : <Trophy className="w-10 h-10 text-slate-600/40" />}
+      />
     );
   }
 

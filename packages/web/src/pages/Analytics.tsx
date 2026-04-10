@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { analyticsApi, CategoryStats, PlatformStats, TopMarket, TopTrader } from '../api/analytics';
 import { MarketVolumeChart } from '../components/analytics/MarketVolumeChart';
+import { EmptyState } from '../components/common/EmptyState';
+import { Search } from 'lucide-react';
 
 interface StatCardProps {
   title: string;
@@ -245,11 +247,12 @@ export function Analytics() {
                   </table>
                 </div>
               ) : (
-                <div className="p-12 border border-dashed border-white/5 rounded-sm text-center">
-                  <p className="text-xs font-mono text-slate-600 uppercase tracking-widest">
-                    Index Empty: No Active Protocols Detected.
-                  </p>
-                </div>
+                <EmptyState 
+                  title="Index Empty" 
+                  description="No high-volume market protocols detected in the current network cycle."
+                  icon={<BarChart3 className="w-10 h-10 text-electric-blue/40" />}
+                  variant="card"
+                />
               )}
             </div>
           )}
@@ -316,11 +319,12 @@ export function Analytics() {
                   </table>
                 </div>
               ) : (
-                <div className="p-12 border border-dashed border-white/5 rounded-sm text-center">
-                  <p className="text-xs font-mono text-slate-600 uppercase tracking-widest">
-                    No Competitor Profiles Found.
-                  </p>
-                </div>
+                <EmptyState 
+                  title="No Intelligence" 
+                  description="The network leaderboard is currently blank. No authorized identities have logged strategic activity."
+                  icon={<Users className="w-10 h-10 text-slate-600/40" />}
+                  variant="card"
+                />
               )}
             </div>
           )}
@@ -372,11 +376,12 @@ export function Analytics() {
                   ))}
                 </div>
               ) : (
-                <div className="p-12 border border-dashed border-white/5 rounded-sm text-center">
-                  <p className="text-xs font-mono text-slate-600 uppercase tracking-widest">
-                    Classification Systems Offline.
-                  </p>
-                </div>
+                <EmptyState 
+                  title="Classification Offline" 
+                  description="Sector breakdown unavailable. Scanning network for categorical data streams."
+                  icon={<Search className="w-10 h-10 text-electric-blue/20" />}
+                  variant="card"
+                />
               )}
             </div>
           )}

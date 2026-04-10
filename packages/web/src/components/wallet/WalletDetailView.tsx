@@ -8,6 +8,7 @@ import {
   Lock,
   Monitor,
   Fingerprint,
+  Zap,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useWallet } from '../../hooks/useWallet';
@@ -33,6 +34,12 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
     refreshBalance,
     setTerminalModalOpen,
     getUserSecretKey,
+    proofServerUrl,
+    proofServerOption,
+    setProofServer,
+    connectWallet,
+    isConnected,
+    walletType,
   } = useWallet();
 
   const userSecretKey = useMemo(() => getUserSecretKey(), [getUserSecretKey]);
@@ -188,6 +195,72 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
                   <span className="text-[8px] text-slate-500 font-mono uppercase">Sync ID</span>
                   <span className="text-[9px] text-white font-mono">#{address?.slice(2, 8).toUpperCase()}</span>
                </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Proof Server Section */}
+        <div className="space-y-2 pt-2 border-t border-white/5 px-4 mb-4">
+          <div className="text-[9px] text-slate-500 font-mono uppercase tracking-widest flex items-center gap-2">
+            <Zap className="w-3 h-3 text-amber-500" />
+            Proof Server Configuration
+          </div>
+          <div className="p-2 bg-slate-900/80 border border-white/5 rounded-sm space-y-3 font-mono">
+            <div className="flex bg-black/40 border border-white/10 rounded-sm p-0.5">
+              <button
+                onClick={() => {
+                  setProofServer('env');
+                  if (isConnected) connectWallet(walletType || 'lace');
+                }}
+                className={`flex-1 px-1 py-1 rounded-sm text-[8px] transition-all ${
+                  proofServerOption === 'env' ? 'bg-amber-500/20 text-amber-500 font-bold' : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                NETWORK
+              </button>
+              <button
+                onClick={() => {
+                  setProofServer('local');
+                  if (isConnected) connectWallet(walletType || 'lace');
+                }}
+                className={`flex-1 px-1 py-1 rounded-sm text-[8px] transition-all ${
+                  proofServerOption === 'local' ? 'bg-amber-500/20 text-amber-500 font-bold' : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                LOCAL
+              </button>
+              <button
+                onClick={() => setProofServer('custom')}
+                className={`flex-1 px-1 py-1 rounded-sm text-[8px] transition-all ${
+                  proofServerOption === 'custom' ? 'bg-amber-500/20 text-amber-500 font-bold' : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                CUSTOM
+              </button>
+            </div>
+
+            {proofServerOption === 'custom' && (
+              <div className="flex gap-2 animate-in fade-in slide-in-from-top-1">
+                <input 
+                  type="text"
+                  placeholder="http://..."
+                  defaultValue={proofServerUrl || ''}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setProofServer('custom', e.currentTarget.value);
+                      if (isConnected) connectWallet(walletType || 'lace');
+                      toast.success('Proof server updated');
+                    }
+                  }}
+                  className="w-full bg-black/40 border border-white/10 p-1.5 rounded-sm text-[9px] text-white focus:border-amber-500/40 outline-none"
+                />
+              </div>
+            )}
+
+            <div className="text-[8px] text-slate-500 break-all leading-tight px-1 uppercase">
+              Active: <span className="text-amber-500/80">
+                {proofServerOption === 'env' ? 'Internal SDK/Environment' : (proofServerUrl || 'localhost:6300')}
+              </span>
             </div>
           </div>
         </div>

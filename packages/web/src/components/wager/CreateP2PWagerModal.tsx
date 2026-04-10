@@ -32,7 +32,7 @@ interface CreateP2PWagerModalProps {
 }
 
 export function CreateP2PWagerModal({ open, onClose, market }: CreateP2PWagerModalProps) {
-  const { isConnected, unshieldedNightBalance, formattedUnshieldedNightBalance, connectWallet } = useWallet();
+  const { isConnected, unshieldedNightBalance, formattedUnshieldedNightBalance, setWalletModalOpen } = useWallet();
   const { createWager } = useContract();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successData, setSuccessData] = useState<{ txHash: string; amount: string; side: string } | null>(null);
@@ -190,7 +190,7 @@ export function CreateP2PWagerModal({ open, onClose, market }: CreateP2PWagerMod
               </p>
               <button
                 type="button"
-                onClick={connectWallet}
+                onClick={() => setWalletModalOpen(true)}
                 className="w-full py-3 bg-electric-blue text-white font-bold text-xs uppercase tracking-[0.2em] rounded-sm hover:brightness-110 transition-all"
               >
                 Connect Wallet

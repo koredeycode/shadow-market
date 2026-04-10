@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { ExternalLink, HandMetal } from 'lucide-react';
 import type { Wager } from '../../types';
+import { EmptyState } from '../common/EmptyState';
+import { useNavigate } from 'react-router-dom';
 
 interface WagerRowProps {
   wager: Wager;
@@ -92,19 +94,16 @@ interface WagersListProps {
 }
 
 export function WagersList({ wagers }: WagersListProps) {
+  const navigate = useNavigate();
   if (wagers.length === 0) {
     return (
-      <div className="py-20 flex flex-col items-center justify-center text-center space-y-4">
-        <div className="p-4 bg-white/[0.02] border border-white/5 rounded-full text-slate-600">
-          <HandMetal className="w-8 h-8 opacity-20" />
-        </div>
-        <div className="space-y-1">
-          <h4 className="text-white font-bold text-xs uppercase tracking-widest">No P2P Wagers Portfolio</h4>
-          <p className="text-slate-500 text-[10px] font-mono max-w-[200px] leading-relaxed">
-            You have not created or matched any peer-to-peer protocols yet.
-          </p>
-        </div>
-      </div>
+      <EmptyState 
+        title="Dossier Link Inactive" 
+        description="You have not initiated or matched any peer-to-peer protocols yet. The decentralized agreement ledger is empty."
+        actionLabel="Create P2P Offer"
+        onAction={() => navigate("/markets")}
+        icon={<HandMetal className="w-10 h-10 text-electric-blue/40" />}
+      />
     );
   }
 

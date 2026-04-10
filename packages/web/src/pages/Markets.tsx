@@ -6,8 +6,11 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { marketsApi } from '../api/markets';
 import { useDebounce } from '../hooks/useDebounce';
+import { EmptyState } from '../components/common/EmptyState';
+import { useNavigate } from 'react-router-dom';
 
 export function Markets() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const categoryFilter = searchParams.get('filter');
 
@@ -154,17 +157,19 @@ export function Markets() {
             ))}
           </div>
 
-          {(data?.items?.length === 0 || !data?.items) && (
-            <div className="py-24 border border-dashed border-white/10 bg-white/[0.02] rounded-sm flex flex-col items-center justify-center space-y-4">
-              <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
-                <Search className="w-6 h-6 text-slate-600" />
-              </div>
-              <div className="text-center">
-                <h3 className="text-slate-300 font-bold">No markets found</h3>
-                <p className="text-slate-500 text-sm font-light">
-                  Try adjusting your filters or search keywords.
-                </p>
-              </div>
+          {(!data?.items || data.items.length === 0) && (
+            <div className="py-12">
+              <EmptyState 
+                title={searchQuery ? "No Results" : "Registry Empty"}
+                description={searchQuery 
+                  ? `Your query "${searchQuery}" did not match any active market dossiers on the network.`
+                  : "No decentralized markets are currently open for trading in this sector."
+                }
+                actionLabel={searchQuery ? "Clear Search" : "Initialize Market"}
+                onAction={() => searchQuery ? setSearchQuery('') : navigate('/create')}
+                icon={<Search className="w-12 h-12 text-slate-600/40" />}
+                variant="card"
+              />
             </div>
           )}
         </>

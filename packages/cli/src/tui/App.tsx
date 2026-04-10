@@ -23,6 +23,7 @@ import { WagerDetail } from './views/WagerDetail.js';
 import { Analytics } from './views/Analytics.js';
 import { HowItWorks } from './views/HowItWorks.js';
 import { Legal } from './views/Legal.js';
+import { ConfigView } from './views/ConfigView.js';
 
 // Components
 import { ConfirmationModal } from './components/ConfirmationModal.js';
@@ -481,6 +482,23 @@ export const App = () => {
                 if (input === 'a') { navigateTo('analytics'); return; }
                 if (input === 'h') { navigateTo('help'); return; }
                 if (input === 'q') { setShowQuitConfirm(true); return; }
+                
+                // Proof Server Actions in Wallet View
+                if (activeView === 'wallet') {
+                    if (input === 's') {
+                        const options: ('env' | 'local' | 'custom')[] = ['env', 'local', 'custom'];
+                        const current = walletManager.getProofServerOption() as any;
+                        const next = options[(options.indexOf(current) + 1) % options.length];
+                        walletManager.setProofServer(next);
+                        loadData();
+                        return;
+                    }
+                    if (input === 'p') {
+                        pushView('config');
+                        return;
+                    }
+                }
+
                 if (input === 'L') {
                     walletManager.logout();
                     navigateTo('login');
@@ -641,6 +659,18 @@ export const App = () => {
                              <Legal type="privacy" onBack={popView} />
                         )}
 
+                        {activeView === 'config' && (
+                            <ConfigView 
+                                initialUrl={walletManager.getProofServerUrl()}
+                                onBack={popView}
+                                onSave={async (url) => {
+                                    walletManager.setProofServer('custom', url);
+                                    popView();
+                                    await loadData();
+                                }}
+                            />
+                        )}
+
                         {activeView === 'link' && (
                             pairingSession ? (
                                 <LinkView 
@@ -661,7 +691,7 @@ export const App = () => {
 
 
                         {/* Catch-all for unknown views to prevent blank screens */}
-                        {!['dashboard', 'markets', 'market-detail', 'create', 'login', 'link', 'portfolio', 'wallet', 'bet-detail', 'analytics', 'help', 'terms', 'privacy'].includes(activeView) && (
+                        {!['dashboard', 'markets', 'market-detail', 'create', 'login', 'link', 'portfolio', 'wallet', 'bet-detail', 'wager-detail', 'analytics', 'help', 'terms', 'privacy', 'config'].includes(activeView as string) && (
                            <Box justifyContent="center" alignItems="center" height={10}>
                               <Text color="red">ERROR: Invalid Terminal Context - Redirecting...</Text>
                            </Box>

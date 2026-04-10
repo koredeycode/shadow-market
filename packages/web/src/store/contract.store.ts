@@ -12,10 +12,12 @@ interface ContractState {
   // Actions
   initialize: (
     wallet: any,
+    walletType: 'lace' | '1am',
     shieldedKeys?: {
       shieldedCoinPublicKey: string;
       shieldedEncryptionPublicKey: string;
-    }
+    },
+    proofServerUrl?: string | null
   ) => Promise<boolean>;
   cleanup: () => void;
   setProtocolInitialized: (status: boolean) => void;
@@ -33,10 +35,12 @@ export const useContractStore = create<ContractState>(set => ({
 
   initialize: async (
     wallet: any,
+    walletType: 'lace' | '1am',
     shieldedKeys?: {
       shieldedCoinPublicKey: string;
       shieldedEncryptionPublicKey: string;
-    }
+    },
+    proofServerUrl?: string | null
   ) => {
     set({ isInitializing: true, error: null });
 
@@ -59,12 +63,13 @@ export const useContractStore = create<ContractState>(set => ({
       const config = {
         indexerUri: import.meta.env.VITE_MIDNIGHT_INDEXER_URL || import.meta.env.VITE_INDEXER_URL || 'http://localhost:8088/api/v3',
         indexerWsUri: import.meta.env.VITE_MIDNIGHT_INDEXER_WS || import.meta.env.VITE_MIDNIGHT_INDEXER_WS_URL || import.meta.env.VITE_INDEXER_WS || 'ws://localhost:8088/api/v3',
-        proverServerUri: import.meta.env.VITE_MIDNIGHT_PROOF_SERVER_URL || import.meta.env.VITE_PROOF_SERVER_URL || 'http://localhost:6300',
+        proverServerUri: proofServerUrl || import.meta.env.VITE_MIDNIGHT_PROOF_SERVER_URL || import.meta.env.VITE_PROOF_SERVER_URL || 'http://localhost:6300',
         zkConfigPath: `${window.location.origin}/zk-config`, // Local absolute URL for ZK artifacts
         contractAddress,
         networkId: import.meta.env.VITE_MIDNIGHT_NETWORK_ID || import.meta.env.VITE_NETWORK_ID || 'undeployed',
         shieldedCoinPublicKey: shieldedKeys?.shieldedCoinPublicKey,
         shieldedEncryptionPublicKey: shieldedKeys?.shieldedEncryptionPublicKey,
+        walletType,
       };
 
       // New API uses wallet and config

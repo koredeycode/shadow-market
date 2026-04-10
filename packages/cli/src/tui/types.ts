@@ -12,7 +12,8 @@ export type ViewType =
   | 'analytics'
   | 'help'
   | 'terms'
-  | 'privacy';
+  | 'privacy'
+  | 'config';
 
 export interface Market {
   id: string;

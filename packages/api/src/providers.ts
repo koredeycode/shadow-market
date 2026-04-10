@@ -49,6 +49,7 @@ export interface ProviderConfig {
   networkId: string;
   shieldedCoinPublicKey?: string;
   shieldedEncryptionPublicKey?: string;
+  walletType?: 'lace' | '1am';
 }
 
 /**
@@ -167,7 +168,19 @@ export const createProvidersFromWallet = async (
     fetch
   );
 
-  const proofProvider = httpClientProofProvider(config.proverServerUri, zkConfigProvider);
+  let proofProvider;
+  if (config.walletType === '1am') {
+    console.log('Building 1AM-specific proof provider...');
+    const provingProvider = await (wallet as any).getProvingProvider(zkConfigProvider);
+    proofProvider = {
+      async proveTx(unprovenTx: any) {
+        const { CostModel } = await import('@midnight-ntwrk/ledger-v8');
+        return unprovenTx.prove(provingProvider, (CostModel as any).initialCostModel());
+      },
+    };
+  } else {
+    proofProvider = httpClientProofProvider(config.proverServerUri, zkConfigProvider);
+  }
 
   const privateStateKey = 'shadow-market-private-state';
   let privateState = await privateStateProvider.get<MarketPrivateState>(privateStateKey);

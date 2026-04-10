@@ -14,16 +14,20 @@ export interface WalletState {
   networkId: string | null;
   autoConnect: boolean;
   username: string | null;
+  walletType: 'lace' | '1am' | null;
+  proofServerUrl: string | null;
+  proofServerOption: 'env' | 'local' | 'custom';
 
   // Wallet provider
   provider: any | null;
 
   // Actions
-  connect: (provider: any, addresses: { shielded: string; unshielded?: string }, networkId: string, username?: string) => void;
+  connect: (provider: any, addresses: { shielded: string; unshielded?: string }, networkId: string, walletType: 'lace' | '1am', username?: string) => void;
   setAddressDisplayMode: (mode: 'shielded' | 'unshielded') => void;
   disconnect: () => void;
   updateBalances: (balances: { night: string; unshieldedNight: string; dust: string }) => void;
   setConnecting: (isConnecting: boolean) => void;
+  setProofServer: (option: 'env' | 'local' | 'custom', url?: string) => void;
   isWalletModalOpen: boolean;
   setWalletModalOpen: (isOpen: boolean) => void;
   isTransacting: boolean;
@@ -48,9 +52,12 @@ export const useWalletStore = create<WalletState>()(
       provider: null,
       autoConnect: false,
       username: null,
+      walletType: null,
+      proofServerUrl: null,
+      proofServerOption: 'env',
 
       // Actions
-      connect: (provider, addresses, networkId, username) => {
+      connect: (provider, addresses, networkId, walletType, username) => {
         set({
           isConnected: true,
           isConnecting: false,
@@ -58,6 +65,7 @@ export const useWalletStore = create<WalletState>()(
           unshieldedAddress: addresses.unshielded || null,
           networkId,
           provider,
+          walletType,
           autoConnect: true,
           username: username || null,
         });
@@ -80,6 +88,7 @@ export const useWalletStore = create<WalletState>()(
           provider: null,
           autoConnect: false,
           username: null,
+          walletType: null,
         });
       },
 
@@ -106,6 +115,12 @@ export const useWalletStore = create<WalletState>()(
       setTerminalModalOpen: isOpen => {
         set({ isTerminalModalOpen: isOpen });
       },
+      setProofServer: (option, url) => {
+        set({ 
+          proofServerOption: option, 
+          proofServerUrl: url || (option === 'local' ? 'http://localhost:6300' : null) 
+        });
+      },
     }),
     {
       name: 'wallet-storage',
@@ -117,6 +132,9 @@ export const useWalletStore = create<WalletState>()(
         networkId: state.networkId,
         autoConnect: state.autoConnect,
         username: state.username,
+        walletType: state.walletType,
+        proofServerOption: state.proofServerOption,
+        proofServerUrl: state.proofServerUrl,
       }),
     }
   )

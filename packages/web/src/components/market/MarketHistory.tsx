@@ -9,6 +9,7 @@ import {
   Info
 } from 'lucide-react';
 import { marketsApi } from '../../api/markets';
+import { EmptyState } from '../common/EmptyState';
 
 interface MarketHistoryProps {
   marketId: string;
@@ -36,7 +37,7 @@ export function MarketHistory({ marketId }: MarketHistoryProps) {
 
   if (error) {
     return (
-      <div className="text-center py-12 p-6 bg-red-500/5 border border-red-500/10 rounded-sm">
+      <div className="text-center py-12 p-6 bg-red-500/5 border border-red-500/20 rounded-sm">
         <p className="text-red-400 font-mono text-xs uppercase tracking-widest">
           Failed to fetch real-time trade ledger
         </p>
@@ -46,14 +47,13 @@ export function MarketHistory({ marketId }: MarketHistoryProps) {
 
   if (!history || history.length === 0) {
     return (
-      <div className="text-center py-24 px-4 bg-white/2 rounded-sm border border-dashed border-white/5">
-        <HistoryIcon className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-        <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mb-2 font-mono">
-          No Transactions Detected
-        </p>
-        <p className="text-[11px] text-slate-600 font-mono uppercase">
-          Be the first to interact with this market on-chain.
-        </p>
+      <div className="py-12 text-center">
+        <EmptyState 
+          title="Genesis State" 
+          description="No on-chain interactions recorded for this market protocol yet. The distributed ledger remains in its initial state."
+          icon={<HistoryIcon className="w-10 h-10 text-slate-700/40" />}
+          variant="minimal"
+        />
       </div>
     );
   }

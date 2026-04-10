@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useWallet } from '../../hooks/useWallet';
 import { Wager } from '../../types';
+import { EmptyState } from '../common/EmptyState';
 
 interface P2PWagersListProps {
   marketId: string;
@@ -196,13 +197,13 @@ export function P2PWagersList({ marketId, selectedWagerId, onSelectWager }: P2PW
 
   if (!wagers || wagers.length === 0) {
     return (
-      <div className="text-center py-16 px-4 bg-white/2 rounded-sm border border-dashed border-white/5">
-        <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mb-2 font-mono">
-          No Active P2P Protocols
-        </p>
-        <p className="text-[11px] text-slate-600 font-mono uppercase">
-          Initiate the first peer-to-peer wager for this market.
-        </p>
+      <div className="py-4">
+        <EmptyState 
+          title="Channel Inactive" 
+          description="No decentralized P2P wager proposals are currently being broadcasted for this market dossier."
+          icon={<Zap className="w-10 h-10 text-electric-blue/40" />}
+          variant="card"
+        />
       </div>
     );
   }

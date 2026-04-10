@@ -57,6 +57,13 @@ class ContractManager {
    */
   private async verifyWalletReadiness(): Promise<void> {
     const walletStore = useWalletStore.getState();
+    
+    // 1am wallet handles dust sponsorship, so we skip the dust check
+    if (walletStore.walletType === '1am') {
+      this.log('1am wallet detected. Skipping dust readiness verification.');
+      return;
+    }
+
     const dustBalance = Number(walletStore.dustBalance || '0');
     
     this.log(`Verifying wallet readiness... Dust: ${dustBalance}`);
