@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build #",
+    "copy-zkconfig": "mkdir -p public/zk-config && rm -rf public/zk-config/* && cp -rv ../contracts/src/managed/shadow-market/* public/zk-config/ || true",
+    "build": "npm run copy-zkconfig && tsc && vite build #",
     "preview": "vite preview",
     "test": "vitest",
     "test:watch": "vitest --watch",

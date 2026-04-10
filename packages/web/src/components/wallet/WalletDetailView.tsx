@@ -9,7 +9,11 @@ import {
   Monitor,
   Fingerprint,
   Zap,
+  Edit2,
+  Check,
+  X,
 } from 'lucide-react';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useWallet } from '../../hooks/useWallet';
 import { Link } from 'react-router-dom';
@@ -49,10 +53,25 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
     return `${userSecretKey.slice(0, 8)}...${userSecretKey.slice(-8)}`;
   }, [userSecretKey]);
 
+  const [isEditingKey, setIsEditingKey] = useState(false);
+  const [newKey, setNewKey] = useState('');
+
   const handleCopy = () => {
     if (address) {
       navigator.clipboard.writeText(address);
       toast.success('Address copied');
+    }
+  };
+
+  const handleUpdateKey = async () => {
+    if (!newKey || newKey.length < 64) {
+      toast.error('Invalid key. Must be 64 hex characters.');
+      return;
+    }
+
+    if (await importUserSecretKey(newKey, true)) {
+      setIsEditingKey(false);
+      setNewKey('');
     }
   };
 
@@ -187,11 +206,52 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
               ZK Identity Vault
             </div>
             <div className="p-2 bg-slate-900/80 border border-white/5 rounded-sm space-y-2">
-               <div className="flex justify-between items-center">
-                  <span className="text-[8px] text-slate-500 font-mono uppercase">Master Secret</span>
-                  <span className="text-[9px] text-white font-mono">{formattedSecretKey}</span>
+               <div className="flex flex-col gap-1.5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[8px] text-slate-500 font-mono uppercase">Master Secret</span>
+                    {!isEditingKey ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-white font-mono">{formattedSecretKey}</span>
+                        <button 
+                          onClick={() => {
+                            setIsEditingKey(true);
+                            setNewKey(userSecretKey || '');
+                          }}
+                          className="p-1 hover:bg-white/5 rounded-sm text-slate-400 hover:text-electric-blue transition-all"
+                        >
+                          <Edit2 className="w-2.5 h-2.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <button 
+                          onClick={handleUpdateKey}
+                          className="p-1 hover:bg-success-green/10 rounded-sm text-success-green transition-all"
+                        >
+                          <Check className="w-2.5 h-2.5" />
+                        </button>
+                        <button 
+                          onClick={() => setIsEditingKey(false)}
+                          className="p-1 hover:bg-red-500/10 rounded-sm text-red-500 transition-all"
+                        >
+                          <X className="w-2.5 h-2.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {isEditingKey && (
+                    <input
+                      type="text"
+                      value={newKey}
+                      onChange={(e) => setNewKey(e.target.value)}
+                      placeholder="Paste 64-char hex key..."
+                      className="w-full bg-black/40 border border-white/10 p-1.5 rounded-sm text-[8px] text-white font-mono focus:border-electric-blue outline-none animate-in fade-in slide-in-from-top-1"
+                    />
+                  )}
                </div>
-               <div className="flex justify-between items-center">
+
+               <div className="flex justify-between items-center border-t border-white/5 pt-1.5">
                   <span className="text-[8px] text-slate-500 font-mono uppercase">Sync ID</span>
                   <span className="text-[9px] text-white font-mono">#{address?.slice(2, 8).toUpperCase()}</span>
                </div>

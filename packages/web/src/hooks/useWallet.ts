@@ -319,29 +319,39 @@ export function useWallet() {
     toast.success('Wallet disconnected');
   }, [storeDisconnect, cleanupContract]);
 
-  const importUserSecretKey = useCallback(async (hexKey: string) => {
+  const importUserSecretKey = useCallback(async (hexKey: string, autoReconnect = false) => {
     try {
       const bytes = fromHex(hexKey);
       if (bytes.length !== 32) throw new Error('Invalid key length (must be 32 bytes / 64 hex chars)');
       
       const privateState = {
-        userSecretKey: hexKey, // Store as hex in localStorage for the PersistentPrivateStateProvider to find it
+        userSecretKey: hexKey,
         bets: {}
       };
       
       localStorage.setItem('shadow-market-private-state', JSON.stringify(privateState));
-      toast.success('Identity Imported! Please reconnect to apply changes.');
       
-      // If connected, we should disconnect to force re-init
-      if (isConnected) {
+      if (autoReconnect && isConnected) {
+        toast.loading('Identity updated. Re-synchronizing terminal...', { duration: 2000 });
+        // Instead of disconnecting, we just re-initialize the contract with the new state
+        await initializeContract(
+          useWalletStore.getState().provider as any,
+          storedWalletType as any,
+          undefined, // Will be fetched from wallet
+          proofServerOption === 'env' ? (import.meta as any).env?.VITE_MIDNIGHT_PROOF_SERVER_URL : proofServerUrl
+        );
+      } else if (isConnected) {
+        toast.success('Identity Imported! Please reconnect to apply changes.');
         disconnectWallet();
+      } else {
+        toast.success('Identity Imported! You can now connect your wallet.');
       }
       return true;
     } catch (error: any) {
       toast.error(`Import failed: ${error.message}`);
       return false;
     }
-  }, [isConnected, disconnectWallet]);
+  }, [isConnected, disconnectWallet, initializeContract, storedWalletType, proofServerOption, proofServerUrl]);
 
 
   // Refresh balances

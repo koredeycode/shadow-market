@@ -70,7 +70,7 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
     window.crypto.getRandomValues(bytes);
     const hex = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
     
-    const success = await importUserSecretKey(hex);
+    const success = await importUserSecretKey(hex, true);
     if (success) {
       setSetupStep('DONE');
       toast.success('New Identity Generated!');
@@ -79,7 +79,7 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
 
   const handleImport = async () => {
     if (!importKey.trim()) return;
-    const success = await importUserSecretKey(importKey.trim());
+    const success = await importUserSecretKey(importKey.trim(), true);
     if (success) {
       setImportKey('');
       setSetupStep('DONE');
