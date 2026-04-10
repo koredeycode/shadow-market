@@ -1,7 +1,7 @@
 {
-  "name": "@shadow-market/cli",
+  "name": "shadow-market-cli",
   "version": "0.1.0",
-  "description": "Shadow Market Command Line Interface",
+  "description": "Shadow Market Command Line Interface | Private Prediction Terminal",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {

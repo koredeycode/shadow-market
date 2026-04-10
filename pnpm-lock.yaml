@@ -417,9 +417,6 @@ importers:
       '@scure/bip39':
         specifier: ^2.0.1
         version: 2.0.1
-      '@shadow-market/api':
-        specifier: workspace:*
-        version: link:../api
       chalk:
         specifier: ^5.6.2
         version: 5.6.2
