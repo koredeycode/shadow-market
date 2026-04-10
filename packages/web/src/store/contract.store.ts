@@ -73,12 +73,15 @@ export const useContractStore = create<ContractState>(set => ({
       };
 
       // New API uses wallet and config
+      console.log('Synchronizing terminal with proof server:', config.proverServerUri);
       const success = await contractManager.initialize(wallet, config);
 
       if (success) {
+        console.log('Terminal synchronization complete.');
         set({ isInitialized: true, isInitializing: false });
         return true;
       } else {
+        console.error('Terminal synchronization failed (Returned False)');
         set({
           isInitialized: false,
           isInitializing: false,
@@ -87,6 +90,7 @@ export const useContractStore = create<ContractState>(set => ({
         return false;
       }
     } catch (error: any) {
+      console.error('CRITICAL: Terminal synchronization exception:', error);
       set({
         isInitialized: false,
         isInitializing: false,

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "copy-zkconfig": "mkdir -p public/zk-config && rm -rf public/zk-config/* && cp -rv ../contracts/src/managed/shadow-market/* public/zk-config/ || true",
+    "copy-zkconfig": "mkdir -p public/zk-config && rm -rf public/zk-config/* && cp -rv ../contracts/src/managed/shadow-market/keys/* public/zk-config/ && cp -rv ../contracts/src/managed/shadow-market/zkir/* public/zk-config/ && cp -rv ../contracts/src/managed/shadow-market/contract/* public/zk-config/ || true",
     "build": "npm run copy-zkconfig && tsc && vite build #",
     "preview": "vite preview",
     "test": "vitest",
