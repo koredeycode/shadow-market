@@ -11,6 +11,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@shadow-market/api': path.resolve(__dirname, '../api/src/index.ts'),
+      '@shadow-market/contracts': path.resolve(__dirname, '../contracts/src/index.ts'),
       'isomorphic-ws': path.resolve(__dirname, './src/ws-polyfill.js'),
     },
   },
