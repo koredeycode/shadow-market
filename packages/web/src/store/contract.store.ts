@@ -48,6 +48,7 @@ export const useContractStore = create<ContractState>(set => ({
       // Get contract address from env
       const contractAddress =
         import.meta.env.VITE_MIDNIGHT_SHADOW_MARKET_CONTRACT_ADDRESS?.trim() ||
+        import.meta.env.VITE_SHADOW_MARKET_CONTRACT_ADDRESS?.trim() ||
         import.meta.env.VITE_MIDNIGHT_UNIFIED_CONTRACT_ADDRESS?.trim() ||
         import.meta.env.VITE_UNIFIED_CONTRACT_ADDRESS?.trim();
 
