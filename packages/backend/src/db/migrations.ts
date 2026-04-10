@@ -27,6 +27,10 @@ export async function runMigrations() {
     // Migration files to run
     const migrations = [
       {
+        name: '000_bootstrap',
+        path: join(process.cwd(), 'migrations', '000_bootstrap.sql'),
+      },
+      {
         name: '001_admin_and_trending',
         path: join(process.cwd(), 'migrations', '001_admin_and_trending.sql'),
       },
