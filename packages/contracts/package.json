@@ -17,7 +17,7 @@
   },
   "scripts": {
     "compile": "mkdir -p src/managed && compact compile compact/shadow-market.compact src/managed/shadow-market",
-    "build": "rm -rf dist && tsc",
+    "build": "rm -rf dist && tsc #",
     "dev": "tsc --watch",
     "deploy": "npx tsx src/deployment/deploy.ts",
     "initialize": "npx tsx scripts/initialize-contract.ts",
