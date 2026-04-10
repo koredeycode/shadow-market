@@ -16,6 +16,7 @@ import {
 import { useMidnight } from '../../contexts/MidnightContext';
 import { contractManager } from '../../services/contract.service';
 import { toast } from 'react-hot-toast';
+import { Buffer } from 'buffer';
 
 // Helper to format bytes/hashes
 const formatHash = (hash: string | Uint8Array | undefined) => {

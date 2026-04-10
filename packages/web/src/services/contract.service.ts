@@ -116,7 +116,7 @@ class ContractManager {
         reject(new Error('State update synchronization timed out'));
       }, timeoutMs);
 
-      sub = api.state$.subscribe((state) => {
+      sub = api.state$.subscribe((state: any) => {
         this.log('State update received, checking predicate...', state);
         if (predicate(state)) {
           this.log('Predicate met. Finalizing.');
