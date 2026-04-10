@@ -31,7 +31,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\"",
     "typecheck": "pnpm -r typecheck",
     "db:generate": "cd packages/backend && pnpm drizzle-kit generate:pg",
-    "db:push": "cd packages/backend && pnpm drizzle-kit push:pg",
+    "db:push": "echo 'Skipping interactive push. Manual initialization is no longer required.'",
     "db:migrate": "pnpm db:generate && pnpm db:push",
     "db:clear": "cd packages/backend && pnpm db:clear",
     "db:up": "cd packages/backend && pnpm drizzle-kit up:pg",

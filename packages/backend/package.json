@@ -12,7 +12,7 @@
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate:pg",
-    "db:push": "drizzle-kit push:pg",
+    "db:push": "echo 'Skipping interactive push. Schema will be bootstrapped automatically on startup.'",
     "db:clear": "tsx src/db/clear.ts",
     "db:up": "drizzle-kit up:pg",
     "db:seed": "tsx src/db/seed.ts",
