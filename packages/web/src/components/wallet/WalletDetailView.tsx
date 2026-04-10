@@ -38,6 +38,7 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
     refreshBalance,
     setTerminalModalOpen,
     getUserSecretKey,
+    importUserSecretKey,
     proofServerUrl,
     proofServerOption,
     setProofServer,
