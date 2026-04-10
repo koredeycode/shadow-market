@@ -31,16 +31,16 @@ out/
 *~
 .DS_Store
 
-# Midnight
+# Midnight (Keep managed artifacts for deployment)
 private-state/
 *.leveldb/
 midnight-level-db/
-witnesses/
-.witnesses/
-logs/
-*.prover
-*.verifier
-managed/
+# witnesses/
+# .witnesses/
+# logs/
+# !managed/
+# !*.prover
+# !*.verifier
 
 # Database
 *.db
