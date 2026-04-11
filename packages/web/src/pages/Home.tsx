@@ -117,7 +117,7 @@ export function Home() {
                          <p className="text-[9px] font-mono text-slate-600 uppercase mb-2">Network activity</p>
                          <div className="flex items-center gap-3">
                             <Users className="w-4 h-4 text-slate-500" />
-                            <span className="text-sm font-bold font-mono text-white">{currentFeatured.totalBets} Position Holders</span>
+                            <span className="text-sm font-bold font-mono text-white">{currentFeatured.totalBets} Positions</span>
                          </div>
                       </div>
                    </div>
@@ -295,7 +295,7 @@ export function Home() {
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
           <h2 className="text-xl font-bold text-white flex items-center gap-3">
             <div className="w-1 h-6 bg-electric-blue" />
-            Market intelligence
+            Explore Markets
           </h2>
           <Link
             to="/markets"

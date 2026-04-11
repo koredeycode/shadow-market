@@ -347,14 +347,14 @@ export function MarketDetail() {
                   onClick={() => setTerminalMode('pool')}
                   className={`text-[9px] font-bold font-mono tracking-widest uppercase transition-colors ${terminalMode === 'pool' ? 'text-electric-blue' : 'text-slate-500'}`}
                 >
-                  [ Pool ]
+                  [ Pool Bet ]
                 </button>
                 <span className="text-white/10">|</span>
                 <button 
                   onClick={() => setTerminalMode('p2p')}
                   className={`text-[9px] font-bold font-mono tracking-widest uppercase transition-colors ${terminalMode === 'p2p' ? 'text-electric-blue' : 'text-slate-500'}`}
                 >
-                  [ P2P ]
+                  [ P2P Wager ]
                 </button>
               </div>
               <div className="flex gap-1">

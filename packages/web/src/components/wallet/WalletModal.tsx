@@ -10,6 +10,17 @@ interface WalletModalProps {
 
 const walletTypes = [
   {
+    id: '1am',
+    name: '1AM Wallet',
+    recommended: true,
+    icon: (
+      <div className="w-8 h-8 bg-amber-500/20 rounded-full border border-amber-500/40 flex items-center justify-center text-amber-500 font-bold">
+        1
+      </div>
+    ),
+    description: 'Dust-Free ZK Execution',
+  },
+  {
     id: 'lace',
     name: 'Lace',
     icon: (
@@ -18,16 +29,6 @@ const walletTypes = [
       </div>
     ),
     description: 'Midnight Testnet Optimized',
-  },
-  {
-    id: '1am',
-    name: '1AM Wallet',
-    icon: (
-      <div className="w-8 h-8 bg-amber-500/20 rounded-full border border-amber-500/40 flex items-center justify-center text-amber-500 font-bold">
-        1
-      </div>
-    ),
-    description: 'Dust-Free ZK Execution',
   },
 ];
 
@@ -269,9 +270,15 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
                         {wallet.description}
                       </div>
                     </div>
-                    <div className="px-2 py-0.5 rounded-full bg-electric-blue/10 border border-electric-blue/20 text-[9px] text-electric-blue font-bold uppercase tracking-tighter">
-                      Authorized
-                    </div>
+                    {wallet.recommended ? (
+                      <div className="px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[9px] text-amber-500 font-bold uppercase tracking-tighter animate-pulse">
+                        Recommended
+                      </div>
+                    ) : (
+                      <div className="px-2 py-0.5 rounded-full bg-electric-blue/10 border border-electric-blue/20 text-[9px] text-electric-blue font-bold uppercase tracking-tighter">
+                        Authorized
+                      </div>
+                    )}
                   </button>
                 ))}
               </div>

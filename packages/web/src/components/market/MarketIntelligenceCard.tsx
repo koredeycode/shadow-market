@@ -84,7 +84,7 @@ export function MarketIntelligenceCard({ market }: MarketIntelligenceCardProps) 
           <div className="space-y-1">
             <div className="flex items-center gap-1.5 text-slate-500">
                <Users className="w-3.5 h-3.5" />
-               <span className="text-[9px] font-mono uppercase tracking-widest">Traders</span>
+               <span className="text-[9px] font-mono uppercase tracking-widest">Positions</span>
             </div>
             <div className="text-xs font-mono text-white font-bold">{market.totalBets.toLocaleString()}</div>
           </div>
@@ -93,7 +93,7 @@ export function MarketIntelligenceCard({ market }: MarketIntelligenceCardProps) 
                <Clock className="w-3.5 h-3.5" />
                <span className="text-[9px] font-mono uppercase tracking-widest">Expiry</span>
             </div>
-            <div className="text-xs font-mono text-white font-bold">{format(new Date(market.endTime), 'MMM dd')}</div>
+            <div className="text-xs font-mono text-white font-bold">{format(new Date(market.endTime), 'MMM dd, yyyy')}</div>
           </div>
         </div>
 

@@ -166,8 +166,8 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
             <Zap className="w-4 h-4" />
             <span className="font-bold text-xs tracking-widest uppercase">
                 {selectedWager 
-                    ? isUserCreator ? 'PROTOCOL_MANAGEMENT' : 'PROTOCOL_ACCEPTANCE'
-                    : 'P2P_PROTOCOL_CREATE'
+                    ? isUserCreator ? 'MANAGE P2P WAGER' : 'ACCEPT P2P WAGER'
+                    : 'Create P2P Wager'
                 }
             </span>
           </button>
@@ -211,7 +211,7 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
                             className="w-full py-4 bg-red-500/10 text-red-500 border border-red-500/20 rounded-sm font-bold text-[11px] tracking-[0.2em] uppercase hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
                         >
                             {cancelMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
-                            TERMINATE_PROTOCOL
+                            Cancel Wager
                         </button>
                     ) : (
                         <button
@@ -221,7 +221,7 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
                             className="w-full py-4 bg-success-green text-black rounded-sm font-bold text-[11px] tracking-[0.2em] uppercase hover:brightness-110 transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2"
                         >
                             {acceptMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                            ACCEPT_OFFER_MATCH
+                            Accept Offer
                         </button>
                     )}
                     
@@ -248,7 +248,7 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
                     {selectedWager.status === 'SETTLED' && (
                         <div className="w-full py-4 bg-white/5 text-slate-500 border border-white/10 rounded-sm font-bold text-[11px] tracking-[0.2em] uppercase text-center flex items-center justify-center gap-2">
                             <ShieldCheck className="w-4 h-4 text-success-green" />
-                            PROTOCOL_SETTLED
+                            Wager Settled
                         </div>
                     )}
                 </div>
@@ -369,7 +369,7 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
                         ) : (
                             <Zap className="w-4 h-4" />
                         )}
-                        {createMutation.isPending ? 'TRANSMITTING_PROOF...' : 'BROADCAST_P2P_PROTOCOL'}
+                        {createMutation.isPending ? 'Creating Wager...' : 'Create Wager'}
                     </button>
                 </div>
             </>
