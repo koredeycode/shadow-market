@@ -37,7 +37,7 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
 
   const isUserCreator = selectedWager && address === selectedWager.creatorId;
 
-  const { control, handleSubmit, watch, reset, formState: { errors } } = useForm<P2PWagerFormData>({
+  const { register, control, handleSubmit, watch, reset, formState: { errors } } = useForm<P2PWagerFormData>({
     resolver: zodResolver(p2pWagerSchema),
     defaultValues: {
       amount: '',
@@ -279,7 +279,7 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
           </div>
           <div className="relative group">
             <input
-              {...control.register('amount')}
+              {...register('amount')}
               type="number"
               placeholder="0.00"
               className={`w-full bg-slate-950 border ${errors.amount ? 'border-red-500/50' : 'border-white/10 group-focus-within:border-electric-blue/50'} p-4 rounded-sm font-mono text-2xl text-white focus:outline-none transition-all`}

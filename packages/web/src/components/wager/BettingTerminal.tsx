@@ -28,7 +28,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const {
-    control,
+    register,
     watch,
     setValue,
     formState: { errors },
@@ -94,7 +94,7 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
           </div>
           <div className="relative group">
             <input
-              {...control.register('amount')}
+              {...register('amount')}
               type="number"
               step="any"
               placeholder="0.00"
