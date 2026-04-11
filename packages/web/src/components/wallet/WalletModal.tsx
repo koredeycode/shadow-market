@@ -14,9 +14,11 @@ const walletTypes = [
     name: '1AM Wallet',
     recommended: true,
     icon: (
-      <div className="w-8 h-8 bg-amber-500/20 rounded-full border border-amber-500/40 flex items-center justify-center text-amber-500 font-bold">
-        1
-      </div>
+       <img 
+        src="/images/wallets/1am.png" 
+        alt="1AM Wallet" 
+        className="w-8 h-8 rounded-full border border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.2)]" 
+      />
     ),
     description: 'Dust-Free ZK Execution',
   },
@@ -24,9 +26,11 @@ const walletTypes = [
     id: 'lace',
     name: 'Lace',
     icon: (
-      <div className="w-8 h-8 bg-electric-blue/20 rounded-full border border-electric-blue/40 flex items-center justify-center text-electric-blue font-bold">
-        L
-      </div>
+       <img 
+        src="/images/wallets/lace.png" 
+        alt="Lace" 
+        className="w-8 h-8 rounded-full border border-electric-blue/20 shadow-[0_0_10px_rgba(59,130,246,0.2)]" 
+      />
     ),
     description: 'Midnight Testnet Optimized',
   },
