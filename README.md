@@ -5,6 +5,15 @@
 
 ---
 
+## 🔗 Quick Links
+
+- **🌐 Live Demo**: [shadow-market-demo.vercel.app](https://shadow-market-demo.vercel.app/)
+- **📺 Demo Video**: [Watch on YouTube](https://youtu.be/5QBzzfqzUcY)
+
+[![Shadow Market Demo](https://img.youtube.com/vi/5QBzzfqzUcY/0.jpg)](https://youtu.be/5QBzzfqzUcY)
+
+---
+
 ## ✨ Key Innovations
 
 - **The "Tri-Head" Architecture**: A compositing design that provides three distinct ways to trade:
