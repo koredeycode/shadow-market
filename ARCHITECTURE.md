@@ -1,12 +1,12 @@
 # Shadow Market: System Architecture & Compositing Strategy
 
-The **Shadow Market** is a privacy-first decentralized prediction market built on the Midnight Network. It employs a modern **Compositing Architecture** designed for high throughput, professional-grade trading, and maximum user privacy.
+The **Shadow Market** is a privacy-first decentralized prediction market built on the Midnight Network. It employs a modern **Compositing Architecture** designed for high throughput, professional-grade trading, and maximum user privacy using Zero-Knowledge proofs.
 
 ---
 
 ## 1. The Compositing Core ("Tri-Head" Pattern)
 
-The system is designed as a "Composite" where three distinct interfaces (Heads) interact with a single shared logic layer (SDK Body).
+The system is designed as a "Composite" where three distinct interfaces (Heads) interact with a single shared logic layer (SDK Body). This ensures feature parity and logic consistency across all platforms.
 
 ```mermaid
 graph TB
@@ -69,42 +69,65 @@ graph TB
 
 ### A. The Web Head (`packages/web`)
 A visual-first dashboard built for ease of use. It handles complex charting, social interactions, and market discovery.
-- **Composition**: React 19 + Vite.
-- **Role**: Primary interface for standard users.
+- **Composition**: React 19 + Vite + Tailwind CSS.
+- **Experience**: High-fidelity trading UI with real-time order books and portfolio tracking.
 
 ### B. The Terminal Head (`packages/cli`)
 A high-performance trading TUI (Terminal User Interface) built for power users who require keyboard-driven navigation and low-latency execution.
 - **Composition**: Ink (React for CLI) + Commander.
-- **Role**: Trading execution and advanced wallet management.
+- **Experience**: "Vim-like" navigation, dedicated wallet management, and lightning-fast wager placement.
 
 ### C. The Server Head (`packages/backend`)
 An off-chain auxiliary that manages transient data, database-backed indexing, and session synchronization.
-- **Composition**: Express + Drizzle + PostgreSQL.
-- **Role**: Market discovery, historical indexing, and TUI-to-Web pairing.
+- **Composition**: Express + Drizzle + PostgreSQL + WebSockets.
+- **Role**: Market discovery, historical indexing, and TUI-to-Web pairing synchronization.
 
 ---
 
-## 2. The "Headless" logic (`packages/api`)
+## 2. The "Headless" Logic (`packages/api`)
 
-The **Shadow Market SDK** acts as the shared connective tissue (the "Body") for the heads. It encapsulates:
+The **Shadow Market SDK** acts as the shared connective tissue (the "Body") for the heads. It encapsulates the complex Zero-Knowledge logic required by Midnight.
 
-- **Circuit Handlers**: Abstractions for the 10 Midnight ZK circuits (Market Creation, Betting, Wagers).
-- **Witness Management**: Secure handling of private data used to generate proofs.
+- **Circuit Handlers**: Abstractions for the 10 Midnight ZK circuits including Market Creation, Betting, and P2P Wager settlement.
+- **Witness Management**: Secure handling of private data used to generate proofs without revealing secrets to the UI layer.
 - **Multi-Head State Sync**: A unified Reactive (RxJS) state stream that all heads subscribe to for real-time ledger updates.
 
 ---
 
 ## 3. Compositing Layer: Data & Session Flow
 
-The project utilizes a **Session Synchronization** layer to link the Terminal Head and Web Head without duplicating sensitive private keys.
+To ensure the user's **Terminal (TUI)** and **Web Frontend** are operating on the same account securely, we implement an **Assigned Session Authorization** flow. This allows the Terminal to "Pair" with a Web-connected wallet without transferring private keys.
 
-### Session Pairing Flow
-1. **Initiation**: The TUI requests a `PairingCode` from the Backend.
-2. **Identification**: The User enters the code into the Web UI.
-3. **Authorization**: The Web UI uses the connected wallet to sign a cryptographic challenge.
-4. **Binding**: The Backend verifies the signature and binds the TUI session to the Wallet’s public address.
+### Technical Flow
+```mermaid
+sequenceDiagram
+    participant TUI
+    participant Backend
+    participant Web
+    participant Wallet
 
-This "Compositing" technique allows for a seamless cross-device experience while maintaining the Zero-Knowledge security boundary.
+    TUI->>Backend: 1. Request Pairing Token (sessionId)
+    Backend-->>TUI: Send Token (e.g. "SHADOW-8192")
+    
+    TUI->>User: 2. Display Pairing Code: "SHADOW-8192"
+    
+    User->>Web: 3. Enter Code "SHADOW-8192" in "Link Terminal" UI
+    Web->>Wallet: 4. Request Signature (msg: "Authorize Session SHADOW-8192")
+    Wallet-->>Web: Signed Message (Sig)
+    
+    Web->>Backend: 5. Submit Sig + WalletAddress + Token
+    Backend->>Backend: 6. Verify Signature & Pair {Token <-> Address}
+    Backend-->>Web: Pairing Successful
+    
+    Note over TUI, Backend: Polling or WebSocket Notification
+    Backend-->>TUI: 7. Session Authorized for Address: 0x...
+    TUI->>TUI: 8. Switch to Shared Profile
+```
+
+### Security Considerations
+- **No Key Sharing**: Private keys never leave their respective environments (Browser Extension vs. TUI Memory).
+- **Timeboxing**: Pairing tokens expire quickly (5 mins) to prevent hijacking.
+- **Single-Use**: Once a pairing is successful, the token is invalidated immediately.
 
 ---
 
@@ -112,16 +135,21 @@ This "Compositing" technique allows for a seamless cross-device experience while
 
 | Layer | Responsibility | Privacy Level |
 | :--- | :--- | :--- |
-| **Ledger (Midnight)** | Settlement, Truth, Pool Math | **Public Verified** |
-| **SDK (Headless)** | Probative Proof Generation, Private State | **Strictly Private** |
-| **Backend (Off-chain)** | Indexing metadata, Discovery | **Public Cache** |
-| **Interfaces (Heads)** | Presentation, Interaction | **User-Local** |
+| **Ledger (Midnight)** | Settlement, State Truth, Pool Logic | **Publicly Verifiable** |
+| **SDK (Headless)** | Zero-Knowledge Proof Generation | **Strictly Private** |
+| **Backend (Off-chain)** | Discovery, Indexing, Pairing | **Public Cache** |
+| **Interfaces (Heads)** | Presentation, User Interaction | **User-Local** |
 
 ---
 
 ## 5. Technical Stack Composition
 
-- **Language**: TypeScript throughout for type-safety across package boundaries.
+- **Language**: TypeScript (Strict Mode) across all packages.
 - **ZK Engine**: Midnight COMPACT for privacy-preserving contract logic.
-- **Storage**: Drizzle ORM + PostgreSQL for high-speed off-chain queries.
-- **React Ecosystem**: Used for both Web (Browser) and TUI (Terminal) components, sharing a similar declarative mental model.
+- **Storage**: Drizzle ORM + PostgreSQL for high-performance off-chain queries.
+- **React Ecosystem**: Unified declarative model for both Web (Browser) and TUI (Terminal).
+- **Protocol**: Custom JSON-RPC + WebSocket stream for real-time updates.
+
+---
+
+**Shadow Market | Project Sigil Protocol v4.0**

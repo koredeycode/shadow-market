@@ -1,82 +1,89 @@
 # 🌑 Shadow Market
+### Private Prediction Markets on Midnight
 
-A privacy-first, decentralized prediction market built on the **Midnight Network**. 
+**Shadow Market** is a privacy-first, decentralized prediction market built on the **Midnight Network**. Leveraging Zero-Knowledge (ZK) technology, it allows traders to predict and wager on outcomes without revealing their positions, identity, or bet sizes to the public ledger.
 
-Shadow Market uses Zero-Knowledge (ZK) technology to enable private trading of binary and multi-choice outcomes while ensuring trustless settlement.
+---
+
+## ✨ Key Innovations
+
+- **The "Tri-Head" Architecture**: A compositing design that provides three distinct ways to trade:
+    - 🌐 **Web Dashboard**: High-fidelity, visual trading with social features.
+    - 📟 **Terminal UI (TUI)**: Low-latency, keyboard-driven interface for power users.
+    - 🛠️ **CLI Tooling**: Programmable interactions for automation and integrations.
+- **Zero-Knowledge Privacy**: Built using Midnight's **COMPACT** language, ensuring that your financial strategies and identity remain shielded.
+- **ZK Claims**: Prove you are the winner of a bet and claim rewards without linking your identity to the transaction.
+- **Cross-Head Session Sync**: Securely link your terminal session to your web wallet using cryptographic signatures—no private keys ever leave your browser.
 
 ---
 
 ## 🏗️ Project Structure
 
-The project is organized as a **Pnpm Monorepo** using the "Tri-Head" architecture.
+The project is managed as a **pnpm** monorepo:
 
 ```bash
 shadow-market/
 ├── packages/
-│   ├── api/          # 🧠 "Headless" SDK: Shared logic & on-chain handlers.
-│   ├── backend/      # 🖥️ Off-chain database, API server, and WebSockets.
-│   ├── cli/          # 📟 Terminal Head: Interactive TUI and CLI tools.
+│   ├── api/          # 🧠 "Headless" SDK: Shared ZK logic & on-chain handlers.
+│   ├── backend/      # 🖥️ Off-chain indexing, WebSockets, and Session API.
+│   ├── cli/          # 📟 Terminal Head: Interactive Ink-based TUI.
 │   ├── web/          # 🌐 Web Head: React + Vite trading dashboard.
 │   ├── contracts/    # 📜 Midnight Ledger: Compact contracts and circuits.
-│   └── scripts/      # 🛠️ Maintenance and deployment automation scripts.
-├── pnpm-workspace.yaml
-├── ARCHITECTURE.md    # 🗺️ Technical deep-dive on design patterns.
-└── README.md          # 📍 You are here.
+│   └── scripts/      # 🛠️ Automation: Bootstrapping and deployment.
+├── ARCHITECTURE.md    # 🗺️ Technical deep-dive on compositing strategy.
+├── DEV_GUIDE.md        # 🛠️ Step-by-step local development & testing.
+└── README.md          # 📍 Project entry point.
 ```
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Demo Mode)
+
+To get Shadow Market running locally:
 
 ### 1. Prerequisites
-- **Node.js** (v18+)
-- **Pnpm** (v8+)
-- **Midnight Compiler** (`compact`)
+- **Node.js** (v20+)
+- **pnpm** (v8+)
+- **Docker** (for PostgreSQL and Midnight node)
 
-### 2. Initialization
-Install all dependencies for all heads:
+### 2. Setup
 ```bash
+# Install dependencies
 pnpm install
+
+# Build all packages
+pnpm build
+
+# Spin up infrastructure
+docker-compose up -d
 ```
 
-### 3. Running the Terminal (TUI)
-For the low-latency trading experience:
+### 3. Start the Engines
 ```bash
-pnpm --filter cli dev
-```
+# 1. Start the Backend API (Terminal 1)
+pnpm --filter backend dev
 
-### 4. Running the Web App
-For the visual trading experience:
-```bash
+# 2. Start the Web Dashboard (Terminal 2)
 pnpm --filter web dev
+
+# 3. Start the Terminal UI (Terminal 3)
+pnpm --filter cli dev:tui
 ```
 
 ---
 
-## ⚡ Key Features
+## 🛠️ Developer Resources
 
-- **Private Wagers**: Your bet amount and side are never revealed publicly.
-- **ZK Claims**: Prove you won a bet and claim your reward without revealing your identity.
-- **Tri-Head Access**: Trade via Web, Terminal, or CLI depending on your style.
-- **Offline Mode**: A local-first architecture for the backend ensures high availability.
-
----
-
-## 📖 Documentation
-
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)**: System design and technical specs.
-- **[Back-end Guide](./packages/backend/README.md)**: Database and API schema.
-- **[Terminal Guide](./packages/cli/README.md)**: TUI keybindings and commands.
-- **[Contract Guide](./packages/contracts/README.md)**: Compact language details.
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+- **[Architecture Deep-Dive](./ARCHITECTURE.md)**: Understand the Tri-Head pattern.
+- **[Local Test Protocol](./DEV_GUIDE.md)**: How to run ZK circuits locally.
+- **[CLI Reference](./packages/cli/README.md)**: Commands for the terminal interface.
 
 ---
 
 ## ⚖️ License
 
-Shadow Market is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
+Shadow Market is licensed under the MIT License. Built for the **Midnight Network Hackathon 2024**.
+
+---
+
+**Shadow Market | Privacy as a Standard**
