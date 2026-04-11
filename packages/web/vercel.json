@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/zk-config/(.*)",
+      "destination": "/zk-config/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
