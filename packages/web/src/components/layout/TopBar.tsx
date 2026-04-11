@@ -6,7 +6,6 @@ import { WalletModal } from '../wallet/WalletModal';
 import { WalletDetailView } from '../wallet/WalletDetailView';
 import { useWalletStore } from '../../store/wallet.store';
 import { HeaderSearch } from './HeaderSearch';
-import { TerminalPairingModal } from '../wallet/TerminalPairing';
 
 export function TopBar() {
   const { 
@@ -15,8 +14,6 @@ export function TopBar() {
     formattedAddress, 
     formattedUnshieldedNightBalance,
     username,
-    isTerminalModalOpen,
-    setTerminalModalOpen
   } = useWallet();
   const { isWalletModalOpen, setWalletModalOpen } = useWalletStore();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -118,7 +115,6 @@ export function TopBar() {
       </div>
 
       <WalletModal isOpen={isWalletModalOpen} onClose={() => setWalletModalOpen(false)} />
-      <TerminalPairingModal isOpen={isTerminalModalOpen} onClose={() => setTerminalModalOpen(false)} />
     </header>
   );
 }

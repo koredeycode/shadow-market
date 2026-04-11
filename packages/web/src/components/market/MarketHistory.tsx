@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { marketsApi } from '../../api/markets';
 import { EmptyState } from '../common/EmptyState';
+import { getTxExplorerUrl } from '../../utils/explorer';
 
 interface MarketHistoryProps {
   marketId: string;
@@ -69,7 +70,6 @@ export function MarketHistory({ marketId }: MarketHistoryProps) {
             <h3 className="text-white font-bold text-[11px] uppercase tracking-widest leading-none mb-1">
               Network Transactions
             </h3>
-            <p className="text-[9px] text-slate-500 font-mono uppercase">Verified by Shadow Indexer</p>
           </div>
         </div>
         <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-sm">
@@ -95,9 +95,11 @@ export function MarketHistory({ marketId }: MarketHistoryProps) {
 
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-slate-400 uppercase tracking-tight">Execution Hash</span>
+                    <span className="text-[10px] font-mono text-slate-400 uppercase tracking-tight">Transaction Hash</span>
                     <a 
-                      href={`#`} // explorer link
+                      href={tx.txHash ? getTxExplorerUrl(tx.txHash) : '#'} 
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-[10px] font-mono text-electric-blue flex items-center gap-1 hover:underline"
                     >
                       <Hash className="w-3 h-3" />
@@ -121,7 +123,7 @@ export function MarketHistory({ marketId }: MarketHistoryProps) {
                   {format(new Date(tx.timestamp), 'HH:mm:ss')}
                 </div>
                 <div className="text-lg font-mono font-bold text-white tracking-tight">
-                  {(Number(tx.entryPrice) * 100).toFixed(1)}% <span className="text-[9px] text-slate-600 uppercase font-bold ml-1">PRICE_AT_TX</span>
+                  {(Number(tx.entryPrice) * 100).toFixed(1)}% <span className="text-[9px] text-slate-600 uppercase font-bold ml-1">Market Sentiment</span>
                 </div>
               </div>
             </div>

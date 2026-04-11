@@ -283,7 +283,7 @@ export function Home() {
                 to="/markets"
                 className="block text-center py-2.5 text-[10px] font-mono font-bold text-electric-blue hover:underline uppercase tracking-[0.25em] bg-electric-blue/5 border border-electric-blue/10 rounded-sm"
               >
-                Explore terminal
+                Explore markets
               </Link>
             </div>
           </section>

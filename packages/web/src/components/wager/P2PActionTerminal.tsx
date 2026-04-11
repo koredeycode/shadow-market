@@ -28,9 +28,10 @@ interface P2PActionTerminalProps {
   onClose?: () => void;
   selectedWager?: Wager | null;
   onClearSelection?: () => void;
+  onSuccess?: (data: { txHash: string; title: string; subtitle: string }) => void;
 }
 
-export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P2PActionTerminalProps) {
+export function P2PActionTerminal({ market, selectedWager, onClearSelection, onSuccess }: P2PActionTerminalProps) {
   const { isConnected, formattedUnshieldedNightBalance, address } = useWallet();
   const { createWager, acceptWager, cancelWager, claimWagerWinnings, isInitialized } = useContract();
   const queryClient = useQueryClient();
@@ -79,7 +80,14 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
       await wagersApi.acceptWager(market.id, selectedWager.id, { txHash });
       return txHash;
     },
-    onSuccess: (_txHash) => {
+    onSuccess: (txHash) => {
+      if (onSuccess) {
+        onSuccess({
+          txHash,
+          title: "Position Matched",
+          subtitle: `Successfully accepted the P2P wager and synced to the reservoir.`
+        });
+      }
       toast.success('Position Matched! Successfully accepted the P2P wager and synced to reservoir.');
       queryClient.invalidateQueries({ queryKey: ['market', market.id] });
       queryClient.invalidateQueries({ queryKey: ['p2p-wagers', market.id] });
@@ -143,7 +151,14 @@ export function P2PActionTerminal({ market, selectedWager, onClearSelection }: P
 
       return { txHash, onchainId };
     },
-    onSuccess: (_result, variables) => {
+    onSuccess: (result, variables) => {
+      if (onSuccess) {
+        onSuccess({
+          txHash: result.txHash,
+          title: "Protocol Broadcast",
+          subtitle: `Successfully published your ${variables.amount} NIGHT ${variables.side.toUpperCase()} wager to the network.`
+        });
+      }
       toast.success(`Protocol Broadcast! Successfully published your ${variables.amount} NIGHT ${variables.side.toUpperCase()} wager.`);
       queryClient.invalidateQueries({ queryKey: ['market', market.id] });
       queryClient.invalidateQueries({ queryKey: ['p2p-wagers', market.id] });

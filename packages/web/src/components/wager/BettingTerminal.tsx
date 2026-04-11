@@ -8,7 +8,6 @@ import { useContract } from '../../hooks/useContract';
 import { useWallet } from '../../hooks/useWallet';
 import { Market } from '../../types';
 import { wagersApi } from '../../api/wagers';
-import { TxSuccessModal } from '../common/TxSuccessModal';
 import toast from 'react-hot-toast';
 
 const betSchema = z.object({
@@ -23,12 +22,12 @@ type BetFormData = z.infer<typeof betSchema>;
 
 interface BettingTerminalProps {
   market: Market;
+  onSuccess?: (data: { txHash: string; title: string; subtitle: string }) => void;
 }
 
-export function BettingTerminal({ market }: BettingTerminalProps) {
+export function BettingTerminal({ market, onSuccess }: BettingTerminalProps) {
   const { isConnected, unshieldedNightBalance, formattedUnshieldedNightBalance, setWalletModalOpen } = useWallet();
   const { placeBet, isInitialized } = useContract();
-  const [successData, setSuccessData] = useState<{ txHash: string; amount: string; side: string } | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const queryClient = useQueryClient();
 
@@ -98,11 +97,13 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
       });
     },
     onSuccess: (data, variables) => {
-      setSuccessData({
-        txHash: data.transaction?.hash || '',
-        amount: variables.amount,
-        side: variables.side.toUpperCase()
-      });
+      if (onSuccess) {
+        onSuccess({
+          txHash: data.transaction?.hash || '',
+          title: "Position Secured",
+          subtitle: `Successfully deposited ${variables.amount} NIGHT into the ZK-escrow pool for the ${variables.side.toUpperCase()} outcome.`
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ['market', market.id] });
       queryClient.invalidateQueries({ queryKey: ['bets'] });
       reset();
@@ -291,13 +292,6 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
         </button>
       </div>
 
-      <TxSuccessModal 
-        isOpen={!!successData}
-        onClose={() => setSuccessData(null)}
-        txHash={successData?.txHash || ''}
-        title="Position Secured"
-        subtitle={`Successfully deposited ${successData?.amount} NIGHT into the ZK-escrow pool for the ${successData?.side} outcome.`}
-      />
     </div>
   );
 }

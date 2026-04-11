@@ -15,6 +15,7 @@ import { P2PActionTerminal } from '../components/wager/P2PActionTerminal';
 import { MarketHistory } from '../components/market/MarketHistory';
 import { MarketStatus, Wager } from '../types';
 import { socket } from '../lib/socket';
+import { TxSuccessModal } from '../components/common/TxSuccessModal';
 
 export function MarketDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -39,6 +40,7 @@ export function MarketDetail() {
 
   const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d' | '30d' | 'all'>('24h');
   const [selectedWager, setSelectedWager] = useState<Wager | null>(null);
+  const [successData, setSuccessData] = useState<{ txHash: string; title: string; subtitle: string } | null>(null);
 
   const {
     data: market,
@@ -368,9 +370,13 @@ export function MarketDetail() {
                   market={market} 
                   selectedWager={selectedWager}
                   onClearSelection={() => setSelectedWager(null)}
+                  onSuccess={(data: { txHash: string; title: string; subtitle: string }) => setSuccessData(data)}
                 />
               ) : (
-                <BettingTerminal market={market} />
+                <BettingTerminal 
+                  market={market} 
+                  onSuccess={(data: { txHash: string; title: string; subtitle: string }) => setSuccessData(data)}
+                />
               )}
             </div>
           </div>
@@ -537,6 +543,16 @@ export function MarketDetail() {
           </div>
         </div>
       </div>
+      {/* Tertiary Level... */}
+      {/* (existing stats section) */}
+
+      <TxSuccessModal 
+        isOpen={!!successData}
+        onClose={() => setSuccessData(null)}
+        txHash={successData?.txHash || ''}
+        title={successData?.title || ''}
+        subtitle={successData?.subtitle || ''}
+      />
     </div>
   );
 }

@@ -36,7 +36,6 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
     networkId,
     disconnectWallet,
     refreshBalance,
-    setTerminalModalOpen,
     getUserSecretKey,
     importUserSecretKey,
     proofServerUrl,
@@ -338,20 +337,6 @@ export function WalletDetailView({ onClose }: WalletDetailViewProps) {
             </div>
             <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all" />
           </Link>
-
-          <button
-            onClick={() => {
-              setTerminalModalOpen(true);
-              onClose();
-            }}
-            className="w-full flex items-center justify-between p-2 hover:bg-white/5 rounded-sm transition-colors text-xs text-slate-400 hover:text-white group"
-          >
-            <div className="flex items-center gap-3">
-               <Monitor className="w-4 h-4 text-electric-blue" />
-               <span>Terminal Link</span>
-            </div>
-            <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all" />
-          </button>
 
           <button
             onClick={handleDisconnect}
