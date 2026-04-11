@@ -83,7 +83,20 @@ export class WagerService {
         .returning();
 
       // Calculate new volumes and prices based on the locked row's exact state
-      const amountNum = BigInt(data.amount);
+      // Calculate new volumes and prices based on the locked row's exact state
+      // Convert to BigInt, handling potential decimal strings from older or misconfigured clients
+      // We scale by 1,000,000 (6 decimals) if the amount is a float, or parse directly if it's already an integer.
+      let amountNum: bigint;
+      try {
+        if (data.amount.includes('.')) {
+          amountNum = BigInt(Math.floor(parseFloat(data.amount) * 1_000_000));
+        } else {
+          amountNum = BigInt(data.amount);
+        }
+      } catch (err) {
+        console.warn(`[WagerService] Failed to parse amount "${data.amount}" as BigInt, falling back to 0n`);
+        amountNum = 0n;
+      }
       const currentYesVol = BigInt(market.totalYesVolume || '0');
       const currentNoVol = BigInt(market.totalNoVolume || '0');
 

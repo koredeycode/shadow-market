@@ -209,25 +209,17 @@ export class ShadowMarketAPI {
       const outcomeEnum = betOutcome ? 2 : 1; 
       const nonce = generateBetNonce();
 
-      // SCOPED WITNESSES: Create a fresh contract instance with local witnesses to prevent race conditions
-      const scopedWitnesses = createWitnessProviders(this.privateState, {
-        betAmount,
-        betSide: outcomeEnum,
-        betNonce: nonce,
-      });
+      // Update witnesses on the shared provider
+      if ((this.providers as any).witnesses?.updateContext) {
+        (this.providers as any).witnesses.updateContext({
+          betAmount,
+          betSide: outcomeEnum,
+          betNonce: nonce,
+        });
+      }
 
-      const compiledWithWitnesses = (compiledShadowMarketContract as any).pipe(
-        (CompiledContract as any).withWitnesses(scopedWitnesses)
-      );
-
-      const contractInstance = (await findDeployedContract(this.providers, {
-        compiledContract: compiledWithWitnesses,
-        contractAddress: this.deployedContractAddress,
-        privateStateId: 'shadow-market-private-state',
-        initialPrivateState: this.privateState,
-      } as any)) as DeployedShadowMarketContract;
-
-      const txData = await (contractInstance.callTx.placeBet as any)(
+      // Use the stable contract instance that successfully processed 'createMarket'
+      const txData = await (this.deployedContract.callTx.placeBet as any)(
         BigInt(marketId),
         outcomeEnum
       );
@@ -310,28 +302,19 @@ export class ShadowMarketAPI {
           console.log(`Losing bet detected for ${betId}. Payout is 0n.`);
       }
 
-      // SCOPED WITNESSES
-      const scopedWitnesses = createWitnessProviders(this.privateState, {
-        betAmount: privateBet.amount,
-        betSide: privateBet.side,
-        betNonce: privateBet.nonce,
-        betPayout: payout,
-        betRemainder: remainder
-      });
-
-      const compiledWithWitnesses = (compiledShadowMarketContract as any).pipe(
-        (CompiledContract as any).withWitnesses(scopedWitnesses)
-      );
-
-      const contractInstance = (await findDeployedContract(this.providers, {
-        compiledContract: compiledWithWitnesses,
-        contractAddress: this.deployedContractAddress,
-        privateStateId: 'shadow-market-private-state',
-        initialPrivateState: this.privateState,
-      } as any)) as DeployedShadowMarketContract;
+      // Update witnesses on the shared provider
+      if ((this.providers as any).witnesses?.updateContext) {
+        (this.providers as any).witnesses.updateContext({
+          betAmount: privateBet.amount,
+          betSide: privateBet.side,
+          betNonce: privateBet.nonce,
+          betPayout: payout,
+          betRemainder: remainder
+        });
+      }
 
       const userAddress = this.providers.walletProvider.getCoinPublicKey();
-      const txData = await (contractInstance.callTx.claimPoolWinnings as any)(
+      const txData = await (this.deployedContract.callTx.claimPoolWinnings as any)(
         BigInt(betId),
         userAddress
       );
@@ -434,23 +417,14 @@ export class ShadowMarketAPI {
     try {
       const outcomeEnum = side ? 2 : 1; 
 
-      // SCOPED WITNESSES
-      const scopedWitnesses = createWitnessProviders(this.privateState, {
-        wagerAmount: amount,
-      });
+      // Update witnesses on the shared provider
+      if ((this.providers as any).witnesses?.updateContext) {
+        (this.providers as any).witnesses.updateContext({
+          wagerAmount: amount,
+        });
+      }
 
-      const compiledWithWitnesses = (compiledShadowMarketContract as any).pipe(
-        (CompiledContract as any).withWitnesses(scopedWitnesses)
-      );
-
-      const contractInstance = (await findDeployedContract(this.providers, {
-        compiledContract: compiledWithWitnesses,
-        contractAddress: this.deployedContractAddress,
-        privateStateId: 'shadow-market-private-state',
-        initialPrivateState: this.privateState,
-      } as any)) as DeployedShadowMarketContract;
-
-      const txData = await (contractInstance.callTx.createWager as any)(
+      const txData = await (this.deployedContract.callTx.createWager as any)(
         BigInt(marketId),
         outcomeEnum,
         oddsNumerator,

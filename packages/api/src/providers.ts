@@ -69,11 +69,28 @@ class PersistentPrivateStateProvider {
       const value = localStorage.getItem(key);
       if (value) {
         try {
-          const parsed = JSON.parse(value);
-          // Convert hex strings back to Uint8Arrays for keys if needed
+          // REVIVER: Handles BigInt and Hex restoration
+          const parsed = JSON.parse(value, (k, v) => {
+            if (typeof v === 'string' && v.endsWith('n') && /^\d+n$/.test(v)) {
+              return BigInt(v.slice(0, -1));
+            }
+            return v;
+          });
+
+          // Restore binary keys
           if (parsed && parsed.userSecretKey && typeof parsed.userSecretKey === 'string') {
             parsed.userSecretKey = fromHex(parsed.userSecretKey);
           }
+          
+          // Restore nonces in bets
+          if (parsed && parsed.bets) {
+            for (const id in parsed.bets) {
+              if (typeof parsed.bets[id].nonce === 'string') {
+                parsed.bets[id].nonce = fromHex(parsed.bets[id].nonce);
+              }
+            }
+          }
+          
           return parsed as T;
         } catch (e) {
           console.error('Failed to parse private state from localStorage', e);
@@ -85,12 +102,15 @@ class PersistentPrivateStateProvider {
 
   async set<T>(key: string, value: any): Promise<void> {
     if (this.useLocalStorage) {
-      // Serialize Uint8Arrays to Hex for storage
-      const toSerialize = { ...value };
-      if (toSerialize.userSecretKey instanceof Uint8Array) {
-        toSerialize.userSecretKey = toHex(toSerialize.userSecretKey);
-      }
-      localStorage.setItem(key, JSON.stringify(toSerialize));
+      // REPLACER: Handles BigInt and Uint8Array serialization
+      const serialized = JSON.stringify(value, (k, v) => {
+        if (typeof v === 'bigint') return v.toString() + 'n';
+        if (v instanceof Uint8Array || (v && v.type === 'Buffer')) {
+          return toHex(new Uint8Array(v.data || v));
+        }
+        return v;
+      });
+      localStorage.setItem(key, serialized);
     }
     this.memoryStore.set(key, value);
   }
@@ -194,96 +214,41 @@ export const createProvidersFromWallet = async (
 
   const witnesses = createWitnessProviders(privateState);
 
-  // Original balanceTx kept for reference as requested
+  // Original balanceTx - preserves exact serialization format from wallet
   const balanceTx_original = async (tx: UnboundTransaction, ttl?: Date): Promise<FinalizedTransaction> => {
-    const txHex = toHex(tx.serialize()); 
-    const balanced = await wallet.balanceUnsealedTransaction(txHex) as { tx: string };
-    return fromHex(balanced.tx) as unknown as FinalizedTransaction;
-  };
-
-  /**
-   * Refined balancing logic (v3) to address the persistent contract call hang issue.
-   * Review of BUG.md shows a silent hang in the wallet's balanceUnboundTransaction logic
-   * when processing contract call transactions versus deploy transactions.
-   */
-  const balanceTx_v3 = async (tx: UnboundTransaction, ttl?: Date): Promise<FinalizedTransaction> => {
-    const txBytes = tx.serialize();
-    const startTime = performance.now();
+    const serialized = tx.serialize();
+    const txHex = toHex(serialized); 
+    console.log(`[BALANCING] Raw tx: ${serialized.length} bytes / ${txHex.length} hex chars`);
     
-    try {
-      if (typeof (wallet as any).balanceUnsealedTransaction !== 'function') {
-        throw new Error('Wallet does not support balanceUnsealedTransaction');
-      }
-
-      console.log(`[v3 WORKAROUND] Initiated for unsealed transaction (${txBytes.length} bytes)`);
-      
-      // Step 1: Clean deserialization to normalize the transaction object
-      if (statusCallback) statusCallback('CLEANING');
-      console.log('[v3 WORKAROUND] Step 1: Cleaning transaction state...');
-      const cleanTx = (Transaction as any).deserialize(
-        'signature', 
-        'proof', 
-        'pre-binding', 
-        txBytes
-      );
-      
-      // Step 2: Convert to Hex
-      if (statusCallback) statusCallback('SERIALIZING');
-      const cleanTxHex = toHex(cleanTx.serialize());
-      console.log(`[v3 WORKAROUND] Step 2: Serialized to hex (Length: ${cleanTxHex.length})`);
-      
-      // Step 3: Call wallet bridge and wait for balancing
-      if (statusCallback) statusCallback('BALANCING_START');
-      console.log('[v3 WORKAROUND] Step 3: Calling wallet.balanceUnsealedTransaction... (STUCK HERE?)');
-      
-      // Use a timeout to ensure we don't hang the UI forever
-      const balancingPromise = wallet.balanceUnsealedTransaction(cleanTxHex) as Promise<{ tx: string }>;
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Balancing timeout (60s) reached - the wallet may have crashed or locked up internally')), 60000)
-      );
-      
-      const balanced = await Promise.race([balancingPromise, timeoutPromise]) as { tx: string };
-      
-      const duration = ((performance.now() - startTime) / 1000).toFixed(2);
-      if (statusCallback) statusCallback('BALANCING_END', { duration });
-      console.log(`[v3 WORKAROUND] Step 4: Balancing successful. Duration: ${duration}s. Deserializing result...`);
-      
-      const result = fromHex(balanced.tx) as unknown as FinalizedTransaction;
-      console.log('[v3 WORKAROUND] complete.');
-      
-      return result;
-    } catch (error: any) {
-      console.error('Balancing phase (v3) failed or timed out:', error);
-      throw error;
-    }
+    if (statusCallback) statusCallback('BALANCING_START');
+    const balanced = await wallet.balanceUnsealedTransaction(txHex) as { tx: string };
+    if (statusCallback) statusCallback('BALANCING_END');
+    
+    // Return a Transaction object instead of raw bytes, matching the bboard-ui pattern
+    return Transaction.deserialize<SignatureEnabled, Proof, Binding>(
+      'signature', 'proof', 'binding', fromHex(balanced.tx)
+    );
   };
 
   const walletProvider = {
-    balanceTx: balanceTx_v3, // Using the new v3 method
-    balanceTx_legacy: balanceTx_original, // Kept for reference
+    balanceTx: balanceTx_original, // Using the pattern from bboard-ui
+    balanceTx_legacy: balanceTx_original,
     getCoinPublicKey: (): CoinPublicKey => config.shieldedCoinPublicKey as CoinPublicKey,
     getEncryptionPublicKey: (): EncPublicKey => config.shieldedEncryptionPublicKey as EncPublicKey,
   };
 
   const midnightProvider = {
     submitTx: async (tx: FinalizedTransaction): Promise<TransactionId> => {
-      console.log('Submitting finalized transaction to wallet...');
-      const txBytes = tx as unknown as Uint8Array;
-      const txHex = toHex(txBytes);
+      console.log('Submitting transaction via wallet...');
+      // Extract the ID and serialize as hex, matching bboard-ui
+      const txId = (tx as any).identifiers()[0] as unknown as TransactionId;
+      console.log('Transaction ID:', txId);
       
-      try {
-        await (wallet as any).submitTransaction(txHex);
-        
-        // Extract ID via clean deserialization
-        const txObj = Transaction.deserialize<SignatureEnabled, Proof, Binding>(
-          'signature', 'proof', 'binding', txBytes
-        );
-        const txId = (txObj as any).identifiers()[0];
-        return txId as unknown as TransactionId;
-      } catch (error: any) {
-        console.error('Transaction submission failed:', error);
-        throw error;
-      }
+      const serializedTx = toHex(tx.serialize());
+      await (wallet as any).submitTransaction(serializedTx);
+      
+      console.log('Wallet accepted transaction');
+      return txId;
     },
   };
 

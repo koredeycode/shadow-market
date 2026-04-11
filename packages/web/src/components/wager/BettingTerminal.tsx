@@ -86,9 +86,11 @@ export function BettingTerminal({ market }: BettingTerminalProps) {
       if (!result) throw new Error('On-chain transaction failed or was cancelled');
       const { txHash, onchainId } = result;
 
+      const microAmount = Math.floor(parseFloat(data.amount) * 1_000_000).toString();
+
       return await wagersApi.placeBet({
         marketId: market.id,
-        amount: data.amount,
+        amount: microAmount,
         side: data.side,
         slippage: data.slippage,
         txHash,

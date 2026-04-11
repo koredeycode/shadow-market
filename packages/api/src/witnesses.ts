@@ -19,7 +19,6 @@ export interface MarketPrivateState {
 
 /**
  * Ephemeral context used to provide witnesses for a specific circuit execution.
- * To avoid race conditions, do not use global variables for this.
  */
 export interface MarketWitnessContext {
   betAmount?: bigint;
@@ -33,43 +32,48 @@ export interface MarketWitnessContext {
 type Ledger = any;
 
 /**
- * Create witness providers for a specific transaction/call context.
- * 
- * @param privateState The user's persisted private state
- * @param ephemeralContext Context for the current operation (to avoid race conditions)
+ * Creates witness providers with a shared, updatable context.
  */
 export const createWitnessProviders = (
   privateState: MarketPrivateState, 
-  ephemeralContext: MarketWitnessContext = {}
-) => ({
-  userSecretKey: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, Uint8Array] => {
-    return [privateState, privateState.userSecretKey];
-  },
+  context: MarketWitnessContext = {}
+) => {
+  // Return the witnesses bound to the mutable context object
+  return {
+    // Current context accessor for external updates
+    updateContext: (newContext: MarketWitnessContext) => {
+      Object.assign(context, newContext);
+    },
+    
+    userSecretKey: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, Uint8Array] => {
+      return [privateState, privateState.userSecretKey];
+    },
 
-  betAmount: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, bigint] => {
-    return [privateState, ephemeralContext.betAmount ?? 0n];
-  },
+    betAmount: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, bigint] => {
+      return [privateState, context.betAmount ?? 0n];
+    },
 
-  betSide: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, number] => {
-    return [privateState, ephemeralContext.betSide ?? 0];
-  },
+    betSide: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, number] => {
+      return [privateState, context.betSide ?? 0];
+    },
 
-  betNonce: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, Uint8Array] => {
-    return [privateState, ephemeralContext.betNonce ?? new Uint8Array(32).fill(0)];
-  },
+    betNonce: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, Uint8Array] => {
+      return [privateState, context.betNonce ?? new Uint8Array(32).fill(0)];
+    },
 
-  wagerAmountInput: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, bigint] => {
-    return [privateState, ephemeralContext.wagerAmount ?? 0n];
-  },
+    wagerAmountInput: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, bigint] => {
+      return [privateState, context.wagerAmount ?? 0n];
+    },
 
-  betPayout: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, bigint] => {
-    return [privateState, ephemeralContext.betPayout ?? 0n];
-  },
+    betPayout: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, bigint] => {
+      return [privateState, context.betPayout ?? 0n];
+    },
 
-  betRemainder: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, bigint] => {
-    return [privateState, ephemeralContext.betRemainder ?? 0n];
-  },
-});
+    betRemainder: (ctx: WitnessContext<Ledger, MarketPrivateState>): [MarketPrivateState, bigint] => {
+      return [privateState, context.betRemainder ?? 0n];
+    },
+  };
+};
 
 /**
  * Utility to generate a safe random nonce for new bets

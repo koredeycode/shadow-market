@@ -109,9 +109,13 @@ export function CreateP2PWagerModal({ open, onClose, market }: CreateP2PWagerMod
 
       // Step 2: Sync to backend for indexing
       console.log('DEBUG: Syncing P2P wager to backend with txHash:', txHash, 'onchainId:', onchainId);
+      const microAmount = Math.floor(parseFloat(data.amount) * 1_000_000).toString();
+
+      // Step 2: Sync to backend for indexing
+      console.log('DEBUG: Syncing P2P wager to backend with txHash:', txHash, 'onchainId:', onchainId);
       return await wagersApi.createP2PWager({
         marketId: market.id,
-        amount: data.amount,
+        amount: microAmount,
         side: data.side,
         odds: [data.oddsNumerator, data.oddsDenominator],
         duration: data.durationHours * 3600,
